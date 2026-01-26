@@ -8,7 +8,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
 import { VideoMetadata, CaptionTrack, SubtitleSegment, ErrorCode, Yt2PdfError } from '../types/index.js';
-import { parseYouTubeUrl, isValidYouTubeUrl, buildVideoUrl } from '../utils/url.js';
+import { isValidYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 import { logger } from '../utils/logger.js';
 
 const execAsync = promisify(exec);

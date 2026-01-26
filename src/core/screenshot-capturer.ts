@@ -7,7 +7,7 @@ import { Screenshot, ImageQuality } from '../types/index.js';
 import { ScreenshotConfig } from '../types/config.js';
 import { FFmpegWrapper } from '../providers/ffmpeg.js';
 import { YouTubeProvider } from '../providers/youtube.js';
-import { createTempDir, cleanupDir } from '../utils/file.js';
+import { createTempDir } from '../utils/file.js';
 import { logger } from '../utils/logger.js';
 
 export interface ScreenshotCapturerOptions {

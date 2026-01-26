@@ -45,7 +45,7 @@ export { logger, Logger, log } from './utils/logger.js';
 import { Orchestrator } from './core/orchestrator.js';
 import { configManager } from './utils/config.js';
 import { cacheManager } from './utils/cache.js';
-import type { ConvertOptions, Config } from './types/config.js';
+import type { ConvertOptions } from './types/config.js';
 import type { ConvertResult } from './types/index.js';
 
 /**

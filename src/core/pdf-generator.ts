@@ -264,7 +264,7 @@ export class PDFGenerator {
   private renderTableOfContents(
     doc: PDFKit.PDFDocument,
     sections: PDFSection[],
-    videoId: string
+    _videoId: string
   ): void {
     doc.addPage();
 
@@ -398,7 +398,7 @@ export class PDFGenerator {
   /**
    * 테마 로드
    */
-  private loadTheme(themeName: string): Theme {
+  private loadTheme(_themeName: string): Theme {
     // 현재는 기본 테마만 지원
     // 향후 테마 파일 로드 로직 추가
     return DEFAULT_THEME;

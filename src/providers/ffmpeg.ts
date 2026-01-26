@@ -95,7 +95,7 @@ export class FFmpegWrapper {
   /**
    * 오디오 추출
    */
-  async extractAudio(videoPath: string, outputPath: string, format = 'mp3'): Promise<void> {
+  async extractAudio(videoPath: string, outputPath: string, _format = 'mp3'): Promise<void> {
     try {
       logger.debug(`오디오 추출: ${videoPath} -> ${outputPath}`);
 

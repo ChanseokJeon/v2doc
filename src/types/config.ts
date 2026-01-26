@@ -3,7 +3,10 @@
  */
 
 import { z } from 'zod';
-import type { OutputFormat, ImageQuality, PDFLayout, WhisperProvider } from './index.js';
+import type { OutputFormat, ImageQuality, PDFLayout } from './index.js';
+
+// Re-export for convenience
+export type { OutputFormat, ImageQuality, PDFLayout } from './index.js';
 
 // ============================================================
 // Zod 스키마 정의

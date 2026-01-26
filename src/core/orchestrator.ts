@@ -8,7 +8,6 @@ import {
   ConvertResult,
   PipelineState,
   ProgressCallback,
-  VideoMetadata,
   ErrorCode,
   Yt2PdfError,
 } from '../types/index.js';
@@ -29,7 +28,6 @@ import {
   getDateString,
   applyFilenamePattern,
   getFileSize,
-  formatBytes,
 } from '../utils/file.js';
 import { parseYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 
