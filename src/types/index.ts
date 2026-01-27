@@ -6,11 +6,34 @@
 // 출력 포맷 타입
 // ============================================================
 
-export type OutputFormat = 'pdf' | 'md' | 'html';
+export type OutputFormat = 'pdf' | 'md' | 'html' | 'brief';
 export type ImageQuality = 'low' | 'medium' | 'high';
 export type PDFLayout = 'vertical' | 'horizontal';
 export type WhisperProvider = 'openai' | 'groq' | 'local';
 export type SubtitleSource = 'youtube' | 'whisper';
+
+// ============================================================
+// 영상 유형 (Video Type Classification)
+// ============================================================
+
+export type VideoType =
+  | 'conference_talk'  // 컨퍼런스 발표
+  | 'tutorial'         // 튜토리얼/강좌
+  | 'interview'        // 인터뷰
+  | 'lecture'          // 강의
+  | 'demo'             // 제품 데모
+  | 'discussion'       // 토론/패널
+  | 'unknown';         // 분류 불가
+
+// ============================================================
+// 챕터 (Chapter)
+// ============================================================
+
+export interface Chapter {
+  title: string;
+  startTime: number;  // 초
+  endTime: number;    // 초
+}
 
 // ============================================================
 // 영상 메타데이터
@@ -32,6 +55,9 @@ export interface VideoMetadata {
   uploadDate: string;
   viewCount: number;
   availableCaptions: CaptionTrack[];
+  chapters?: Chapter[];           // YouTube 챕터 (있는 경우)
+  videoType?: VideoType;          // 영상 유형
+  videoTypeConfidence?: number;   // 영상 유형 판별 신뢰도 (0-1)
 }
 
 // ============================================================
@@ -82,6 +108,7 @@ export interface PDFSection {
   screenshot: Screenshot;
   subtitles: SubtitleSegment[];
   sectionSummary?: SectionSummary;
+  chapterTitle?: string;  // 챕터 제목 (챕터 기반 섹션인 경우)
 }
 
 export interface ContentSummary {
@@ -94,6 +121,29 @@ export interface PDFContent {
   metadata: VideoMetadata;
   sections: PDFSection[];
   summary?: ContentSummary;
+}
+
+// ============================================================
+// Executive Brief (한 페이지 요약)
+// ============================================================
+
+export interface ExecutiveBrief {
+  title: string;
+  metadata: {
+    channel: string;
+    duration: number;
+    videoType: VideoType;
+    uploadDate?: string;
+    videoId: string;
+  };
+  summary: string;                    // 3-5문장 핵심 요약
+  keyTakeaways: string[];             // 핵심 포인트 (3-5개)
+  chapterSummaries: Array<{
+    title: string;
+    startTime: number;
+    summary: string;                  // 한 줄 요약
+  }>;
+  actionItems?: string[];             // 실행 항목 (해당시)
 }
 
 export interface PDFOptions {

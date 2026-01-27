@@ -2,7 +2,7 @@
  * 콘텐츠 병합기 - 스크린샷과 자막을 타임스탬프 기준으로 병합
  */
 
-import { VideoMetadata, SubtitleResult, Screenshot, PDFContent, PDFSection, SubtitleSegment } from '../types/index.js';
+import { VideoMetadata, SubtitleResult, Screenshot, PDFContent, PDFSection, SubtitleSegment, Chapter } from '../types/index.js';
 import { ScreenshotConfig } from '../types/config.js';
 
 export interface ContentMergerOptions {
@@ -17,7 +17,7 @@ export class ContentMerger {
   }
 
   /**
-   * 콘텐츠 병합
+   * 콘텐츠 병합 (interval 기준)
    */
   merge(
     metadata: VideoMetadata,
@@ -34,17 +34,80 @@ export class ContentMerger {
         this.screenshotInterval
       );
 
-      sections.push({
-        timestamp: screenshot.timestamp,
-        screenshot,
-        subtitles: relevantSubtitles,
-      });
+      // 자막이 있는 섹션만 추가 (빈 페이지 방지)
+      if (relevantSubtitles.length > 0) {
+        sections.push({
+          timestamp: screenshot.timestamp,
+          screenshot,
+          subtitles: relevantSubtitles,
+        });
+      }
     }
 
     return {
       metadata,
       sections,
     };
+  }
+
+  /**
+   * 챕터 기준 콘텐츠 병합
+   */
+  mergeWithChapters(
+    metadata: VideoMetadata,
+    subtitles: SubtitleResult,
+    screenshots: Screenshot[],
+    chapters: Chapter[]
+  ): PDFContent {
+    const sections: PDFSection[] = [];
+
+    for (let i = 0; i < chapters.length; i++) {
+      const chapter = chapters[i];
+      const screenshot = screenshots[i];
+
+      if (!screenshot) continue;
+
+      // 해당 챕터 구간의 자막 찾기
+      const chapterSubtitles = this.findSubtitlesInRange(
+        subtitles.segments,
+        chapter.startTime,
+        chapter.endTime
+      );
+
+      // 자막이 있는 섹션만 추가 (빈 페이지 방지)
+      if (chapterSubtitles.length > 0) {
+        sections.push({
+          timestamp: chapter.startTime,
+          screenshot,
+          subtitles: chapterSubtitles,
+          // 챕터 제목을 sectionSummary에 임시 저장 (나중에 AI 요약으로 대체)
+          sectionSummary: {
+            summary: chapter.title,
+            keyPoints: [],
+          },
+        });
+      }
+    }
+
+    return {
+      metadata,
+      sections,
+    };
+  }
+
+  /**
+   * 특정 시간 범위의 자막 찾기
+   * - 중복 방지를 위해 자막 시작 시간 기준으로 구간 판단
+   */
+  private findSubtitlesInRange(
+    segments: SubtitleSegment[],
+    startTime: number,
+    endTime: number
+  ): SubtitleSegment[] {
+    return segments.filter((seg) => {
+      // 자막의 시작 시간이 구간 내에 있는 경우만 포함 (중복 방지)
+      return seg.start >= startTime && seg.start < endTime;
+    });
   }
 
   /**

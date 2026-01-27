@@ -7,7 +7,7 @@ import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { VideoMetadata, CaptionTrack, SubtitleSegment, ErrorCode, Yt2PdfError } from '../types/index.js';
+import { VideoMetadata, CaptionTrack, SubtitleSegment, ErrorCode, Yt2PdfError, Chapter } from '../types/index.js';
 import { isValidYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 import { logger } from '../utils/logger.js';
 
@@ -45,6 +45,9 @@ export class YouTubeProvider {
       const { stdout } = await execAsync(`${this.ytdlpPath} --dump-json --no-playlist "${url}"`);
       const data = JSON.parse(stdout);
 
+      // 챕터 파싱
+      const chapters = this.parseChapters(data.chapters, data.duration);
+
       return {
         id: data.id,
         title: data.title || 'Untitled',
@@ -55,6 +58,7 @@ export class YouTubeProvider {
         uploadDate: data.upload_date || '',
         viewCount: data.view_count || 0,
         availableCaptions: this.parseCaptions(data.subtitles, data.automatic_captions),
+        chapters: chapters.length > 0 ? chapters : undefined,
       };
     } catch (error) {
       const err = error as Error;
@@ -338,6 +342,44 @@ export class YouTubeProvider {
     }
 
     return tracks;
+  }
+
+  /**
+   * YouTube 챕터 파싱
+   * yt-dlp chapters 형식: [{ "title": "...", "start_time": 0, "end_time": 60 }, ...]
+   */
+  private parseChapters(chapters?: Array<{ title?: string; start_time?: number; end_time?: number }>, duration?: number): Chapter[] {
+    if (!chapters || !Array.isArray(chapters) || chapters.length === 0) {
+      return [];
+    }
+
+    const parsedChapters: Chapter[] = [];
+
+    for (let i = 0; i < chapters.length; i++) {
+      const chapter = chapters[i];
+      if (chapter && typeof chapter.start_time === 'number') {
+        // end_time이 없으면 다음 챕터의 start_time 또는 영상 끝 사용
+        let endTime = chapter.end_time;
+        if (typeof endTime !== 'number') {
+          if (i + 1 < chapters.length && typeof chapters[i + 1].start_time === 'number') {
+            endTime = chapters[i + 1].start_time;
+          } else if (typeof duration === 'number') {
+            endTime = duration;
+          } else {
+            endTime = chapter.start_time + 60; // fallback: 60초
+          }
+        }
+
+        parsedChapters.push({
+          title: chapter.title || `챕터 ${i + 1}`,
+          startTime: chapter.start_time,
+          endTime: endTime ?? chapter.start_time + 60, // 보장된 숫자 값
+        });
+      }
+    }
+
+    logger.debug(`챕터 파싱 완료: ${parsedChapters.length}개`);
+    return parsedChapters;
   }
 }
 

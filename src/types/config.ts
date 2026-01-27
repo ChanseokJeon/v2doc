@@ -14,7 +14,7 @@ export type { OutputFormat, ImageQuality, PDFLayout } from './index.js';
 
 export const OutputConfigSchema = z.object({
   directory: z.string().default('./output'),
-  format: z.enum(['pdf', 'md', 'html']).default('pdf'),
+  format: z.enum(['pdf', 'md', 'html', 'brief']).default('pdf'),
   filenamePattern: z.string().default('{date}_{index}_{title}'),
 });
 
@@ -72,6 +72,13 @@ export const AIConfigSchema = z.object({
   model: z.string().default('gpt-4o-mini'),
 });
 
+export const ChapterConfigSchema = z.object({
+  useYouTubeChapters: z.boolean().default(true),    // YouTube 챕터 우선 사용
+  autoGenerate: z.boolean().default(true),          // 없으면 자동 생성
+  minChapterLength: z.number().min(30).default(60), // 최소 챕터 길이 (초)
+  maxChapters: z.number().min(1).max(50).default(20), // 최대 챕터 수
+});
+
 export const ConfigSchema = z.object({
   output: OutputConfigSchema.default({}),
   screenshot: ScreenshotConfigSchema.default({}),
@@ -83,6 +90,7 @@ export const ConfigSchema = z.object({
   summary: SummaryConfigSchema.default({}),
   translation: TranslationConfigSchema.default({}),
   ai: AIConfigSchema.default({}),
+  chapter: ChapterConfigSchema.default({}),
 });
 
 // ============================================================
@@ -99,6 +107,7 @@ export type ProcessingConfig = z.infer<typeof ProcessingConfigSchema>;
 export type SummaryConfig = z.infer<typeof SummaryConfigSchema>;
 export type TranslationConfig = z.infer<typeof TranslationConfigSchema>;
 export type AIConfig = z.infer<typeof AIConfigSchema>;
+export type ChapterConfig = z.infer<typeof ChapterConfigSchema>;
 export type Config = z.infer<typeof ConfigSchema>;
 
 // ============================================================

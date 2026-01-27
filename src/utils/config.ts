@@ -139,6 +139,7 @@ export class ConfigManager {
       summary: { ...base.summary, ...override.summary },
       translation: { ...base.translation, ...override.translation },
       ai: { ...base.ai, ...override.ai },
+      chapter: { ...base.chapter, ...override.chapter },
     };
   }
 

@@ -3,7 +3,7 @@
  */
 
 import * as path from 'path';
-import { Screenshot, ImageQuality } from '../types/index.js';
+import { Screenshot, ImageQuality, Chapter } from '../types/index.js';
 import { ScreenshotConfig } from '../types/config.js';
 import { FFmpegWrapper } from '../providers/ffmpeg.js';
 import { YouTubeProvider } from '../providers/youtube.js';
@@ -105,6 +105,68 @@ export class ScreenshotCapturer {
     }
 
     return screenshots;
+  }
+
+  /**
+   * 챕터 기준 스크린샷 캡처
+   * @param videoId - YouTube 비디오 ID
+   * @param chapters - 챕터 목록
+   * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
+   */
+  async captureForChapters(videoId: string, chapters: Chapter[], thumbnailUrl?: string): Promise<Screenshot[]> {
+    if (chapters.length === 0) {
+      return [];
+    }
+
+    const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
+    const screenshots: Screenshot[] = [];
+
+    try {
+      // 영상 다운로드
+      logger.info('영상 다운로드 중...');
+      const qualityFormat = this.getDownloadFormat(this.config.quality);
+      const videoPath = await this.youtube.downloadVideo(videoId, workDir, qualityFormat);
+
+      const qualitySize = this.getQualitySize(this.config.quality);
+
+      logger.info(`챕터 기준 스크린샷 캡처 시작: ${chapters.length}개`);
+
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
+        const timestamp = chapter.startTime;
+        const outputPath = path.join(workDir, `screenshot_${i.toString().padStart(4, '0')}.jpg`);
+
+        // 첫 번째 챕터(0:00)는 썸네일 사용
+        if (i === 0 && timestamp === 0 && thumbnailUrl) {
+          try {
+            await this.youtube.downloadThumbnail(thumbnailUrl, outputPath);
+            logger.debug('첫 챕터에 썸네일 사용');
+          } catch {
+            // 썸네일 다운로드 실패 시 일반 캡처
+            await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
+          }
+        } else {
+          await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
+        }
+
+        // 진행률 콜백 호출
+        if (this.onProgress) {
+          this.onProgress(i + 1, chapters.length);
+        }
+
+        screenshots.push({
+          timestamp,
+          imagePath: outputPath,
+          width: qualitySize.width,
+          height: qualitySize.height,
+        });
+      }
+
+      logger.success(`챕터 기준 스크린샷 캡처 완료: ${chapters.length}개`);
+      return screenshots;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**

@@ -3,7 +3,7 @@
  */
 
 import OpenAI from 'openai';
-import { ErrorCode, Yt2PdfError, SubtitleSegment } from '../types/index.js';
+import { ErrorCode, Yt2PdfError, SubtitleSegment, VideoType, Chapter, ExecutiveBrief, VideoMetadata } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 export interface SummaryOptions {
@@ -309,7 +309,16 @@ ${maxKeyPoints > 2 ? '- (핵심 포인트 3)' : ''}
             {
               role: 'system',
               content: `당신은 전문 번역가입니다. ${sourceLang}에서 ${targetLang}로 자막을 번역하세요.
-각 줄의 [번호]를 유지하면서 번역하세요. 자연스럽고 읽기 쉬운 번역을 제공하세요.`,
+
+중요 규칙:
+1. 각 줄의 [번호]를 유지하세요
+2. 번역 결과는 반드시 ${targetLang}로만 작성하세요 - 원문(영어)을 절대 포함하지 마세요
+3. 번역이 어려운 고유명사나 기술 용어도 ${targetLang}로 음역하거나 설명하세요
+4. 불확실해도 반드시 ${targetLang}로만 응답하세요
+
+예시:
+입력: [0] So I actually don't have one unfortunately
+출력: [0] 사실 저는 안타깝게도 하나도 없습니다`,
             },
             {
               role: 'user',
@@ -332,10 +341,23 @@ ${maxKeyPoints > 2 ? '- (핵심 포인트 3)' : ''}
           }
         }
 
-        // 세그먼트에 번역 적용
+        // 세그먼트에 번역 적용 (검증 포함)
         for (let j = 0; j < batch.length; j++) {
           const original = batch[j];
-          const translatedText = translatedTexts.get(j) || original.text;
+          let translatedText = translatedTexts.get(j) || original.text;
+
+          // 번역 검증: 목표 언어가 한국어인 경우 한글 비율 확인
+          if (targetLanguage === 'ko' && translatedText) {
+            const koreanChars = (translatedText.match(/[\uAC00-\uD7AF]/g) || []).length;
+            const totalChars = translatedText.replace(/[\s\d\W]/g, '').length;
+            const koreanRatio = totalChars > 0 ? koreanChars / totalChars : 0;
+
+            // 한글이 30% 미만이면 번역 품질 낮음으로 간주, 경고 로그
+            if (koreanRatio < 0.3 && totalChars > 5) {
+              logger.warn(`번역 품질 낮음 (한글 ${(koreanRatio * 100).toFixed(0)}%): ${translatedText.slice(0, 50)}...`);
+            }
+          }
+
           translatedSegments.push({
             start: original.start,
             end: original.end,
@@ -392,6 +414,337 @@ ${maxKeyPoints > 2 ? '- (핵심 포인트 3)' : ''}
     } catch (error) {
       logger.warn('언어 감지 실패, unknown 반환');
       return 'unknown';
+    }
+  }
+
+  /**
+   * 영상 유형 분류
+   */
+  async classifyVideoType(
+    metadata: { title: string; description: string; channel: string },
+    subtitleSample: string
+  ): Promise<{ type: VideoType; confidence: number }> {
+    try {
+      logger.debug('영상 유형 분류 시작...');
+
+      const prompt = `다음 YouTube 영상의 유형을 분류하세요.
+
+제목: ${metadata.title}
+채널: ${metadata.channel}
+설명: ${metadata.description.slice(0, 500)}
+
+자막 샘플:
+${subtitleSample.slice(0, 500)}
+
+다음 유형 중 하나로 분류하세요:
+- conference_talk: 컨퍼런스/세미나 발표 (기술 발표, 연사가 청중 앞에서 발표)
+- tutorial: 튜토리얼/강좌 (단계별 설명, how-to 콘텐츠)
+- interview: 인터뷰 (질문-답변 형식, 대담)
+- lecture: 강의 (대학 강의, 교육 콘텐츠)
+- demo: 제품 데모 (제품 시연, 기능 소개)
+- discussion: 토론/패널 (여러 사람이 의견 교환)
+- unknown: 분류 불가
+
+응답 형식 (JSON만):
+{"type": "유형", "confidence": 0.0~1.0}`;
+
+      const response = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: '당신은 YouTube 영상 콘텐츠 분류 전문가입니다. JSON 형식으로만 응답하세요.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.1,
+        max_tokens: 100,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim() || '';
+
+      // JSON 파싱 시도
+      const jsonMatch = content.match(/\{[^}]+\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        const validTypes: VideoType[] = ['conference_talk', 'tutorial', 'interview', 'lecture', 'demo', 'discussion', 'unknown'];
+        const type = validTypes.includes(parsed.type) ? parsed.type : 'unknown';
+        const confidence = typeof parsed.confidence === 'number' ? Math.min(1, Math.max(0, parsed.confidence)) : 0.5;
+
+        logger.debug(`영상 유형: ${type} (신뢰도: ${confidence})`);
+        return { type, confidence };
+      }
+
+      return { type: 'unknown', confidence: 0 };
+    } catch (error) {
+      logger.warn('영상 유형 분류 실패, unknown 반환');
+      return { type: 'unknown', confidence: 0 };
+    }
+  }
+
+  /**
+   * 토픽 기반 챕터 자동 생성
+   */
+  async detectTopicShifts(
+    segments: SubtitleSegment[],
+    options: { minChapterLength?: number; maxChapters?: number; language?: string } = {}
+  ): Promise<Chapter[]> {
+    const { minChapterLength = 60, maxChapters = 20, language = 'ko' } = options;
+
+    if (segments.length === 0) {
+      return [];
+    }
+
+    try {
+      logger.debug(`토픽 기반 챕터 생성 시작: ${segments.length}개 세그먼트`);
+
+      // 자막을 시간순으로 그룹화 (30초 단위)
+      const timeBlocks: Array<{ startTime: number; text: string }> = [];
+      let currentBlock = { startTime: segments[0].start, texts: [segments[0].text] };
+
+      for (let i = 1; i < segments.length; i++) {
+        const seg = segments[i];
+        if (seg.start - currentBlock.startTime > 30) {
+          timeBlocks.push({ startTime: currentBlock.startTime, text: currentBlock.texts.join(' ') });
+          currentBlock = { startTime: seg.start, texts: [seg.text] };
+        } else {
+          currentBlock.texts.push(seg.text);
+        }
+      }
+      timeBlocks.push({ startTime: currentBlock.startTime, text: currentBlock.texts.join(' ') });
+
+      // 너무 많으면 샘플링
+      const sampleBlocks = timeBlocks.length > 40
+        ? timeBlocks.filter((_, i) => i % Math.ceil(timeBlocks.length / 40) === 0)
+        : timeBlocks;
+
+      const blocksText = sampleBlocks.map((b) =>
+        `[${this.formatTimestamp(b.startTime)}] ${b.text.slice(0, 200)}`
+      ).join('\n\n');
+
+      const languageMap: Record<string, string> = {
+        ko: '한국어',
+        en: 'English',
+        ja: '日本語',
+        zh: '中文',
+      };
+      const targetLang = languageMap[language] || language;
+
+      const prompt = `다음은 YouTube 영상의 자막입니다. 주제 전환점을 감지하여 챕터를 생성하세요.
+
+자막:
+${blocksText}
+
+요구사항:
+- 최소 챕터 길이: ${minChapterLength}초
+- 최대 챕터 수: ${maxChapters}개
+- 챕터 제목은 ${targetLang}로 작성
+- 각 챕터는 해당 구간의 핵심 주제를 반영
+
+응답 형식 (JSON 배열만):
+[{"title": "챕터 제목", "startTime": 0}, {"title": "다음 챕터", "startTime": 120}, ...]
+
+중요: startTime은 초 단위 숫자입니다.`;
+
+      const response = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: '당신은 영상 콘텐츠 분석 전문가입니다. 주제 전환을 감지하여 챕터를 생성합니다. JSON 배열로만 응답하세요.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 2000,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim() || '';
+
+      // JSON 배열 파싱
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        logger.warn('챕터 JSON 파싱 실패');
+        return [];
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]) as Array<{ title: string; startTime: number }>;
+
+      // 챕터 생성
+      const chapters: Chapter[] = [];
+      const lastSegmentEnd = segments[segments.length - 1].end;
+
+      for (let i = 0; i < parsed.length; i++) {
+        const item = parsed[i];
+        if (typeof item.startTime !== 'number' || !item.title) continue;
+
+        const endTime = i + 1 < parsed.length
+          ? parsed[i + 1].startTime
+          : lastSegmentEnd;
+
+        // 최소 길이 확인
+        if (endTime - item.startTime >= minChapterLength) {
+          chapters.push({
+            title: item.title,
+            startTime: item.startTime,
+            endTime: endTime,
+          });
+        }
+      }
+
+      // 최대 챕터 수 제한
+      const limitedChapters = chapters.slice(0, maxChapters);
+      logger.debug(`토픽 기반 챕터 생성 완료: ${limitedChapters.length}개`);
+
+      return limitedChapters;
+    } catch (error) {
+      logger.warn('토픽 기반 챕터 생성 실패', error as Error);
+      return [];
+    }
+  }
+
+  /**
+   * Executive Brief 생성
+   */
+  async generateExecutiveBrief(
+    metadata: VideoMetadata,
+    chapters: Chapter[],
+    segments: SubtitleSegment[],
+    options: { language?: string } = {}
+  ): Promise<ExecutiveBrief> {
+    const { language = 'ko' } = options;
+
+    const languageMap: Record<string, string> = {
+      ko: '한국어',
+      en: 'English',
+      ja: '日本語',
+      zh: '中文',
+    };
+    const targetLang = languageMap[language] || language;
+
+    try {
+      logger.debug('Executive Brief 생성 시작...');
+
+      // 전체 자막 텍스트 (요약용)
+      const fullText = segments.map((s) => s.text).join(' ');
+
+      // 챕터별 자막 매핑
+      const chapterTexts = chapters.map((chapter) => {
+        const chapterSegments = segments.filter(
+          (s) => s.start >= chapter.startTime && s.start < chapter.endTime
+        );
+        return {
+          title: chapter.title,
+          startTime: chapter.startTime,
+          text: chapterSegments.map((s) => s.text).join(' '),
+        };
+      });
+
+      const prompt = `다음 YouTube 영상의 Executive Brief를 작성하세요.
+
+제목: ${metadata.title}
+채널: ${metadata.channel}
+영상 길이: ${this.formatTimestamp(metadata.duration)}
+영상 유형: ${metadata.videoType || 'unknown'}
+
+전체 자막:
+${fullText.slice(0, 3000)}
+
+챕터:
+${chapterTexts.map((c) => `[${this.formatTimestamp(c.startTime)}] ${c.title}\n${c.text.slice(0, 300)}`).join('\n\n')}
+
+요구사항 (${targetLang}로 작성):
+1. summary: 3-5문장의 핵심 요약
+2. keyTakeaways: 3-5개의 핵심 포인트 (문장형)
+3. chapterSummaries: 각 챕터별 한 줄 요약
+4. actionItems: 실행 가능한 항목 (해당되는 경우에만, 없으면 빈 배열)
+
+응답 형식 (JSON만):
+{
+  "summary": "...",
+  "keyTakeaways": ["...", "..."],
+  "chapterSummaries": [{"title": "챕터1", "startTime": 0, "summary": "..."}],
+  "actionItems": ["...", "..."]
+}`;
+
+      const response = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: `당신은 비즈니스 콘텐츠 요약 전문가입니다. 영상의 핵심을 간결하게 정리합니다. 반드시 ${targetLang}로 작성하고 JSON 형식으로만 응답하세요.`,
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        max_tokens: 3000,
+      });
+
+      const content = response.choices[0]?.message?.content?.trim() || '';
+
+      // JSON 파싱
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('JSON 파싱 실패');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      const brief: ExecutiveBrief = {
+        title: metadata.title,
+        metadata: {
+          channel: metadata.channel,
+          duration: metadata.duration,
+          videoType: metadata.videoType || 'unknown',
+          uploadDate: metadata.uploadDate,
+          videoId: metadata.id,
+        },
+        summary: parsed.summary || '',
+        keyTakeaways: Array.isArray(parsed.keyTakeaways) ? parsed.keyTakeaways : [],
+        chapterSummaries: Array.isArray(parsed.chapterSummaries)
+          ? parsed.chapterSummaries.map((c: { title?: string; startTime?: number; summary?: string }, i: number) => ({
+              title: c.title || chapters[i]?.title || `챕터 ${i + 1}`,
+              startTime: c.startTime ?? chapters[i]?.startTime ?? 0,
+              summary: c.summary || '',
+            }))
+          : [],
+        actionItems: Array.isArray(parsed.actionItems) && parsed.actionItems.length > 0
+          ? parsed.actionItems
+          : undefined,
+      };
+
+      logger.debug('Executive Brief 생성 완료');
+      return brief;
+    } catch (error) {
+      logger.warn('Executive Brief 생성 실패', error as Error);
+
+      // 폴백: 기본 brief 반환
+      return {
+        title: metadata.title,
+        metadata: {
+          channel: metadata.channel,
+          duration: metadata.duration,
+          videoType: metadata.videoType || 'unknown',
+          uploadDate: metadata.uploadDate,
+          videoId: metadata.id,
+        },
+        summary: '요약을 생성할 수 없습니다.',
+        keyTakeaways: [],
+        chapterSummaries: chapters.map((c) => ({
+          title: c.title,
+          startTime: c.startTime,
+          summary: '',
+        })),
+      };
     }
   }
 }

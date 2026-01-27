@@ -12,6 +12,8 @@ import {
   Yt2PdfError,
   ContentSummary,
   SubtitleSegment,
+  Chapter,
+  ExecutiveBrief,
 } from '../types/index.js';
 import { YouTubeProvider } from '../providers/youtube.js';
 import { FFmpegWrapper } from '../providers/ffmpeg.js';
@@ -29,6 +31,7 @@ import {
   cleanupDir,
   ensureDir,
   getDateString,
+  getTimestampString,
   applyFilenamePattern,
   getFileSize,
 } from '../utils/file.js';
@@ -154,6 +157,13 @@ export class Orchestrator {
         logger.warn(`영상 길이(${metadata.duration}초)가 제한(${this.config.processing.maxDuration}초)을 초과합니다.`);
       }
 
+      // 2.5. 챕터 정보 확인 (YouTube 챕터가 있는지)
+      let chapters: Chapter[] = [];
+      if (this.config.chapter.useYouTubeChapters && metadata.chapters && metadata.chapters.length > 0) {
+        chapters = metadata.chapters;
+        logger.info(`YouTube 챕터 발견: ${chapters.length}개`);
+      }
+
       // 3. 자막 추출
       this.updateState({ status: 'processing', currentStep: '자막 추출', progress: 20 });
 
@@ -202,7 +212,48 @@ export class Orchestrator {
         }
       }
 
-      // 3.6. 요약 생성 (활성화된 경우)
+      // 3.6. 영상 유형 분류 (AI 사용 가능한 경우)
+      if (this.ai && processedSegments.length > 0) {
+        this.updateState({ currentStep: '영상 유형 분류', progress: 34 });
+
+        try {
+          const subtitleSample = processedSegments.slice(0, 10).map(s => s.text).join(' ');
+          const typeResult = await this.ai.classifyVideoType(
+            { title: metadata.title, description: metadata.description, channel: metadata.channel },
+            subtitleSample
+          );
+          metadata.videoType = typeResult.type;
+          metadata.videoTypeConfidence = typeResult.confidence;
+          logger.info(`영상 유형: ${typeResult.type} (신뢰도: ${(typeResult.confidence * 100).toFixed(0)}%)`);
+        } catch (e) {
+          logger.warn('영상 유형 분류 실패', e as Error);
+        }
+      }
+
+      // 3.7. 챕터 자동 생성 (YouTube 챕터 없고 autoGenerate 활성화된 경우)
+      if (chapters.length === 0 && this.config.chapter.autoGenerate && this.ai && processedSegments.length > 0) {
+        this.updateState({ currentStep: '챕터 자동 생성', progress: 35 });
+        logger.info('AI 기반 챕터 자동 생성 중...');
+
+        try {
+          const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
+          chapters = await this.ai.detectTopicShifts(processedSegments, {
+            minChapterLength: this.config.chapter.minChapterLength,
+            maxChapters: this.config.chapter.maxChapters,
+            language: summaryLang,
+          });
+          logger.info(`AI 생성 챕터: ${chapters.length}개`);
+        } catch (e) {
+          logger.warn('챕터 자동 생성 실패', e as Error);
+        }
+      }
+
+      // 메타데이터에 챕터 추가 (자동 생성된 경우)
+      if (chapters.length > 0 && !metadata.chapters) {
+        metadata.chapters = chapters;
+      }
+
+      // 3.8. 요약 생성 (활성화된 경우)
       let summary: ContentSummary | undefined;
       if (this.config.summary.enabled && this.ai && processedSegments.length > 0) {
         this.updateState({ currentStep: '요약 생성', progress: 36 });
@@ -248,8 +299,17 @@ export class Orchestrator {
         },
       });
 
-      // 첫 번째 스크린샷은 썸네일 사용 (0:00은 보통 검은 화면)
-      const screenshots = await screenshotCapturer.captureAll(videoId, metadata.duration, metadata.thumbnail);
+      // 챕터가 있으면 챕터 기준, 없으면 interval 기준
+      const useChapters = chapters.length > 0;
+      let screenshots;
+
+      if (useChapters) {
+        logger.info(`챕터 기준 스크린샷 캡처: ${chapters.length}개 챕터`);
+        screenshots = await screenshotCapturer.captureForChapters(videoId, chapters, metadata.thumbnail);
+      } else {
+        // 첫 번째 스크린샷은 썸네일 사용 (0:00은 보통 검은 화면)
+        screenshots = await screenshotCapturer.captureAll(videoId, metadata.duration, metadata.thumbnail);
+      }
       this.updateState({ progress: 70 });
 
       // 5. 콘텐츠 병합
@@ -259,17 +319,25 @@ export class Orchestrator {
         screenshotConfig: this.config.screenshot,
       });
 
-      const content = contentMerger.merge(metadata, subtitles, screenshots);
+      // 챕터 기준 또는 interval 기준 병합
+      let content;
+      if (useChapters) {
+        content = contentMerger.mergeWithChapters(metadata, subtitles, screenshots, chapters);
+        logger.info(`챕터 기준 콘텐츠 병합: ${content.sections.length}개 섹션`);
+      } else {
+        content = contentMerger.merge(metadata, subtitles, screenshots);
+      }
 
       // 요약 추가
       if (summary) {
         content.summary = summary;
       }
 
-      // 5.5. 섹션별 요약 생성
+      // 5.5. 챕터별/섹션별 요약 생성
       if (this.config.summary.enabled && this.config.summary.perSection && this.ai && content.sections.length > 0) {
-        this.updateState({ currentStep: '섹션별 요약 생성', progress: 77 });
-        logger.info(`섹션별 요약 생성 중... (${content.sections.length}개 섹션)`);
+        const sectionType = useChapters ? '챕터별' : '섹션별';
+        this.updateState({ currentStep: `${sectionType} 요약 생성`, progress: 77 });
+        logger.info(`${sectionType} 요약 생성 중... (${content.sections.length}개)`);
 
         try {
           const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
@@ -286,16 +354,22 @@ export class Orchestrator {
           for (let i = 0; i < content.sections.length; i++) {
             const sectionSummary = sectionSummaries.find((s) => s.timestamp === content.sections[i].timestamp);
             if (sectionSummary && sectionSummary.summary) {
+              // 챕터 제목이 있으면 유지하고 요약만 업데이트
+              const existingTitle = content.sections[i].sectionSummary?.summary;
               content.sections[i].sectionSummary = {
                 summary: sectionSummary.summary,
                 keyPoints: sectionSummary.keyPoints,
               };
+              // 챕터 제목을 별도로 저장 (나중에 PDF에서 사용)
+              if (useChapters && existingTitle) {
+                content.sections[i].chapterTitle = existingTitle;
+              }
             }
           }
 
-          logger.debug(`섹션별 요약 완료: ${sectionSummaries.filter((s) => s.summary).length}개`);
+          logger.debug(`${sectionType} 요약 완료: ${sectionSummaries.filter((s) => s.summary).length}개`);
         } catch (e) {
-          logger.warn('섹션별 요약 생성 실패', e as Error);
+          logger.warn(`${sectionType} 요약 생성 실패`, e as Error);
         }
       }
 
@@ -307,15 +381,74 @@ export class Orchestrator {
 
       const filename = applyFilenamePattern(this.config.output.filenamePattern, {
         date: getDateString(),
+        timestamp: getTimestampString(),
+        videoId: videoId,
+        channel: metadata.channel,
         index: '001',
         title: metadata.title,
       });
 
       const format = options.format || this.config.output.format;
+      const pdfGenerator = new PDFGenerator(this.config.pdf);
+
+      // brief 형식 처리
+      if (format === 'brief') {
+        this.updateState({ currentStep: 'Executive Brief 생성', progress: 82 });
+
+        // Executive Brief 생성
+        let brief: ExecutiveBrief;
+        if (this.ai && chapters.length > 0) {
+          const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
+          brief = await this.ai.generateExecutiveBrief(metadata, chapters, processedSegments, { language: summaryLang });
+        } else {
+          // AI 없거나 챕터 없으면 기본 brief 생성
+          brief = {
+            title: metadata.title,
+            metadata: {
+              channel: metadata.channel,
+              duration: metadata.duration,
+              videoType: metadata.videoType || 'unknown',
+              uploadDate: metadata.uploadDate,
+              videoId: metadata.id,
+            },
+            summary: summary?.summary || '요약을 생성할 수 없습니다.',
+            keyTakeaways: summary?.keyPoints || [],
+            chapterSummaries: chapters.map(c => ({
+              title: c.title,
+              startTime: c.startTime,
+              summary: '',
+            })),
+          };
+        }
+
+        // 출력 확장자 결정 (pdf, md, html 중 하나로 brief 출력)
+        // 기본은 pdf, 설정에 따라 md 또는 html
+        const briefExtension = 'pdf'; // 기본값
+        const outputPath = path.join(outputDir, `${filename}_brief.${briefExtension}`);
+
+        await pdfGenerator.generateBriefPDF(brief, outputPath);
+
+        // 결과 생성 (brief 형식)
+        this.updateState({ status: 'complete', currentStep: '완료', progress: 100 });
+
+        const fileSize = await getFileSize(outputPath);
+
+        return {
+          success: true,
+          outputPath,
+          metadata,
+          stats: {
+            pages: 1, // Brief는 1페이지
+            fileSize,
+            duration: metadata.duration,
+            screenshotCount: 0, // Brief에는 스크린샷 없음
+          },
+        };
+      }
+
+      // 기존 형식 처리 (pdf, md, html)
       const extension = format === 'pdf' ? 'pdf' : format === 'md' ? 'md' : 'html';
       const outputPath = path.join(outputDir, `${filename}.${extension}`);
-
-      const pdfGenerator = new PDFGenerator(this.config.pdf);
 
       if (format === 'pdf') {
         await pdfGenerator.generatePDF(content, outputPath);

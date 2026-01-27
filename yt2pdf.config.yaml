@@ -3,7 +3,7 @@
 output:
   directory: ./output
   format: pdf          # pdf, md, html
-  filenamePattern: "{date}_{index}_{title}"
+  filenamePattern: "{timestamp}_{title}"
 
 screenshot:
   interval: 60         # 캡처 간격 (초)

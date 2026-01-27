@@ -84,6 +84,20 @@ export function getDateString(): string {
 }
 
 /**
+ * 타임스탬프 문자열 생성 (YYYYMMDD_HHMMSS)
+ */
+export function getTimestampString(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = (now.getMonth() + 1).toString().padStart(2, '0');
+  const day = now.getDate().toString().padStart(2, '0');
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  return `${year}${month}${day}_${hours}${minutes}${seconds}`;
+}
+
+/**
  * 파일명 패턴 적용
  * @param pattern - 패턴 문자열 (예: "{date}_{index}_{title}")
  * @param values - 치환할 값들
