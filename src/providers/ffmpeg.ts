@@ -51,23 +51,46 @@ export class FFmpegWrapper {
     videoPath: string,
     timestamp: number,
     outputPath: string,
-    quality: ImageQuality = 'low'
+    quality: ImageQuality = 'low',
+    showTimestamp = true
   ): Promise<void> {
     const { scale } = this.qualityMap[quality];
     const timeStr = this.formatTime(timestamp);
+    const displayTime = this.formatDisplayTime(timestamp);
 
     try {
       logger.debug(`스크린샷 캡처: ${timestamp}초 -> ${outputPath}`);
 
+      // 타임스탬프 오버레이 필터
+      // FFmpeg에서 콜론을 이스케이프: ':'  -> '\\:'
+      const escapedTime = displayTime.replace(/:/g, '\\:');
+      const timestampFilter = showTimestamp
+        ? `,drawtext=text='${escapedTime}':fontcolor=white:fontsize=24:box=1:boxcolor=black@0.6:boxborderw=8:x=20:y=h-50`
+        : '';
+
       await execAsync(
         `${this.ffmpegPath} -ss ${timeStr} -i "${videoPath}" ` +
-          `-vframes 1 -vf "scale=${scale}:force_original_aspect_ratio=decrease,pad=${scale}:(ow-iw)/2:(oh-ih)/2" ` +
+          `-vframes 1 -vf "scale=${scale}:force_original_aspect_ratio=decrease,pad=${scale}:(ow-iw)/2:(oh-ih)/2${timestampFilter}" ` +
           `-q:v 2 "${outputPath}" -y 2>/dev/null`
       );
     } catch (error) {
       const err = error as Error;
       throw new Yt2PdfError(ErrorCode.SCREENSHOT_FAILED, `스크린샷 캡처 실패: ${err.message}`, err);
     }
+  }
+
+  /**
+   * 표시용 시간 포맷 (초 -> MM:SS 또는 HH:MM:SS)
+   */
+  private formatDisplayTime(seconds: number): string {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    if (h > 0) {
+      return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 
   /**

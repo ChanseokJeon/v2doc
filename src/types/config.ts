@@ -51,6 +51,27 @@ export const ProcessingConfigSchema = z.object({
   retryCount: z.number().min(0).max(10).default(3),
 });
 
+export const SummaryConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  maxLength: z.number().min(100).max(2000).default(500),
+  style: z.enum(['brief', 'detailed']).default('brief'),
+  language: z.string().optional(), // undefined면 defaultLanguage 사용
+  perSection: z.boolean().default(true), // 섹션별 요약 활성화
+  sectionMaxLength: z.number().min(50).max(500).default(150), // 섹션 요약 최대 길이
+  sectionKeyPoints: z.number().min(1).max(5).default(3), // 섹션별 핵심 포인트 수
+});
+
+export const TranslationConfigSchema = z.object({
+  enabled: z.boolean().default(false),
+  defaultLanguage: z.string().default('ko'), // 기본 언어
+  autoTranslate: z.boolean().default(true), // 기본 언어가 아니면 자동 번역
+});
+
+export const AIConfigSchema = z.object({
+  provider: z.enum(['openai']).default('openai'),
+  model: z.string().default('gpt-4o-mini'),
+});
+
 export const ConfigSchema = z.object({
   output: OutputConfigSchema.default({}),
   screenshot: ScreenshotConfigSchema.default({}),
@@ -59,6 +80,9 @@ export const ConfigSchema = z.object({
   whisper: WhisperConfigSchema.default({}),
   cache: CacheConfigSchema.default({}),
   processing: ProcessingConfigSchema.default({}),
+  summary: SummaryConfigSchema.default({}),
+  translation: TranslationConfigSchema.default({}),
+  ai: AIConfigSchema.default({}),
 });
 
 // ============================================================
@@ -72,6 +96,9 @@ export type PDFConfig = z.infer<typeof PDFConfigSchema>;
 export type WhisperConfig = z.infer<typeof WhisperConfigSchema>;
 export type CacheConfig = z.infer<typeof CacheConfigSchema>;
 export type ProcessingConfig = z.infer<typeof ProcessingConfigSchema>;
+export type SummaryConfig = z.infer<typeof SummaryConfigSchema>;
+export type TranslationConfig = z.infer<typeof TranslationConfigSchema>;
+export type AIConfig = z.infer<typeof AIConfigSchema>;
 export type Config = z.infer<typeof ConfigSchema>;
 
 // ============================================================

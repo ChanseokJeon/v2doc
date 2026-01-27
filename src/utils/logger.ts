@@ -35,9 +35,12 @@ export class Logger {
     }
   }
 
-  warn(message: string): void {
+  warn(message: string, error?: Error): void {
     if (this.shouldLog('warn')) {
       console.warn(chalk.yellow(`⚠ ${message}`));
+      if (error && this.shouldLog('debug')) {
+        console.warn(chalk.gray(error.stack || error.message));
+      }
     }
   }
 
@@ -79,7 +82,7 @@ export const logger = new Logger();
 // 편의 함수
 export const log = {
   error: (message: string, error?: Error) => logger.error(message, error),
-  warn: (message: string) => logger.warn(message),
+  warn: (message: string, error?: Error) => logger.warn(message, error),
   info: (message: string) => logger.info(message),
   debug: (message: string, data?: object) => logger.debug(message, data),
   success: (message: string) => logger.success(message),

@@ -37,35 +37,68 @@ export function decodeHtmlEntities(text: string): string {
 }
 
 /**
- * 연속 중복 라인 제거
- * YouTube 자동 자막에서 겹치는 부분 제거
+ * 두 텍스트 간의 겹치는 부분 찾기
+ * text1의 끝부분과 text2의 시작부분이 겹치는 길이 반환
+ */
+function findOverlap(text1: string, text2: string): number {
+  const minLen = Math.min(text1.length, text2.length);
+  for (let i = minLen; i >= 3; i--) {
+    // 최소 3글자 이상 겹쳐야 유효한 중복으로 판단
+    if (text1.slice(-i) === text2.slice(0, i)) {
+      return i;
+    }
+  }
+  return 0;
+}
+
+/**
+ * 연속 중복 라인 제거 및 병합
+ * YouTube 자동 자막에서 겹치는 부분을 제거하고 자연스럽게 병합
  */
 export function deduplicateSubtitles(texts: string[]): string[] {
   if (texts.length === 0) return [];
 
   const result: string[] = [];
-  let lastText = '';
+  let accumulated = '';
 
   for (const text of texts) {
     const trimmed = text.trim();
     if (!trimmed) continue;
 
     // 완전히 동일한 경우 스킵
-    if (trimmed === lastText) continue;
+    if (trimmed === accumulated) continue;
 
     // 이전 텍스트가 현재 텍스트의 시작 부분인 경우 (점진적 자막)
-    // 예: "Hello" -> "Hello world" -> 마지막 것만 유지
-    if (lastText && trimmed.startsWith(lastText)) {
-      // 이전 것을 현재로 교체
-      result.pop();
-    }
-    // 현재 텍스트가 이전 텍스트의 시작 부분인 경우 스킵
-    else if (lastText && lastText.startsWith(trimmed)) {
+    if (accumulated && trimmed.startsWith(accumulated)) {
+      accumulated = trimmed;
       continue;
     }
 
-    result.push(trimmed);
-    lastText = trimmed;
+    // 현재 텍스트가 이전 텍스트의 시작 부분인 경우 스킵
+    if (accumulated && accumulated.startsWith(trimmed)) {
+      continue;
+    }
+
+    // 부분 중첩 확인 (YouTube 자동 자막 패턴)
+    if (accumulated) {
+      const overlap = findOverlap(accumulated, trimmed);
+      if (overlap > 0) {
+        // 겹치는 부분을 제거하고 병합
+        accumulated = accumulated + trimmed.slice(overlap);
+        continue;
+      }
+    }
+
+    // 새로운 문장 시작
+    if (accumulated) {
+      result.push(accumulated);
+    }
+    accumulated = trimmed;
+  }
+
+  // 마지막 텍스트 추가
+  if (accumulated) {
+    result.push(accumulated);
   }
 
   return result;

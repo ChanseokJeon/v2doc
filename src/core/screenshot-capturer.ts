@@ -15,6 +15,7 @@ export interface ScreenshotCapturerOptions {
   youtube: YouTubeProvider;
   config: ScreenshotConfig;
   tempDir?: string;
+  onProgress?: (current: number, total: number) => void;
 }
 
 export class ScreenshotCapturer {
@@ -22,18 +23,23 @@ export class ScreenshotCapturer {
   private youtube: YouTubeProvider;
   private config: ScreenshotConfig;
   private tempDir?: string;
+  private onProgress?: (current: number, total: number) => void;
 
   constructor(options: ScreenshotCapturerOptions) {
     this.ffmpeg = options.ffmpeg;
     this.youtube = options.youtube;
     this.config = options.config;
     this.tempDir = options.tempDir;
+    this.onProgress = options.onProgress;
   }
 
   /**
    * 스크린샷 캡처 (비동기 제너레이터)
+   * @param videoId - YouTube 비디오 ID
+   * @param duration - 영상 길이 (초)
+   * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
    */
-  async *captureStream(videoId: string, duration: number): AsyncGenerator<Screenshot> {
+  async *captureStream(videoId: string, duration: number, thumbnailUrl?: string): AsyncGenerator<Screenshot> {
     const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
 
     try {
@@ -52,7 +58,23 @@ export class ScreenshotCapturer {
         const timestamp = timestamps[i];
         const outputPath = path.join(workDir, `screenshot_${i.toString().padStart(4, '0')}.jpg`);
 
-        await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
+        // 첫 번째 프레임(0:00)은 썸네일 사용
+        if (i === 0 && timestamp === 0 && thumbnailUrl) {
+          try {
+            await this.youtube.downloadThumbnail(thumbnailUrl, outputPath);
+            logger.debug('첫 프레임에 썸네일 사용');
+          } catch {
+            // 썸네일 다운로드 실패 시 일반 캡처
+            await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
+          }
+        } else {
+          await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
+        }
+
+        // 진행률 콜백 호출
+        if (this.onProgress) {
+          this.onProgress(i + 1, timestamps.length);
+        }
 
         yield {
           timestamp,
@@ -71,11 +93,14 @@ export class ScreenshotCapturer {
 
   /**
    * 일괄 스크린샷 캡처
+   * @param videoId - YouTube 비디오 ID
+   * @param duration - 영상 길이 (초)
+   * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
    */
-  async captureAll(videoId: string, duration: number): Promise<Screenshot[]> {
+  async captureAll(videoId: string, duration: number, thumbnailUrl?: string): Promise<Screenshot[]> {
     const screenshots: Screenshot[] = [];
 
-    for await (const screenshot of this.captureStream(videoId, duration)) {
+    for await (const screenshot of this.captureStream(videoId, duration, thumbnailUrl)) {
       screenshots.push(screenshot);
     }
 

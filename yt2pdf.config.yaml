@@ -33,3 +33,22 @@ processing:
   maxDuration: 7200    # 최대 영상 길이 (초, 2시간)
   parallel: true
   retryCount: 3
+
+# AI 기능 설정
+summary:
+  enabled: true        # 요약 기능 활성화
+  maxLength: 500       # 최대 전체 요약 글자 수
+  style: brief         # brief, detailed
+  perSection: true     # 섹션별 요약 활성화
+  sectionMaxLength: 150  # 섹션 요약 최대 길이
+  sectionKeyPoints: 3  # 섹션별 핵심 포인트 수
+  # language: ko       # 지정 안하면 translation.defaultLanguage 사용
+
+translation:
+  enabled: false       # 번역 기능 (섹션 요약으로 대체)
+  defaultLanguage: ko  # 기본 언어
+  autoTranslate: false # 자동 번역 비활성화
+
+ai:
+  provider: openai     # openai
+  model: gpt-4o-mini   # 사용할 모델

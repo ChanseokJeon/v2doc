@@ -72,15 +72,28 @@ export interface ScreenshotOptions {
 // PDF 관련
 // ============================================================
 
+export interface SectionSummary {
+  summary: string;
+  keyPoints: string[];
+}
+
 export interface PDFSection {
   timestamp: number;
   screenshot: Screenshot;
   subtitles: SubtitleSegment[];
+  sectionSummary?: SectionSummary;
+}
+
+export interface ContentSummary {
+  summary: string;
+  keyPoints: string[];
+  language: string;
 }
 
 export interface PDFContent {
   metadata: VideoMetadata;
   sections: PDFSection[];
+  summary?: ContentSummary;
 }
 
 export interface PDFOptions {

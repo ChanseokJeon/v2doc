@@ -10,6 +10,7 @@ import { cacheManager } from '../../utils/cache.js';
 import { logger } from '../../utils/logger.js';
 import { parseYouTubeUrl } from '../../utils/url.js';
 import { formatBytes } from '../../utils/file.js';
+import { formatTimestamp } from '../../utils/index.js';
 import { validateCLIOptions } from '../../utils/validation.js';
 import { CLIOptions, OutputFormat, PDFLayout, ImageQuality } from '../../types/config.js';
 
@@ -21,6 +22,9 @@ interface ConvertCommandOptions {
   theme?: string;
   quality?: string;
   lang?: string;
+  summary?: boolean;
+  translate?: boolean;
+  targetLang?: string;
   cache?: boolean;
   verbose?: boolean;
 }
@@ -79,6 +83,18 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
     spinner.text = '설정 로드 중...';
     const config = await configManager.load(cliOptions);
 
+    // CLI 옵션으로 요약/번역 설정 오버라이드
+    if (options.summary !== undefined) {
+      config.summary.enabled = options.summary;
+    }
+    if (options.translate !== undefined) {
+      config.translation.enabled = options.translate;
+      config.translation.autoTranslate = options.translate;
+    }
+    if (options.targetLang) {
+      config.translation.defaultLanguage = options.targetLang;
+    }
+
     // 캐시 초기화
     if (config.cache.enabled) {
       await cacheManager.init();
@@ -119,12 +135,22 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
       const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
       console.log(chalk.green('\n✓ 변환 완료!\n'));
-      console.log(`  ${chalk.bold('파일:')} ${result.outputPath}`);
-      console.log(`  ${chalk.bold('제목:')} ${result.metadata.title}`);
-      console.log(`  ${chalk.bold('페이지:')} ${result.stats.pages}`);
-      console.log(`  ${chalk.bold('용량:')} ${formatBytes(result.stats.fileSize)}`);
-      console.log(`  ${chalk.bold('스크린샷:')} ${result.stats.screenshotCount}개`);
-      console.log(`  ${chalk.bold('소요시간:')} ${elapsedTime}초`);
+      console.log(chalk.dim('─'.repeat(50)));
+      console.log(`  ${chalk.bold.blue('제목')}     ${result.metadata.title}`);
+      console.log(`  ${chalk.bold.blue('채널')}     ${result.metadata.channel}`);
+      console.log(`  ${chalk.bold.blue('영상 길이')} ${formatTimestamp(result.metadata.duration)}`);
+      console.log(chalk.dim('─'.repeat(50)));
+      const format = result.outputPath.split('.').pop()?.toUpperCase() || 'PDF';
+      console.log(`  ${chalk.bold('포맷')}     ${format}`);
+      console.log(`  ${chalk.bold('파일')}     ${chalk.underline(result.outputPath)}`);
+      console.log(`  ${chalk.bold('섹션')}     ${result.stats.pages}개`);
+      console.log(`  ${chalk.bold('페이지')}   ${result.stats.pages}개`);
+      console.log(`  ${chalk.bold('용량')}     ${formatBytes(result.stats.fileSize)}`);
+      console.log(`  ${chalk.bold('스크린샷')} ${result.stats.screenshotCount}개`);
+      console.log(`  ${chalk.bold('소요시간')} ${elapsedTime}초`);
+      console.log(chalk.dim('─'.repeat(50)));
+      console.log(`  ${chalk.cyan.underline(`https://youtube.com/watch?v=${result.metadata.id}`)}`);
+      console.log();
     }
   } catch (error) {
     spinner.stop();

@@ -10,10 +10,13 @@ import {
   ProgressCallback,
   ErrorCode,
   Yt2PdfError,
+  ContentSummary,
+  SubtitleSegment,
 } from '../types/index.js';
 import { YouTubeProvider } from '../providers/youtube.js';
 import { FFmpegWrapper } from '../providers/ffmpeg.js';
 import { WhisperProvider } from '../providers/whisper.js';
+import { AIProvider } from '../providers/ai.js';
 import { SubtitleExtractor } from './subtitle-extractor.js';
 import { ScreenshotCapturer } from './screenshot-capturer.js';
 import { ContentMerger } from './content-merger.js';
@@ -50,6 +53,7 @@ export class Orchestrator {
   private youtube: YouTubeProvider;
   private ffmpeg: FFmpegWrapper;
   private whisper?: WhisperProvider;
+  private ai?: AIProvider;
 
   constructor(options: OrchestratorOptions) {
     this.config = options.config;
@@ -58,12 +62,18 @@ export class Orchestrator {
     this.youtube = new YouTubeProvider();
     this.ffmpeg = new FFmpegWrapper();
 
-    // Whisper는 API 키가 있을 때만 초기화
+    // OpenAI API 키가 있을 때만 초기화
     if (process.env.OPENAI_API_KEY) {
       try {
         this.whisper = new WhisperProvider();
       } catch {
         // API 키가 없으면 Whisper 사용 불가
+      }
+
+      try {
+        this.ai = new AIProvider(undefined, this.config.ai.model);
+      } catch {
+        // AI 사용 불가
       }
     }
   }
@@ -161,7 +171,66 @@ export class Orchestrator {
         audioPath = await this.youtube.downloadAudio(videoId, tempDir);
       }
 
-      const subtitles = await subtitleExtractor.extract(videoId, audioPath);
+      let subtitles = await subtitleExtractor.extract(videoId, audioPath);
+      let processedSegments: SubtitleSegment[] = subtitles.segments;
+
+      // 3.5. 번역 (필요한 경우)
+      if (
+        this.config.translation.enabled &&
+        this.config.translation.autoTranslate &&
+        this.ai &&
+        subtitles.segments.length > 0
+      ) {
+        const defaultLang = this.config.translation.defaultLanguage;
+        const subtitleLang = subtitles.language;
+
+        // 언어가 다르면 번역
+        if (subtitleLang && subtitleLang !== defaultLang) {
+          this.updateState({ currentStep: `번역 중 (${subtitleLang} → ${defaultLang})`, progress: 32 });
+          logger.info(`자막 번역: ${subtitleLang} → ${defaultLang}`);
+
+          try {
+            const translationResult = await this.ai.translate(subtitles.segments, {
+              sourceLanguage: subtitleLang,
+              targetLanguage: defaultLang,
+            });
+            processedSegments = translationResult.translatedSegments;
+            logger.debug(`번역 완료: ${processedSegments.length}개 세그먼트`);
+          } catch (e) {
+            logger.warn('번역 실패, 원본 자막 사용', e as Error);
+          }
+        }
+      }
+
+      // 3.6. 요약 생성 (활성화된 경우)
+      let summary: ContentSummary | undefined;
+      if (this.config.summary.enabled && this.ai && processedSegments.length > 0) {
+        this.updateState({ currentStep: '요약 생성', progress: 36 });
+        logger.info('AI 요약 생성 중...');
+
+        try {
+          const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
+          const summaryResult = await this.ai.summarize(processedSegments, {
+            maxLength: this.config.summary.maxLength,
+            style: this.config.summary.style,
+            language: summaryLang,
+          });
+          summary = {
+            summary: summaryResult.summary,
+            keyPoints: summaryResult.keyPoints,
+            language: summaryResult.language,
+          };
+          logger.debug(`요약 생성 완료: ${summary.summary.length}자`);
+        } catch (e) {
+          logger.warn('요약 생성 실패', e as Error);
+        }
+      }
+
+      // 번역된 세그먼트로 subtitles 업데이트
+      subtitles = {
+        ...subtitles,
+        segments: processedSegments,
+      };
 
       // 4. 스크린샷 캡처
       this.updateState({ currentStep: '스크린샷 캡처', progress: 40 });
@@ -171,9 +240,16 @@ export class Orchestrator {
         youtube: this.youtube,
         config: this.config.screenshot,
         tempDir,
+        onProgress: (current, total) => {
+          const baseProgress = 40;
+          const progressRange = 30; // 40 ~ 70
+          const progress = baseProgress + Math.floor((current / total) * progressRange);
+          this.updateState({ currentStep: `스크린샷 캡처 (${current}/${total})`, progress });
+        },
       });
 
-      const screenshots = await screenshotCapturer.captureAll(videoId, metadata.duration);
+      // 첫 번째 스크린샷은 썸네일 사용 (0:00은 보통 검은 화면)
+      const screenshots = await screenshotCapturer.captureAll(videoId, metadata.duration, metadata.thumbnail);
       this.updateState({ progress: 70 });
 
       // 5. 콘텐츠 병합
@@ -184,6 +260,44 @@ export class Orchestrator {
       });
 
       const content = contentMerger.merge(metadata, subtitles, screenshots);
+
+      // 요약 추가
+      if (summary) {
+        content.summary = summary;
+      }
+
+      // 5.5. 섹션별 요약 생성
+      if (this.config.summary.enabled && this.config.summary.perSection && this.ai && content.sections.length > 0) {
+        this.updateState({ currentStep: '섹션별 요약 생성', progress: 77 });
+        logger.info(`섹션별 요약 생성 중... (${content.sections.length}개 섹션)`);
+
+        try {
+          const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
+          const sectionSummaries = await this.ai.summarizeSections(
+            content.sections.map((s) => ({ timestamp: s.timestamp, subtitles: s.subtitles })),
+            {
+              language: summaryLang,
+              maxSummaryLength: this.config.summary.sectionMaxLength,
+              maxKeyPoints: this.config.summary.sectionKeyPoints,
+            }
+          );
+
+          // 섹션에 요약 추가
+          for (let i = 0; i < content.sections.length; i++) {
+            const sectionSummary = sectionSummaries.find((s) => s.timestamp === content.sections[i].timestamp);
+            if (sectionSummary && sectionSummary.summary) {
+              content.sections[i].sectionSummary = {
+                summary: sectionSummary.summary,
+                keyPoints: sectionSummary.keyPoints,
+              };
+            }
+          }
+
+          logger.debug(`섹션별 요약 완료: ${sectionSummaries.filter((s) => s.summary).length}개`);
+        } catch (e) {
+          logger.warn('섹션별 요약 생성 실패', e as Error);
+        }
+      }
 
       // 6. 출력 생성
       this.updateState({ status: 'generating', currentStep: 'PDF 생성', progress: 80 });

@@ -186,6 +186,58 @@ export class YouTubeProvider {
   }
 
   /**
+   * 썸네일 다운로드 (JPEG로 변환)
+   */
+  async downloadThumbnail(thumbnailUrl: string, outputPath: string): Promise<string> {
+    try {
+      logger.debug(`썸네일 다운로드: ${thumbnailUrl}`);
+
+      // 더 나은 품질의 썸네일 URL 사용 (maxresdefault 또는 hqdefault)
+      // YouTube 썸네일 URL 패턴: https://i.ytimg.com/vi/{videoId}/{quality}.jpg
+      let betterUrl = thumbnailUrl;
+      if (thumbnailUrl.includes('i.ytimg.com')) {
+        const videoIdMatch = thumbnailUrl.match(/\/vi\/([^/]+)\//);
+        if (videoIdMatch) {
+          // maxresdefault > sddefault > hqdefault 순으로 시도
+          betterUrl = `https://i.ytimg.com/vi/${videoIdMatch[1]}/maxresdefault.jpg`;
+        }
+      }
+
+      // Node.js fetch를 사용하여 썸네일 다운로드
+      let response = await fetch(betterUrl);
+      if (!response.ok && betterUrl !== thumbnailUrl) {
+        // maxresdefault가 없으면 원본 URL 시도
+        response = await fetch(thumbnailUrl);
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      // 이미지 형식 확인 및 변환 (ffmpeg 사용)
+      const tempPath = outputPath.replace('.jpg', '_temp');
+      await fs.writeFile(tempPath, buffer);
+
+      try {
+        // ffmpeg로 JPEG 변환
+        await execAsync(`ffmpeg -y -i "${tempPath}" -q:v 2 "${outputPath}" 2>/dev/null`);
+        await fs.unlink(tempPath).catch(() => {});
+      } catch {
+        // ffmpeg 변환 실패 시 원본 사용
+        await fs.rename(tempPath, outputPath);
+      }
+
+      logger.debug(`썸네일 저장 완료: ${outputPath}`);
+      return outputPath;
+    } catch (error) {
+      const err = error as Error;
+      logger.warn(`썸네일 다운로드 실패: ${err.message}`);
+      throw new Yt2PdfError(ErrorCode.VIDEO_DOWNLOAD_FAILED, `썸네일 다운로드 실패: ${err.message}`, err);
+    }
+  }
+
+  /**
    * VTT 파싱
    */
   private parseVTT(content: string): SubtitleSegment[] {

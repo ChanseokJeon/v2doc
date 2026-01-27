@@ -25,6 +25,9 @@ program
   .option('-t, --theme <name>', 'PDF 테마', 'default')
   .option('-q, --quality <level>', '스크린샷 품질 (low, medium, high)', 'low')
   .option('--lang <code>', '자막 언어 (ko, en)')
+  .option('--summary', 'AI 요약 생성')
+  .option('--translate', '기본 언어로 자동 번역')
+  .option('--target-lang <code>', '번역 대상 언어 (기본: ko)', 'ko')
   .option('--no-cache', '캐시 사용 안함')
   .option('--verbose', '상세 로그 출력')
   .action(convertCommand);

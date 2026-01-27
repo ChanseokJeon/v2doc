@@ -136,6 +136,9 @@ export class ConfigManager {
       whisper: { ...base.whisper, ...override.whisper },
       cache: { ...base.cache, ...override.cache },
       processing: { ...base.processing, ...override.processing },
+      summary: { ...base.summary, ...override.summary },
+      translation: { ...base.translation, ...override.translation },
+      ai: { ...base.ai, ...override.ai },
     };
   }
 

@@ -8,10 +8,10 @@
 
 | 항목 | 값 |
 |------|-----|
-| **날짜** | 2025-01-26 |
-| **세션 ID** | session-001 |
-| **완료한 작업** | 설계 문서 작성 (SPEC, ARCHITECTURE, MODULES, PROGRESS) |
-| **다음 작업** | Phase 0.5 - package.json 생성 |
+| **날짜** | 2025-01-27 |
+| **세션 ID** | session-003 |
+| **완료한 작업** | AI 기능 구현 (요약 + 번역) |
+| **다음 작업** | 실제 API 키로 E2E 테스트 |
 
 ---
 
@@ -26,6 +26,7 @@ YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환하는 CLI
 - **스크린샷**: FFmpeg, 1분 간격, 480p
 - **설정**: YAML
 - **사용 형태**: CLI + Claude Code Skill
+- **AI 기능**: OpenAI GPT (요약, 번역)
 
 ### 문서 구조
 ```
@@ -38,90 +39,96 @@ docs/
 
 ---
 
-## 현재 Phase: 0 (프로젝트 초기화)
+## 최근 완료한 작업: AI 기능 구현
 
-### 완료된 태스크
-- [x] 0.1 스펙 문서 작성 → `SPEC.md`
-- [x] 0.2 아키텍처 설계 → `docs/ARCHITECTURE.md`
-- [x] 0.3 모듈 상세 설계 → `docs/MODULES.md`
-- [x] 0.4 진행 관리 문서 → `docs/PROGRESS.md`
+### 구현된 기능
 
-### 다음 태스크
-- [ ] 0.5 package.json 생성
-- [ ] 0.6 tsconfig.json 설정
-- [ ] 0.7 ESLint/Prettier 설정
-- [ ] 0.8 디렉토리 구조 생성
-- [ ] 0.9 .env.example 생성
-- [ ] 0.10 기본 설정 파일 생성
+1. **AI 요약 기능**
+   - 자막 텍스트를 AI로 요약
+   - 핵심 포인트 추출
+   - PDF/HTML/Markdown 첫 페이지에 표시
+
+2. **자동 번역 기능**
+   - 기본 언어 설정 (defaultLanguage)
+   - 기본 언어가 아닌 자막 자동 번역
+   - 배치 번역으로 효율적 처리
+
+3. **CLI 옵션 추가**
+   - `--summary`: AI 요약 생성
+   - `--translate`: 자동 번역 활성화
+   - `--target-lang <code>`: 번역 대상 언어
+
+4. **설정 파일 지원**
+   ```yaml
+   summary:
+     enabled: true
+     maxLength: 500
+     style: brief
+
+   translation:
+     enabled: true
+     defaultLanguage: ko
+     autoTranslate: true
+
+   ai:
+     provider: openai
+     model: gpt-4o-mini
+   ```
+
+### 생성된 파일
+- `src/providers/ai.ts` - AI Provider (요약/번역/언어감지)
+- `tests/unit/providers/ai.test.ts` - 단위 테스트
+- `tests/unit/types/config.test.ts` - 설정 스키마 테스트
+- `tests/integration/ai-features.test.ts` - 통합 테스트
+
+### 테스트 커버리지
+- Statements: 96.77%
+- Branches: 86%
+- Functions: 100%
+- Lines: 96.65%
+
+---
+
+## 다음 작업
+
+1. **실제 API 키로 E2E 테스트**
+   - OPENAI_API_KEY 환경변수 설정 필요
+   - 영어 영상으로 번역 테스트
+   - 요약 결과 품질 검토
+
+2. **추가 개선 사항**
+   - 요약 캐싱 (동일 자막 재요약 방지)
+   - 번역 품질 개선 (용어 일관성)
+   - 에러 핸들링 강화
 
 ---
 
 ## 빠른 참조
 
-### 의존성 패키지 (package.json에 추가할 것)
+### AI 기능 사용 방법
 
-**Production**:
-```
-commander, ora, cli-progress, chalk, inquirer, yaml, dotenv,
-pdfkit, puppeteer, marked, openai, p-limit, p-retry, winston, zod
-```
-
-**Dev**:
-```
-typescript, @types/node, jest, ts-jest, @types/jest,
-eslint, @typescript-eslint/*, prettier, tsx, rimraf
-```
-
-### 디렉토리 구조 (생성할 것)
-```
-src/
-├── cli/commands/
-├── cli/ui/
-├── core/
-├── providers/
-├── templates/pdf/
-├── utils/
-└── types/
-bin/
-templates/themes/
-scripts/
-tests/unit/
-tests/integration/
-tests/e2e/
-tests/fixtures/
-```
-
-### CLI 명령어 구조
 ```bash
-yt2pdf <url> [options]          # 기본 변환
-yt2pdf config [show|init|set]   # 설정 관리
-yt2pdf cache [show|clear]       # 캐시 관리
-yt2pdf setup                    # 의존성 설치
+# 환경변수 설정
+export OPENAI_API_KEY=sk-...
+
+# 요약 + 번역 활성화
+yt2pdf https://youtube.com/watch?v=... --summary --translate
+
+# 영어로 번역
+yt2pdf https://youtube.com/watch?v=... --translate --target-lang en
 ```
 
----
-
-## 재개 명령어
-
-작업을 재개할 때 Claude에게 전달할 프롬프트:
-
-```
-docs/SESSION.md와 docs/PROGRESS.md를 읽고 다음 태스크를 이어서 진행해줘.
-```
-
-또는 특정 태스크를 지정:
-
-```
-docs/PROGRESS.md의 태스크 0.5 (package.json 생성)를 진행해줘.
-```
+### 설정 파일 경로
+- 프로젝트: `./yt2pdf.config.yaml`
+- 전역: `~/.config/yt2pdf/config.yaml`
 
 ---
 
 ## 주의사항
 
-1. **외부 의존성**: ffmpeg, yt-dlp는 별도 설치 필요
-2. **API 키**: OpenAI API 키 필요 (Whisper 사용 시)
-3. **테스트**: 실제 YouTube URL로 테스트 시 API 호출 발생
+1. **API 키 필수**: AI 기능 사용시 OPENAI_API_KEY 필요
+2. **비용 발생**: GPT-4o-mini API 호출시 비용 발생
+3. **외부 의존성**: ffmpeg, yt-dlp는 별도 설치 필요
 
 ---
 
@@ -129,8 +136,10 @@ docs/PROGRESS.md의 태스크 0.5 (package.json 생성)를 진행해줘.
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2025-01-27 | AI 기능 구현 (요약 + 번역) |
+| 2025-01-26 | 200개 개선사항 적용 |
 | 2025-01-26 | 초기 세션 생성, 설계 문서 완료 |
 
 ---
 
-*마지막 업데이트: 2025-01-26*
+*마지막 업데이트: 2025-01-27*

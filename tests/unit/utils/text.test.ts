@@ -46,7 +46,7 @@ describe('Text Utils', () => {
     it('should handle progressive subtitles', () => {
       const input = ['Hello', 'Hello World', 'Hello World!'];
       const result = deduplicateSubtitles(input);
-      // 이전 것이 현재의 접두사면 교체
+      // 이전 것이 현재의 접두사면 병합
       expect(result).toEqual(['Hello World!']);
     });
 
@@ -70,6 +70,30 @@ describe('Text Utils', () => {
       const input = ['I am', 'I am the', 'I am the last speaker'];
       const result = deduplicateSubtitles(input);
       expect(result).toEqual(['I am the last speaker']);
+    });
+
+    it('should merge overlapping YouTube auto-captions', () => {
+      // YouTube 자동 자막 패턴: 끝부분과 시작부분이 겹침
+      const input = [
+        'hello can you hear me now',
+        'me now I am in California',
+        'California dreaming about who we used to be',
+      ];
+      const result = deduplicateSubtitles(input);
+      expect(result).toEqual([
+        'hello can you hear me now I am in California dreaming about who we used to be',
+      ]);
+    });
+
+    it('should handle partial overlap at word boundaries', () => {
+      const input = [
+        'the time supposed to heal you',
+        'heal you but I have not done much healing',
+      ];
+      const result = deduplicateSubtitles(input);
+      expect(result).toEqual([
+        'the time supposed to heal you but I have not done much healing',
+      ]);
     });
   });
 
