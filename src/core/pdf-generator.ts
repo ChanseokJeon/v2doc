@@ -1529,7 +1529,6 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     // 원본 링크 (클릭 가능)
     const youtubeUrl = `https://youtube.com/watch?v=${metadata.id}`;
     doc.fillColor(theme.colors.link);
-    doc.text('원본: ', { continued: true, align: 'center' });
     doc.text(youtubeUrl, { link: youtubeUrl, align: 'center' });
 
     doc.fillColor(theme.colors.secondary);
