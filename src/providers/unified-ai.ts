@@ -197,7 +197,9 @@ For EACH section, extract:
 4. mainInformation:
    - paragraphs: 3 analytical paragraphs (not translation summary)
    - bullets: 6 facts with tags [METRIC/TOOL/TECHNIQUE/DEFINITION/INSIGHT]
-${includeQuotes ? `5. notableQuotes: 3 quotes with specific data/numbers (reject vague quotes like "그것이 당신을 방해합니다")` : ''}
+${includeQuotes ? `5. notableQuotes: 3 quotes about CORE CONTENT only
+   ❌ NEVER extract: speaker intro ("저는 마지막 연사"), meta-talk ("이 발표에서는", "제가 할 수 있는 최선은"), transitions ("다음으로"), audience mentions ("여러분")
+   ✓ MUST contain: specific numbers/data, key claims, methodology, definitions` : ''}
 
 Output JSON:
 {
