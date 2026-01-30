@@ -1619,19 +1619,28 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
       const timestamp = formatTimestamp(section.timestamp);
-      const rawPreview = section.subtitles[0]?.text || '';
-      const preview = normalizeTextForPDF(cleanSubtitleText(rawPreview)).substring(0, 50);
       const pageNum = startPage + i;
+
+      // 섹션 요약 사용 (없으면 첫 자막 fallback)
+      let title = section.sectionSummary?.summary || '';
+      if (!title) {
+        const rawPreview = section.subtitles[0]?.text || '';
+        title = normalizeTextForPDF(cleanSubtitleText(rawPreview)).substring(0, 50);
+      }
+      // 길이 제한 (50자)
+      if (title.length > 50) {
+        title = title.substring(0, 47) + '...';
+      }
 
       // 타임스탬프 (파란색)
       doc.fillColor(theme.colors.link).text(`${timestamp}`, { continued: true });
 
-      // 제목 미리보기 (검정색) - NFC 정규화 적용
-      const previewText = preview ? `  ${preview}...` : '';
-      doc.fillColor(theme.colors.text).text(previewText, { continued: true });
+      // 섹션 제목 (검정색)
+      const titleText = title ? `  ${title}` : '';
+      doc.fillColor(theme.colors.text).text(titleText, { continued: true });
 
       // 점선 + 페이지 번호 (오른쪽 정렬)
-      const textWidth = doc.widthOfString(`${timestamp}${previewText}`);
+      const textWidth = doc.widthOfString(`${timestamp}${titleText}`);
       const pageNumWidth = doc.widthOfString(`${pageNum}`);
       const dotsWidth = pageWidth - textWidth - pageNumWidth - 10;
       const dotsCount = Math.max(0, Math.floor(dotsWidth / doc.widthOfString('.')));
