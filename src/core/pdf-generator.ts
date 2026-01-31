@@ -252,12 +252,12 @@ const MINIMAL_NEON_TAG_COLORS: Record<string, { bg: string; text: string }> = {
 
 const MINIMAL_NEON_THEME: Theme = {
   name: 'minimal-neon',
-  margins: { top: 60, bottom: 60, left: 48, right: 48 },
+  margins: { top: 72, bottom: 72, left: 50, right: 50 },
   fonts: {
     title: { name: 'NotoSansKR-Bold', size: 36 },
-    heading: { name: 'NotoSansKR-Bold', size: 14 },
-    body: { name: 'NotoSansKR-Regular', size: 12 },
-    timestamp: { name: 'NotoSansKR-Bold', size: 11 },
+    heading: { name: 'NotoSansKR-Bold', size: 18 },
+    body: { name: 'NotoSansKR-Regular', size: 14 },
+    timestamp: { name: 'NotoSansKR-Bold', size: 13 },
   },
   colors: {
     primary: MINIMAL_NEON_COLORS.neonGreen,
@@ -267,7 +267,7 @@ const MINIMAL_NEON_THEME: Theme = {
     background: MINIMAL_NEON_COLORS.bg,
   },
   spacing: {
-    sectionGap: 40,
+    sectionGap: 56,
     paragraphGap: 16,
     imageMargin: 20,
   },
@@ -335,6 +335,13 @@ export class PDFGenerator {
 
         const writeStream = fs.createWriteStream(outputPath);
         doc.pipe(writeStream);
+
+        // Auto-fill dark background on automatic page breaks for minimal-neon layout
+        if (this.config.layout === 'minimal-neon') {
+          doc.on('pageAdded', () => {
+            this.fillMinimalNeonBackground(doc);
+          });
+        }
 
         // 페이지 푸터 추가 함수
         const addPageFooter = (pageNum: number, totalPages: number) => {
@@ -2167,7 +2174,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     // Title (large, bold)
     doc
       .font(theme.fonts.title.name)
-      .fontSize(40)
+      .fontSize(48)
       .fillColor(MINIMAL_NEON_COLORS.white)
       .text(normalizeTextForPDF(metadata.title), theme.margins.left, doc.y, {
         width: pageWidth,
@@ -2217,7 +2224,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
       doc
         .font(theme.fonts.body.name)
-        .fontSize(12)
+        .fontSize(14)
         .fillColor(MINIMAL_NEON_COLORS.white)
         .text(normalizeTextForPDF(item.value), x, metaStartY + 15, { width: colWidth - 10 });
     });
@@ -2245,7 +2252,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     const youtubeUrl = `https://youtube.com/watch?v=${metadata.id}`;
     doc
       .font(theme.fonts.body.name)
-      .fontSize(12)
+      .fontSize(14)
       .fillColor(MINIMAL_NEON_COLORS.neonBlue)
       .text(youtubeUrl, { link: youtubeUrl });
 
@@ -2256,7 +2263,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
       doc
         .font(theme.fonts.body.name)
-        .fontSize(12)
+        .fontSize(14)
         .fillColor(MINIMAL_NEON_COLORS.gray100)
         .text(normalizeTextForPDF(summary.summary), {
           width: pageWidth,
@@ -2316,14 +2323,14 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       const numStr = String(idx + 1).padStart(2, '0');
       doc
         .font(theme.fonts.title.name)
-        .fontSize(24)
+        .fontSize(30)
         .fillColor(MINIMAL_NEON_COLORS.neonGreen)
         .text(numStr, theme.margins.left, doc.y, { width: 50 });
 
       // Content (right column)
       doc
         .font(theme.fonts.body.name)
-        .fontSize(11)
+        .fontSize(14)
         .fillColor(MINIMAL_NEON_COLORS.gray300)
         .text(normalizeTextForPDF(point), theme.margins.left + 60, doc.y, {
           width: pageWidth - 70,
@@ -2382,7 +2389,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       // Time column (left)
       doc
         .font(theme.fonts.timestamp.name)
-        .fontSize(11)
+        .fontSize(13)
         .fillColor(MINIMAL_NEON_COLORS.neonBlue)
         .text(timestamp, theme.margins.left + 15, itemY, { width: 60 });
 
@@ -2397,7 +2404,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       // Title column (right)
       doc
         .font(theme.fonts.body.name)
-        .fontSize(11)
+        .fontSize(13)
         .fillColor(MINIMAL_NEON_COLORS.gray100)
         .text(normalizeTextForPDF(title), theme.margins.left + 95, itemY, {
           width: pageWidth - 110,
@@ -2473,7 +2480,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
     doc
       .font(theme.fonts.heading.name)
-      .fontSize(14)
+      .fontSize(18)
       .fillColor(MINIMAL_NEON_COLORS.white)
       .text(normalizeTextForPDF(sectionTitle), theme.margins.left + timeBadgeWidth + 30, sectionStartY + 15, {
         width: pageWidth - timeBadgeWidth - 50,
@@ -2536,7 +2543,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
         doc
           .font(theme.fonts.body.name)
-          .fontSize(11)
+          .fontSize(14)
           .fillColor(MINIMAL_NEON_COLORS.gray100)
           .text(normalizeTextForPDF(point), theme.margins.left + 35, doc.y, {
             width: pageWidth - 55,
@@ -2583,7 +2590,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
           doc
             .font(theme.fonts.body.name)
-            .fontSize(11)
+            .fontSize(14)
             .fillColor(MINIMAL_NEON_COLORS.gray300)
             .text(normalizeTextForPDF(content), startX + tagWidth + 10, doc.y - 14, {
               width: pageWidth - tagWidth - 50,
@@ -2591,7 +2598,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         } else {
           doc
             .font(theme.fonts.body.name)
-            .fontSize(11)
+            .fontSize(14)
             .fillColor(MINIMAL_NEON_COLORS.gray300)
             .text(normalizeTextForPDF(`• ${bullet}`), startX, doc.y, {
               width: pageWidth - 40,
@@ -2630,7 +2637,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       section.sectionSummary.notableQuotes.forEach((quote) => {
         doc
           .font(theme.fonts.body.name)
-          .fontSize(11)
+          .fontSize(14)
           .fillColor(MINIMAL_NEON_COLORS.white)
           .text(normalizeTextForPDF(`"${quote}"`), theme.margins.left + 35, doc.y, {
             width: pageWidth - 60,
