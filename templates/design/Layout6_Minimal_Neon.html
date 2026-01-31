@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Native Company Report - Minimal Neon Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --bg-elevated: #18181b;
+            --bg-subtle: #27272a;
+            --neon-green: #22c55e;
+            --neon-green-glow: rgba(34, 197, 94, 0.4);
+            --neon-blue: #3b82f6;
+            --neon-blue-glow: rgba(59, 130, 246, 0.4);
+            --white: #fafafa;
+            --gray-100: #e4e4e7;
+            --gray-300: #a1a1aa;
+            --gray-500: #71717a;
+            --gray-700: #3f3f46;
+            --border: #27272a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--white);
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 48px;
+        }
+
+        /* Header - Ultra Minimal */
+        .header {
+            margin-bottom: 80px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tag {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--neon-green-glow);
+        }
+
+        .date {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .title {
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -3px;
+            line-height: 1.05;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 22px;
+            color: var(--gray-300);
+            font-weight: 400;
+            letter-spacing: -0.5px;
+        }
+
+        .meta {
+            display: flex;
+            gap: 32px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .meta-value {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--neon-green);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--neon-green) 0%, transparent 100%);
+        }
+
+        /* Content */
+        .text-block {
+            color: var(--gray-100);
+            font-size: 17px;
+            line-height: 1.8;
+        }
+
+        .text-block + .text-block {
+            margin-top: 20px;
+        }
+
+        /* Insight Cards */
+        .insight-grid {
+            display: grid;
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .insight-card {
+            background: var(--bg);
+            padding: 28px 32px;
+            display: grid;
+            grid-template-columns: 48px 1fr;
+            gap: 20px;
+        }
+
+        .insight-card:hover {
+            background: var(--bg-elevated);
+        }
+
+        .insight-num {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--neon-green);
+            line-height: 1;
+        }
+
+        .insight-content h4 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .insight-content p {
+            color: var(--gray-300);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        /* TOC */
+        .toc {
+            border: 1px solid var(--border);
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        .toc-item:last-child {
+            border-bottom: none;
+        }
+
+        .toc-item:hover {
+            background: var(--bg-elevated);
+        }
+
+        .toc-time {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--neon-blue);
+            padding: 16px 20px;
+            min-width: 80px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+        }
+
+        .toc-title {
+            padding: 16px 20px;
+            color: var(--gray-100);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Detail Section */
+        .detail-section {
+            border: 1px solid var(--border);
+            margin-bottom: 32px;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+
+        .detail-time {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--neon-green);
+            padding: 6px 12px;
+            margin-right: 20px;
+        }
+
+        .detail-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .detail-body {
+            padding: 28px;
+        }
+
+        .detail-subsection {
+            margin-bottom: 28px;
+        }
+
+        .detail-subsection:last-child {
+            margin-bottom: 0;
+        }
+
+        .subsection-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-bottom: 14px;
+        }
+
+        .bullet-list {
+            list-style: none;
+        }
+
+        .bullet-list li {
+            color: var(--gray-100);
+            font-size: 15px;
+            padding: 10px 0;
+            padding-left: 20px;
+            border-left: 2px solid var(--border);
+            margin-left: 8px;
+        }
+
+        .bullet-list li:hover {
+            border-left-color: var(--neon-green);
+        }
+
+        /* Quote */
+        .quote {
+            background: var(--bg-elevated);
+            border-left: 3px solid var(--neon-blue);
+            padding: 24px 28px;
+            margin-top: 24px;
+        }
+
+        .quote p {
+            font-size: 16px;
+            font-style: italic;
+            color: var(--white);
+            line-height: 1.7;
+        }
+
+        .quote-mark {
+            color: var(--neon-blue);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* Conclusion */
+        .conclusion {
+            border: 2px solid var(--neon-green);
+            padding: 48px;
+            text-align: center;
+            position: relative;
+        }
+
+        .conclusion::before {
+            content: 'CONCLUSION';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg);
+            padding: 0 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--neon-green);
+        }
+
+        .conclusion h3 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 20px;
+        }
+
+        .conclusion p {
+            color: var(--gray-300);
+            font-size: 16px;
+            line-height: 1.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .highlight {
+            color: var(--neon-green);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer p {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--gray-500);
+            letter-spacing: 0.5px;
+        }
+
+        .footer p + p {
+            margin-top: 4px;
+        }
+
+        @media print {
+            body { background: white; color: black; }
+            .detail-section, .toc, .insight-grid { border-color: #ddd; }
+            .detail-header { background: #f5f5f5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-top">
+                <div class="tag">Video Summary</div>
+                <div class="date">2026.01</div>
+            </div>
+            <h1 class="title">Dispatch from<br>the Future</h1>
+            <p class="subtitle">Building an AI-Native Company</p>
+            <div class="meta">
+                <div class="meta-item">
+                    <span class="meta-label">Speaker</span>
+                    <span class="meta-value">Dan Shipper</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Company</span>
+                    <span class="meta-value">Every</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Channel</span>
+                    <span class="meta-value">AI Engineer</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Duration</span>
+                    <span class="meta-value">17:57</span>
+                </div>
+            </div>
+        </header>
+
+        <section class="section">
+            <div class="section-label">Executive Summary</div>
+            <p class="text-block">연사는 'AI 네이티브 회사'의 정답 플레이북은 아직 만들어지는 중이라며, 자신들의 실험(Every)에서 얻은 교훈을 공유한다. 핵심은 AI를 90%가 아니라 100%로 쓰는 조직이 완전히 다른 속도·역량을 낸다는 것.</p>
+            <p class="text-block">Every는 15명이 4개 프로덕션 앱을 운영하며 코드 99%를 AI 에이전트가 작성, 앱당 1명이 개발·운영한다. 이를 '컴파운딩 엔지니어링'(계획-위임-평가-코드화)이라 부르며, 프롬프트/지식을 자산화해 협업·온보딩·크로스기여를 쉽게 만든다.</p>
+        </section>
+
+        <section class="section">
+            <div class="section-label">Key Insights</div>
+            <div class="insight-grid">
+                <div class="insight-card">
+                    <div class="insight-num">01</div>
+                    <div class="insight-content">
+                        <h4>10배 격차</h4>
+                        <p>AI는 부분 도입(90%)보다 전면 도입(100%)에서 10배 차이를 만들며, 에이전트 위임으로 병렬 개발이 가능해짐</p>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-num">02</div>
+                    <div class="insight-content">
+                        <h4>Every 사례</h4>
+                        <p>15명, 4개 실서비스 앱, 코드 99% AI 작성, 앱당 1명이 개발·운영</p>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-num">03</div>
+                    <div class="insight-content">
+                        <h4>컴파운딩 엔지니어링</h4>
+                        <p>계획-위임-평가-코드화 루프로 암묵지를 프롬프트 라이브러리화해 공유·온보딩·협업 비용을 낮춤</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-label">Table of Contents</div>
+            <div class="toc">
+                <div class="toc-item"><span class="toc-time">00:00</span><span class="toc-title">AI 네이티브 플레이북은 아직 발명 중</span></div>
+                <div class="toc-item"><span class="toc-time">02:11</span><span class="toc-title">AI 100% 도입은 10배 격차를 만든다</span></div>
+                <div class="toc-item"><span class="toc-time">03:16</span><span class="toc-title">15명이 4개 제품, 코드 99%는 에이전트</span></div>
+                <div class="toc-item"><span class="toc-time">04:14</span><span class="toc-title">1인 개발로 복잡한 실서비스 앱을 만든다</span></div>
+                <div class="toc-item"><span class="toc-time">05:30</span><span class="toc-title">클라우드 코드가 위임·병렬화를 촉발</span></div>
+                <div class="toc-item"><span class="toc-time">06:00</span><span class="toc-title">병렬 에이전트와 저렴한 코드가 실험을 폭발</span></div>
+                <div class="toc-item"><span class="toc-time">07:20</span><span class="toc-title">컴파운딩 엔지니어링: 계획-위임-평가-코드화</span></div>
+                <div class="toc-item"><span class="toc-time">14:00</span><span class="toc-title">고객도 에이전트로 버그 PR을 낼 수 있다</span></div>
+                <div class="toc-item"><span class="toc-time">14:35</span><span class="toc-title">표준 스택 없이도 AI가 번역해 협업한다</span></div>
+                <div class="toc-item"><span class="toc-time">15:09</span><span class="toc-title">AI로 매니저도 쪼개진 시간에 PR을 낸다</span></div>
+                <div class="toc-item"><span class="toc-time">16:20</span><span class="toc-title">AI 100% 도입이 협업까지 바꾸는 10배 효과</span></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-label">Detailed Analysis</div>
+
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">00:00</span>
+                    <h3 class="detail-title">AI 네이티브 플레이북은 아직 발명 중</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>정해진 플레이북은 없고 지금도 만들어지는 중</li>
+                            <li>초기 단계에선 경험 공유와 협업이 중요</li>
+                            <li>자신의 회사 Every에서의 실험을 메모로 전달</li>
+                        </ul>
+                    </div>
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Analysis</div>
+                        <p class="text-block">이 구간의 핵심은 'AI 네이티브 회사 운영 방식'이 아직 표준화되지 않았다는 진단이다. 발표자는 플레이북이 부재한 이유를 지식 부족이 아니라, 기술·조직·프로젝트 관행이 동시다발적으로 변하며 규범 자체가 실시간으로 생성되는 국면이기 때문이라고 본다.</p>
+                    </div>
+                    <div class="quote">
+                        <span class="quote-mark">Quote</span>
+                        <p>"그 플레이북이 사실 지금 이 순간에도 만들어지고 있는 중이고, 실제로 발명되고 있는 중입니다."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">02:11</span>
+                    <h3 class="detail-title">AI 100% 도입은 10배 격차를 만든다</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>AI 사용 90% vs 100%는 완전히 다른 조직</li>
+                            <li>일부가 전통 방식이면 조직이 다시 그쪽으로 회귀</li>
+                            <li>Every는 작은 회사의 가능성을 실험하는 '실험실'</li>
+                        </ul>
+                    </div>
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Analysis</div>
+                        <p class="text-block">이 구간은 AI 도입률의 '임계점'이 존재한다는 주장으로 구성된다. 90% 도입은 상당히 높아 보이지만, 발표자는 100% 도입과는 질적으로 다르다고 말한다.</p>
+                    </div>
+                    <div class="quote">
+                        <span class="quote-mark">Quote</span>
+                        <p>"엔지니어의 90%가 인공지능을 쓰는 조직과 100%가 쓰는 조직은 완전히 달라요."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">03:16</span>
+                    <h3 class="detail-title">15명이 4개 제품, 코드 99%는 에이전트</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>15명으로 소프트웨어 제품 4개 운영</li>
+                            <li>지난 6개월 MRR 매달 두 자릿수 성장</li>
+                            <li>코드 99%를 AI 에이전트가 작성</li>
+                        </ul>
+                    </div>
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Analysis</div>
+                        <p class="text-block">발표자는 Every의 운영 지표를 통해 'AI 네이티브 소규모 팀'이 실서비스 규모에서도 성립함을 입증하려 한다.</p>
+                    </div>
+                    <div class="quote">
+                        <span class="quote-mark">Quote</span>
+                        <p>"우리는 단 15명으로 네 개의 소프트웨어 제품을 운영해요."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="conclusion">
+            <h3>10배 격차와 <span class="highlight">100% 도입</span>의 임계점</h3>
+            <p>핵심은 AI가 일부 업무를 돕는 수준이 아니라, 조직의 기본 작업 경로가 AI/에이전트 중심으로 재설계될 때 개인과 팀의 산출 한계가 재정의된다는 주장이다. 그 결과로 <span class="highlight">'1인 엔지니어가 복잡한 실서비스를 구축·유지'</span>하는 운영 모델이 현실화된다.</p>
+        </div>
+
+        <footer class="footer">
+            <p>Generated by yt2pdf</p>
+            <p>영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.</p>
+        </footer>
+    </div>
+</body>
+</html>

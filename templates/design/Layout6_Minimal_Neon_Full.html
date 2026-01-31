@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Native Company Report - Minimal Neon Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #09090b;
+            --bg-elevated: #18181b;
+            --bg-subtle: #27272a;
+            --neon-green: #22c55e;
+            --neon-green-glow: rgba(34, 197, 94, 0.4);
+            --neon-blue: #3b82f6;
+            --neon-blue-glow: rgba(59, 130, 246, 0.4);
+            --neon-purple: #a855f7;
+            --neon-yellow: #eab308;
+            --neon-cyan: #06b6d4;
+            --neon-pink: #ec4899;
+            --white: #fafafa;
+            --gray-100: #e4e4e7;
+            --gray-300: #a1a1aa;
+            --gray-500: #71717a;
+            --gray-700: #3f3f46;
+            --border: #27272a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Space Grotesk', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--white);
+            line-height: 1.8;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 80px 48px;
+        }
+
+        /* Header */
+        .header {
+            margin-bottom: 80px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tag {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            box-shadow: 0 0 12px var(--neon-green-glow);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .date {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .title {
+            font-size: 52px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 22px;
+            color: var(--gray-300);
+            font-weight: 400;
+            letter-spacing: -0.5px;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .meta-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .meta-value {
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .meta-value a {
+            color: var(--neon-blue);
+            text-decoration: none;
+        }
+
+        .meta-value a:hover {
+            text-decoration: underline;
+        }
+
+        /* Section */
+        .section {
+            margin-bottom: 64px;
+        }
+
+        .section-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--neon-green);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--neon-green) 0%, transparent 100%);
+        }
+
+        /* Content */
+        .text-block {
+            color: var(--gray-100);
+            font-size: 16px;
+            line-height: 1.9;
+        }
+
+        .text-block + .text-block {
+            margin-top: 16px;
+        }
+
+        /* Insight Cards */
+        .insight-grid {
+            display: grid;
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+        }
+
+        .insight-card {
+            background: var(--bg);
+            padding: 28px 32px;
+            display: grid;
+            grid-template-columns: 48px 1fr;
+            gap: 20px;
+        }
+
+        .insight-card:hover {
+            background: var(--bg-elevated);
+        }
+
+        .insight-num {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--neon-green);
+            line-height: 1;
+        }
+
+        .insight-content h4 {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .insight-content p {
+            color: var(--gray-300);
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        /* TOC */
+        .toc {
+            border: 1px solid var(--border);
+        }
+
+        .toc-item {
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.15s;
+        }
+
+        .toc-item:last-child {
+            border-bottom: none;
+        }
+
+        .toc-item:hover {
+            background: var(--bg-elevated);
+        }
+
+        .toc-time {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--neon-blue);
+            padding: 16px 20px;
+            min-width: 80px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+        }
+
+        .toc-title {
+            padding: 16px 20px;
+            color: var(--gray-100);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Detail Section */
+        .detail-section {
+            border: 1px solid var(--border);
+            margin-bottom: 48px;
+        }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-elevated);
+        }
+
+        .detail-time {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--bg);
+            background: var(--neon-green);
+            padding: 6px 12px;
+            margin-right: 20px;
+        }
+
+        .detail-title {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .detail-body {
+            padding: 28px;
+        }
+
+        .detail-subsection {
+            margin-bottom: 28px;
+        }
+
+        .detail-subsection:last-child {
+            margin-bottom: 0;
+        }
+
+        .subsection-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--gray-500);
+            margin-bottom: 14px;
+        }
+
+        /* Image placeholder */
+        .image-placeholder {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 40px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .image-placeholder .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .image-placeholder .caption {
+            color: var(--gray-500);
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        .bullet-list {
+            list-style: none;
+        }
+
+        .bullet-list li {
+            color: var(--gray-100);
+            font-size: 15px;
+            padding: 10px 0;
+            padding-left: 20px;
+            border-left: 2px solid var(--border);
+            margin-left: 8px;
+        }
+
+        .bullet-list li:hover {
+            border-left-color: var(--neon-green);
+        }
+
+        /* Tags */
+        .tag-list {
+            list-style: none;
+            margin-top: 16px;
+        }
+
+        .tag-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: 14px;
+            color: var(--gray-300);
+        }
+
+        .tag-badge {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .tag-badge.insight { background: rgba(34, 197, 94, 0.2); color: var(--neon-green); }
+        .tag-badge.technique { background: rgba(59, 130, 246, 0.2); color: var(--neon-blue); }
+        .tag-badge.definition { background: rgba(168, 85, 247, 0.2); color: var(--neon-purple); }
+        .tag-badge.metric { background: rgba(234, 179, 8, 0.2); color: var(--neon-yellow); }
+        .tag-badge.tool { background: rgba(6, 182, 212, 0.2); color: var(--neon-cyan); }
+
+        /* Quote */
+        .quote {
+            background: var(--bg-elevated);
+            border-left: 3px solid var(--neon-blue);
+            padding: 20px 24px;
+            margin-top: 20px;
+        }
+
+        .quote p {
+            font-size: 15px;
+            font-style: italic;
+            color: var(--white);
+            line-height: 1.7;
+            margin-bottom: 8px;
+        }
+
+        .quote p:last-child {
+            margin-bottom: 0;
+        }
+
+        .quote-mark {
+            color: var(--neon-blue);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* Conclusion */
+        .conclusion {
+            border: 2px solid var(--neon-green);
+            padding: 48px;
+            text-align: center;
+            position: relative;
+            margin-top: 64px;
+        }
+
+        .conclusion::before {
+            content: 'CONCLUSION';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg);
+            padding: 0 16px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: var(--neon-green);
+        }
+
+        .conclusion h3 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 20px;
+        }
+
+        .conclusion p {
+            color: var(--gray-300);
+            font-size: 16px;
+            line-height: 1.8;
+            max-width: 650px;
+            margin: 0 auto 16px;
+        }
+
+        .highlight {
+            color: var(--neon-green);
+            font-weight: 600;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer p {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--gray-500);
+            letter-spacing: 0.5px;
+        }
+
+        .footer p + p {
+            margin-top: 4px;
+        }
+
+        /* Page break for print */
+        @media print {
+            body { background: white; color: black; }
+            .detail-section, .toc, .insight-grid { border-color: #ddd; }
+            .detail-header { background: #f5f5f5; }
+            .page-break { page-break-before: always; }
+        }
+
+        .page-break {
+            height: 1px;
+            margin: 64px 0;
+            border-top: 1px dashed var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-top">
+                <div class="tag">Video Summary</div>
+                <div class="date">생성일: 2026-01-30</div>
+            </div>
+            <h1 class="title">Dispatch from<br>the Future</h1>
+            <p class="subtitle">Building an AI-Native Company</p>
+            <div class="meta">
+                <div class="meta-item">
+                    <span class="meta-label">Speaker</span>
+                    <span class="meta-value">Dan Shipper</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Company</span>
+                    <span class="meta-value">Every</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Channel</span>
+                    <span class="meta-value">AI Engineer</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Duration</span>
+                    <span class="meta-value">17:57 (11개 섹션)</span>
+                </div>
+            </div>
+            <div class="meta" style="margin-top: 16px; padding-top: 16px;">
+                <div class="meta-item" style="grid-column: span 4;">
+                    <span class="meta-label">YouTube Link</span>
+                    <span class="meta-value"><a href="https://youtube.com/watch?v=MGzymaYBiss" target="_blank">https://youtube.com/watch?v=MGzymaYBiss</a></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- EXECUTIVE SUMMARY -->
+        <section class="section">
+            <div class="section-label">Executive Summary</div>
+            <p class="text-block">연사는 'AI 네이티브 회사'의 정답 플레이북은 아직 만들어지는 중이라며, 자신들의 실험(Every)에서 얻은 교훈을 공유한다. 핵심은 AI를 90%가 아니라 100%로 쓰는 조직이 완전히 다른 속도·역량을 낸다는 것. Every는 15명이 4개 프로덕션 앱을 운영하며 코드 99%를 AI 에이전트가 작성, 앱당 1명이 개발·운영한다.</p>
+            <p class="text-block">클라우드 코딩/에이전트 위임으로 병렬 작업이 가능해져 개발이 빨라지고, 코드가 '싸져' 실험·데모 중심 문화가 강화된다. 이를 '컴파운딩 엔지니어링'(계획-위임-평가-코드화)이라 부르며, 프롬프트/지식을 자산화해 협업·온보딩·크로스기여를 쉽게 만든다고 말한다.</p>
+        </section>
+
+        <!-- KEY INSIGHTS -->
+        <section class="section">
+            <div class="section-label">Key Insights</div>
+            <div class="insight-grid">
+                <div class="insight-card">
+                    <div class="insight-num">01</div>
+                    <div class="insight-content">
+                        <h4>10배 격차</h4>
+                        <p>AI는 부분 도입(90%)보다 전면 도입(100%)에서 10배 차이를 만들며, 에이전트 위임으로 병렬 개발이 가능해짐</p>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-num">02</div>
+                    <div class="insight-content">
+                        <h4>Every 사례</h4>
+                        <p>15명, 4개 실서비스 앱, 코드 99% AI 작성, 앱당 1명이 개발·운영 (예: 이메일 비서, 음성→텍스트 등)</p>
+                    </div>
+                </div>
+                <div class="insight-card">
+                    <div class="insight-num">03</div>
+                    <div class="insight-content">
+                        <h4>컴파운딩 엔지니어링</h4>
+                        <p>'계획-위임-평가-코드화' 루프로 암묵지를 프롬프트 라이브러리화해 공유·온보딩·협업(매니저의 커밋까지) 비용을 낮춤</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TABLE OF CONTENTS -->
+        <section class="section">
+            <div class="section-label">Table of Contents</div>
+            <div class="toc">
+                <div class="toc-item"><span class="toc-time">00:00</span><span class="toc-title">AI 네이티브 플레이북은 아직 발명 중</span></div>
+                <div class="toc-item"><span class="toc-time">02:11</span><span class="toc-title">AI 100% 도입은 10배 격차를 만든다</span></div>
+                <div class="toc-item"><span class="toc-time">03:16</span><span class="toc-title">15명이 4개 제품, 코드 99%는 에이전트</span></div>
+                <div class="toc-item"><span class="toc-time">04:14</span><span class="toc-title">1인 개발로 복잡한 실서비스 앱을 만든다</span></div>
+                <div class="toc-item"><span class="toc-time">05:30</span><span class="toc-title">클라우드 코드가 위임·병렬화를 촉발</span></div>
+                <div class="toc-item"><span class="toc-time">06:00</span><span class="toc-title">병렬 에이전트와 저렴한 코드가 실험을 폭발</span></div>
+                <div class="toc-item"><span class="toc-time">07:20</span><span class="toc-title">컴파운딩 엔지니어링: 계획-위임-평가-코드화</span></div>
+                <div class="toc-item"><span class="toc-time">14:00</span><span class="toc-title">고객도 에이전트로 버그 PR을 낼 수 있다</span></div>
+                <div class="toc-item"><span class="toc-time">14:35</span><span class="toc-title">표준 스택 없이도 AI가 번역해 협업한다</span></div>
+                <div class="toc-item"><span class="toc-time">15:09</span><span class="toc-title">AI로 매니저도 쪼개진 시간에 PR을 낸다</span></div>
+                <div class="toc-item"><span class="toc-time">16:20</span><span class="toc-title">AI 100% 도입이 협업까지 바꾸는 10배 효과</span></div>
+            </div>
+        </section>
+
+        <div class="page-break"></div>
+
+        <!-- SECTION 00:00 -->
+        <section class="section">
+            <div class="section-label">Detailed Analysis</div>
+
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">00:00</span>
+                    <h3 class="detail-title">AI 네이티브 플레이북은 아직 발명 중</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">🎬</div>
+                        <div class="caption">AI Engineer Code Summit 발표 화면 - "Compounding engineering: It's a four step loop" / "INSIDE A Fully AI-Native Company"</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>정해진 플레이북은 없고 지금도 만들어지는 중</li>
+                            <li>초기 단계에선 경험 공유와 협업이 중요</li>
+                            <li>자신의 회사 Every에서의 실험을 메모로 전달</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">이 구간의 핵심은 'AI 네이티브 회사 운영 방식'이 아직 표준화되지 않았다는 진단이다. 발표자는 플레이북이 부재한 이유를 지식 부족이 아니라, 기술·조직·프로젝트 관행이 동시다발적으로 변하며 규범 자체가 실시간으로 생성되는 국면이기 때문이라고 본다. 즉, 지금 필요한 것은 정답집이 아니라 변화하는 환경에서 유효한 패턴을 빠르게 포착하고 갱신하는 학습 체계다.</p>
+                        <p class="text-block">또한 그는 초기 국면에서의 최적 전략을 '경험의 공유'와 '집단적 탐색'으로 제시한다. AI를 활용한 엔지니어링은 개인의 숙련만으로 완결되기 어렵고, 조직마다 도구·워크플로·품질 기준이 달라 시행착오가 필연적이다. 따라서 서로의 시행착오를 교환하고, 공통적으로 재현 가능한 절차를 공동으로 정제하는 과정이 플레이북을 만들어내는 실질적 방법론이 된다.</p>
+                        <p class="text-block">마지막으로 발표자는 자신의 역할을 '권위적 지침 제공자'가 아니라 '현장 실험의 관찰자/기록자'로 재정의한다. 이는 AI 네이티브 전환에서 리더십의 형태가 바뀔 수 있음을 시사한다. 즉, 리더는 완성된 프로세스를 강제하기보다, 실험을 촉진하고 학습을 문서화하며 조직 간 학습 속도를 높이는 촉매로 기능해야 한다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge insight">INSIGHT</span> AI 네이티브 운영법은 고정된 규범이 아니라 '실시간 발명'에 가깝다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 초기 단계에서는 개인 경험을 공개적으로 공유해 학습 비용을 낮춘다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> '함께 협업해 실행 지침서를 찾아내기'가 플레이북 생성 방식이다.</li>
+                            <li><span class="tag-badge definition">DEFINITION</span> '미래에서 온 소식'은 현장 실험에서 얻은 관찰 메모를 뜻한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 답을 제시하기보다 탐색 프레임을 공유하는 접근이 더 적합하다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 리더의 역할은 지침 배포가 아니라 실험·학습의 촉진과 기록이다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"그 플레이북이 사실 지금 이 순간에도 만들어지고 있는 중이고, 실제로 발명되고 있는 중입니다."</p>
+                        <p>"이 초반 단계에서는 회사들 안에서 겪고 있는 개인적인 경험들을 공유하는 게 도움이 된다고 생각합니다."</p>
+                        <p>"함께 협업해서 그 실행 지침서를 찾아내는 거죠."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 02:11 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">02:11</span>
+                    <h3 class="detail-title">AI 100% 도입은 10배 격차를 만든다</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">📊</div>
+                        <div class="caption">"There's a 10x difference between an org with 90% vs. 100% AI engineers." - DAN SHIPPER / Co-founder & CEO, EVERY</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>AI 사용 90% vs 100%는 완전히 다른 조직</li>
+                            <li>일부가 전통 방식이면 조직이 다시 그쪽으로 회귀</li>
+                            <li>Every는 작은 회사의 가능성을 실험하는 '실험실'</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">이 구간은 AI 도입률의 '임계점'이 존재한다는 주장으로 구성된다. 90% 도입은 상당히 높아 보이지만, 발표자는 100% 도입과는 질적으로 다르다고 말한다. 이는 도입률이 선형적으로 성과를 올리는 것이 아니라, 조직의 기본 작업 방식(기본값)이 무엇인지에 따라 생산성·속도·가능한 시도의 범위가 급격히 달라진다는 관점이다.</p>
+                        <p class="text-block">그가 제시하는 메커니즘은 '회귀(리버전) 압력'이다. 조직 일부가 전통적 방식(수동 코딩 중심, 기존 프로세스 중심)을 유지하면, 협업·리뷰·일정·품질 기준이 그 방식에 맞춰 재정렬되며 결국 전체가 그쪽으로 끌려간다. 결과적으로 AI가 가능하게 하는 위임·병렬화·탐색적 개발 같은 행동이 구조적으로 억제된다.</p>
+                        <p class="text-block">Every를 '실험실'로 규정한 것은, 작은 팀이 AI를 기본값으로 삼을 때 조직 설계 자체가 달라진다는 점을 강조한다. 즉, AI 네이티브 전환은 도구 도입이 아니라 운영체제 교체에 가깝고, 그 효과는 '작은 회사가 할 수 있는 일의 상한'을 재정의한다는 형태로 나타난다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge metric">METRIC</span> AI 사용률 90%와 100% 사이에 '10배 차이'가 난다고 주장한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 부분적 전통 방식(약 10%)이 조직 전체를 과거 방식으로 되돌린다.</li>
+                            <li><span class="tag-badge definition">DEFINITION</span> '100% 도입'은 예외 없이 AI가 기본 작업 경로가 되는 상태다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> AI 기본값이 되면 코드 편집기 타이핑 중심의 제약이 줄어든다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 조직의 기본값을 AI 워크플로로 고정해 회귀 압력을 차단한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> Every는 '무엇이 가능한지' 검증하는 소규모 실험실 역할을 한다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"엔지니어의 90%가 인공지능을 쓰는 조직과 100%가 쓰는 조직은 완전히 달라요."</p>
+                        <p>"회사 10%만이라도 전통적인 소프트웨어 공학 방식으로 일하면 결국 다시 그쪽으로 기대게 돼요."</p>
+                        <p>"이건 작은 회사로서 우리가 해낼 수 있는 일을 완전히 바꿔놨어요."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 03:16 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">03:16</span>
+                    <h3 class="detail-title">15명이 4개 제품, 코드 99%는 에이전트</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">🏢</div>
+                        <div class="caption">"A bit about Every" - We run 6 business units including 4 software products with just 15 full-time employees / MRR double digits every month / 99% of our code is written by AI agents</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>15명으로 소프트웨어 제품 4개 운영</li>
+                            <li>지난 6개월 MRR 매달 두 자릿수 성장</li>
+                            <li>코드 99%를 AI 에이전트가 작성</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">발표자는 Every의 운영 지표를 통해 'AI 네이티브 소규모 팀'이 실서비스 규모에서도 성립함을 입증하려 한다. 15명으로 4개 제품을 운영하고, 유료/무료 구독자 기반을 동시에 키우며, 최근 6개월 연속으로 MRR을 두 자릿수 성장시켰다는 수치는 '장난감 데모'가 아니라 운영 가능한 비즈니스라는 근거로 기능한다.</p>
+                        <p class="text-block">핵심 차별점은 코드 생산의 주체가 인간에서 에이전트로 이동했다는 점이다. 코드의 99%를 AI 에이전트가 작성하고, 인간이 손코딩을 하지 않는다고 명시함으로써, 개발 프로세스의 병목(타이핑/구현 노동)을 제거하고 설계·평가·우선순위 같은 상위 레벨 작업으로 인간의 시간을 재배치했음을 시사한다.</p>
+                        <p class="text-block">또한 '각 앱을 1명의 개발자가 만들었다'는 구조는 팀 설계의 변화를 암시한다. 전통적으로는 기능 분할과 협업 비용 때문에 다인 팀이 필요하지만, 에이전트 기반 개발에서는 개인이 병렬 에이전트를 통해 구현 능력을 확장할 수 있다. 이는 제품 책임(ownership)과 속도, 그리고 조직 내 조정 비용을 재구성하는 방향으로 이어진다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge metric">METRIC</span> 팀 15명으로 소프트웨어 제품 4개를 운영한다.</li>
+                            <li><span class="tag-badge metric">METRIC</span> 지난 6개월 동안 매달 MRR을 두 자릿수로 성장시켰다.</li>
+                            <li><span class="tag-badge metric">METRIC</span> 유료 구독자 7,000명 이상, 무료 구독자 10만 명 이상이다.</li>
+                            <li><span class="tag-badge metric">METRIC</span> 총 조달 금액은 약 100만 달러 수준이다.</li>
+                            <li><span class="tag-badge metric">METRIC</span> 코드의 99%를 AI 에이전트가 작성하며 손코딩은 없다.</li>
+                            <li><span class="tag-badge tool">TOOL</span> 클라우드 코드/코덱/드로이드 등 코딩 에이전트를 사용한다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"우리는 단 15명으로 네 개의 소프트웨어 제품을 운영해요."</p>
+                        <p>"지난 6개월 동안 매달 월간 반복 매출을 두 자릿수로 성장시켰습니다."</p>
+                        <p>"저희 코드의 99%가 인공지능 에이전트가 작성한 것입니다."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 04:14 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">04:14</span>
+                    <h3 class="detail-title">1인 개발로 복잡한 실서비스 앱을 만든다</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">👤</div>
+                        <div class="caption">"Each of our apps is built and run by a single developer." - 기업 로고들: Google, Tenex, McKinsey, ANTHROPIC, SENTRY, Daytona, arize, goose 등</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>Cora: 이메일 요약·질의응답 비서</li>
+                            <li>Monologue: 음성-텍스트 변환 앱</li>
+                            <li>Spiral 등도 1명이 구축, 수천 사용자</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">이 구간은 '1인 개발=작은 토이 프로젝트'라는 통념을 반박하기 위해 구체적 제품 사례를 제시한다. Cora(이메일 비서), Monologue(음성-텍스트), Spiral(규모 있는 앱) 등은 기능적으로 복잡하고 사용자 기반이 존재하는 실서비스이며, 이를 통해 AI 네이티브 개발이 제품 완성도와 운영 가능성까지 끌어올렸다는 메시지를 강화한다.</p>
+                        <p class="text-block">특히 Cora의 '요약 + 질의응답'은 LLM이 UI/UX의 중심이 되는 패턴을 보여준다. 사용자는 이메일을 전부 읽는 대신 요약을 소비하고, 필요한 정보는 자연어 질문으로 회수한다. 이는 정보 탐색 비용을 줄이고, 앱의 핵심 가치가 '데이터 처리'에서 '의사결정 보조'로 이동했음을 의미한다.</p>
+                        <p class="text-block">또한 '1년 전만 해도 불가능'이라는 시간 기준은 기술 변화의 속도를 강조한다. 여기서 중요한 것은 단순히 모델 성능 향상만이 아니라, 에이전트/워크플로/도구 체계가 결합되며 개인의 실행 능력이 급격히 확장된다는 점이다. 결과적으로 제품 개발의 최소 효율 규모(MES)가 낮아지고, 작은 팀이 더 많은 제품 실험을 수행할 수 있는 환경이 조성된다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge tool">TOOL</span> Cora: 인공지능 이메일 관리/비서 앱(요약 및 Q&A).</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 받은편지함을 '요약 중심'으로 소비하고 필요 시 질문으로 조회한다.</li>
+                            <li><span class="tag-badge metric">METRIC</span> Monologue는 수천 명의 사용자를 가진다고 언급된다.</li>
+                            <li><span class="tag-badge tool">TOOL</span> Monologue: 위스퍼/위스퍼 플로우 계열과 유사한 음성-텍스트 앱.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 복잡한 앱도 '주로 1명'이 구축·운영 가능한 단계가 됐다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 이런 수준의 1인 개발은 1년 전만 해도 어려웠다는 시간 압축이 있다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"우리 팀의 각 앱은 단 한 명의 개발자가 만들었습니다."</p>
+                        <p>"'코라'는 들어오는 모든 이메일을 전부 요약해 줍니다."</p>
+                        <p>"1년 전만 해도 가능하지 않았을 겁니다."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 05:30 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">05:30</span>
+                    <h3 class="detail-title">클라우드 코드가 위임·병렬화를 촉발</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">⚡</div>
+                        <div class="caption">"This would obviously not have been possible to do even a year ago." - Engineering the future of AI</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>코드 편집기 제거가 전환점</li>
+                            <li>에이전트에 작업 위임 단계로 진입</li>
+                            <li>병렬 작업으로 처리량이 크게 증가</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">발표자는 전환점으로 '클라우드 코드'(터미널 기반 에이전트 코딩 환경)를 지목한다. 이는 단순한 IDE 대체가 아니라, 인간이 직접 편집기에서 구현하는 기본 루틴을 깨고 '에이전트에게 위임'하는 행동을 기본값으로 만든다는 점에서 의미가 있다.</p>
+                        <p class="text-block">코드 편집기 제거는 상징적이면서도 실무적으로 중요하다. 편집기 중심 개발은 인간의 연속적 주의와 손작업을 전제하지만, 에이전트 중심 개발은 작업을 패키징해 던지고 결과물을 검증하는 방식으로 바뀐다. 따라서 개발자의 역할은 구현자에서 감독자/설계자/평가자로 이동한다.</p>
+                        <p class="text-block">이 변화의 직접 효과는 병렬성이다. 인간은 한 번에 하나의 구현만 할 수 있었지만, 에이전트는 여러 작업을 동시에 진행할 수 있다. 결과적으로 동일 인력으로 더 많은 기능 개발, 버그 수정, 리팩터링 탐색이 가능해지며, 작은 팀의 처리량이 구조적으로 증가한다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge tool">TOOL</span> 클라우드 코드: 터미널 UI 기반 에이전트 코딩 환경으로 언급된다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 코드 편집기 제거가 '위임' 행동을 강제해 전환을 만든다.</li>
+                            <li><span class="tag-badge definition">DEFINITION</span> '위임 단계'는 작업을 에이전트에게 맡기고 결과를 받는 방식이다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 작업을 에이전트에 던져 병렬로 진행한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 병렬화는 소규모 팀의 처리량 상한을 끌어올린다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 개발자 역할이 구현 중심에서 설계·평가 중심으로 이동한다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"큰 변화는 클라우드 코드에서 시작됐습니다."</p>
+                        <p>"코드 편집기를 없애버리는 터미널 UI가 우리를 에이전트 위임 단계로 밀어붙였습니다."</p>
+                        <p>"병렬로 일해서 원래라면 할 수 있었던 것보다 훨씬 더 많은 일을 하게 됩니다."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 06:00 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">06:00</span>
+                    <h3 class="detail-title">병렬 에이전트와 저렴한 코드가 실험을 폭발</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">🔥</div>
+                        <div class="caption">"You can work on multiple features and bugs in parallel." - Engineering the future of AI</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>여러 기능·버그를 병렬 처리해 속도 향상</li>
+                            <li>코드가 싸져 위험한 아이디어도 시제품화</li>
+                            <li>시작 에너지 감소가 더 큰 진전을 만든다</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">발표자는 속도 향상의 본질을 '병렬 처리'로 정의한다. 과거에는 개발자가 한 번에 하나의 작업 흐름만 유지할 수 있었지만, 에이전트는 여러 작업을 동시에 진행할 수 있다. 이는 개인 생산성의 단순 향상이 아니라 작업 큐의 구조 자체를 바꾸는 변화다.</p>
+                        <p class="text-block">또 다른 축은 '코드의 한계비용 하락'이다. 에이전트가 구현 노동을 대체하면서, 아이디어를 시도하는 비용(시간/정신적 부담)이 크게 줄어든다. 그 결과 위험한 아이디어도 빠르게 프로토타입으로 검증할 수 있고, 실험 횟수가 늘어나며 학습 속도가 빨라진다.</p>
+                        <p class="text-block">이 두 요소가 결합되면 조직의 의사결정 방식도 바뀐다. 문서로 설득하거나 회의를 통해 합의하기 전에, 짧은 시간 내 데모/프로토타입으로 현실 검증이 가능해진다. 즉, '말로 논쟁'하던 단계에서 '만들어 보여주기'로 이동하며, 제품 발견(product discovery)과 기술 탐색이 더 촘촘해진다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 여러 기능과 버그를 에이전트로 병렬 처리한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 병렬 에이전트 운용은 1인이 실서비스를 만들고 운영하게 만든다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 코드가 '싸졌다'는 것은 구현 비용의 급락을 의미한다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 위험한 아이디어를 빠르게 시제품(프로토타입)으로 검증한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> '시작 에너지'가 낮아져 실험 빈도가 증가한다.</li>
+                            <li><span class="tag-badge tool">TOOL</span> 여러 창에서 에이전트를 동시에 돌리는 워크플로가 언급된다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"우리가 훨씬 더 빨리 나아갈 수 있는 건 여러 기능과 버그를 병렬로 처리할 수 있기 때문입니다."</p>
+                        <p>"코드가 싸기 때문에 위험한 아이디어도 시제품으로 만들어볼 수 있습니다."</p>
+                        <p>"뭔가를 시도하기 위한 시작 에너지가 너무 낮아졌습니다."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 07:20 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">07:20</span>
+                    <h3 class="detail-title">컴파운딩 엔지니어링: 계획-위임-평가-코드화</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">🔄</div>
+                        <div class="caption">무대 위 발표자 - "Compounding engineering" 4단계 루프 설명</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>지식 공유 방식의 이동, 설득보다 제작</li>
+                            <li>스택이 스크립팅에서 영어(자연어)로 상승</li>
+                            <li>암묵지를 프롬프트 라이브러리로 코드화</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">이 구간의 중심 개념은 '컴파운딩 엔지니어링(복리형 엔지니어링)'이다. 전통적 개발에서는 기능이 늘수록 복잡도가 누적되어 다음 변경이 어려워지지만, 발표자는 AI/에이전트 기반 개발에서는 기능을 추가할수록 다음 기능 개발이 더 쉬워지도록 '학습과 절차'를 축적할 수 있다고 본다. 즉, 코드뿐 아니라 '코드를 만드는 방법'이 자산화되며 누적 효과가 발생한다.</p>
+                        <p class="text-block">그 누적을 가능케 하는 운영 메커니즘이 4단계 루프(계획-위임-평가-코드화)다. 특히 마지막 '코드화'는 결과물(코드)보다 과정에서 얻은 암묵지를 프롬프트/문서/서브에이전트/슬래시 커맨드로 재사용 가능하게 만드는 단계다. 이는 개인의 노하우를 조직의 실행 가능한 인터페이스로 변환해, 재현성과 확산성을 동시에 높인다.</p>
+                        <p class="text-block">발표자는 이 루프가 만들어내는 2차 효과를 지식 공유·온보딩·협업 구조의 변화로 제시한다. AI가 저장소를 읽고 맥락을 흡수할 수 있으므로, 코드 공유를 위해 공통 라이브러리로 추상화하지 않아도 '과정 공유→자기 스택에서 재구현'이 가능해진다. 또한 신입/프리랜서가 첫날부터 생산적으로 기여하고, 제품 간 경계를 넘어 PR이 오가는 등 조직의 결합 비용이 낮아진다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge definition">DEFINITION</span> 컴파운딩 엔지니어링: 각 기능이 다음 기능을 더 쉽게 만들게 하는 개발 방식.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 4단계 루프: 계획 → 위임 → 평가 → 코드화.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 코드화: 배운 암묵지를 프롬프트/MD/서브에이전트/슬래시 커맨드로 축적.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 데모 중심 문화는 '설득'보다 '몇 시간 내 제작'으로 의사결정을 바꾼다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> AI가 코드를 읽을 수 있어, 라이브러리 추상화 없이도 지식/패턴 공유가 쉬워진다.</li>
+                            <li><span class="tag-badge tool">TOOL</span> 평가 수단으로 테스트, 직접 사용, 에이전트 자기검증, 코드 리뷰가 언급된다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"컴파운딩 엔지니어링에서는 각 기능이 다음 기능을 더 만들기 쉽게 만들어 주도록 하는 것입니다."</p>
+                        <p>"이 루프는 네 단계가 있어요: 계획, 위임, 평가, 그리고 '코드화'예요."</p>
+                        <p>"신입들이 첫날부터 생산적으로 일한다는 거에요."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 14:00 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">14:00</span>
+                    <h3 class="detail-title">고객도 에이전트로 버그 PR을 낼 수 있다</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">🐛</div>
+                        <div class="caption">무대 위 발표자 - 고객 협업 패턴 설명</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>앱 간 협업이 쉬워지고 내부에서 이미 발생</li>
+                            <li>버그를 작은 에이전트가 고쳐 PR 제출 가능</li>
+                            <li>오픈소스와 다른 새로운 협업 형태를 예고</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">발표자는 협업의 범위가 '조직 내부'에서 '고객'으로 확장될 가능성을 제기한다. 이는 사용자가 단순 피드백 제공자가 아니라, 에이전트를 통해 수정안을 생성하고 PR 형태로 전달하는 '참여형 유지보수' 모델로 이동할 수 있음을 의미한다.</p>
+                        <p class="text-block">이 모델은 전통적 오픈소스 기여와 유사해 보이지만, 진입 장벽이 다르다. 과거에는 사용자가 저장소를 이해하고 개발 환경을 구성해야 했지만, 에이전트가 맥락 파악과 수정 구현을 대행하면 사용자는 문제 재현과 의도 설명에 집중할 수 있다. 결과적으로 기여의 최소 요구 역량이 낮아진다.</p>
+                        <p class="text-block">또한 발표자는 이런 현상이 이미 사내에서 '많이 일어난다'고 말함으로써, 미래 예측이 아니라 현재 진행형의 패턴임을 강조한다. 이는 제품 운영에서 버그 수정과 작은 개선이 더 분산된 방식으로 처리될 수 있고, 유지보수 처리량이 사용자 기반과 함께 확장될 수 있다는 가능성을 시사한다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge insight">INSIGHT</span> 협업이 앱/제품 경계를 넘어 더 쉬워진다고 본다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 버그를 에이전트가 수정하고 PR로 제출하는 흐름을 제안한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 고객도 일정 수준 '수정 기여자'가 될 수 있다는 전망을 제시한다.</li>
+                            <li><span class="tag-badge definition">DEFINITION</span> 여기서 PR은 수정안을 코드 변경으로 제출하는 풀 리퀘스트를 뜻한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 전통적 오픈소스보다 진입 장벽이 낮은 기여 모델이 가능해진다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 사내에서 이미 이런 형태의 협업이 빈번히 발생한다고 말한다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"앞으로 몇 년 동안 고객들도 어느 정도는 이런 걸 할 수 있게 될 거라고 봐요."</p>
+                        <p>"버그를 만나면 작은 에이전트가 그걸 고치게 하고 풀 리퀘스트로 제출할 수도 있겠죠."</p>
+                        <p>"우리 회사 내부에서는 확실히 많이 일어나고 있습니다."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 14:35 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">14:35</span>
+                    <h3 class="detail-title">표준 스택 없이도 AI가 번역해 협업한다</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">🔀</div>
+                        <div class="caption">"Each team can work with the stack and language they like best—AI translates." - Engineering the future of AI</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>언어·프레임워크 표준화 필요가 낮아짐</li>
+                            <li>개발자가 선호 스택을 선택해도 생산성 유지</li>
+                            <li>AI가 스택 간 번역·이동 비용을 줄인다</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">발표자는 AI가 '기술 스택 표준화'의 필요성을 낮춘다고 주장한다. 전통적으로는 협업과 유지보수를 위해 언어/프레임워크를 통일하지만, 에이전트가 코드 이해와 변환을 보조하면 스택 다양성이 곧바로 생산성 저하로 이어지지 않을 수 있다.</p>
+                        <p class="text-block">이 접근은 인력 활용 측면에서 유연성을 제공한다. 제품별로 최적의 도구를 선택하거나, 개발자가 가장 익숙한 스택을 사용하게 함으로써 초기 속도를 높일 수 있다. 동시에 AI가 '번역 계층' 역할을 수행해, 다른 사람이 해당 코드베이스에 진입할 때의 학습 비용을 완화한다.</p>
+                        <p class="text-block">다만 이는 암묵적으로 'AI가 충분히 맥락을 읽고 변환할 수 있다'는 전제에 의존한다. 따라서 실제 운영에서는 코드 품질 기준, 테스트, 리뷰 체계가 함께 갖춰져야 스택 다양성이 기술 부채로 변하지 않는다. 발표자의 요지는 표준화가 사라진다는 것이 아니라, 표준화의 강제력이 약해지고 선택지가 넓어진다는 데 있다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge insight">INSIGHT</span> AI가 스택 간 번역 비용을 낮춰 표준화 압력을 줄인다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 제품/개발자별로 선호 스택을 선택하고 AI로 상호 이해를 보완한다.</li>
+                            <li><span class="tag-badge definition">DEFINITION</span> '번역'은 언어/프레임워크 차이를 AI가 중개해 이해·수정을 돕는 것을 뜻한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 새로운 환경에 '뛰어들어' 생산적으로 일하는 진입 비용이 감소한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 스택 다양성은 인력 배치 유연성과 초기 속도를 높일 수 있다.</li>
+                            <li><span class="tag-badge tool">TOOL</span> 인공지능이 중간에서 번역을 처리한다는 '에이전트/LLM' 활용이 전제다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"우리는 아직 특정 스택이나 언어로 표준화를 할 필요가 없었어요."</p>
+                        <p>"그 이유는 인공지능이 서로 간에 훨씬 더 쉽게 번역하게 해주기 때문이에요."</p>
+                        <p>"어떤 언어든 프레임워크든 환경에 뛰어들어서 생산적으로 일하기 쉽게 해줘요."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 15:09 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">15:09</span>
+                    <h3 class="detail-title">AI로 매니저도 쪼개진 시간에 PR을 낸다</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">👔</div>
+                        <div class="caption">"Managers can commit code (even the CEO)" - Engineering the future of AI</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>매니저/CEO도 코드 커밋이 가능해짐</li>
+                            <li>3~4시간 집중 블록 없이도 작업 진행</li>
+                            <li>회의 후 위임→복귀 시 계획/해결책으로 PR</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">발표자는 AI/에이전트가 '관리자도 코드 변경에 참여'할 수 있게 만든다고 주장한다. 이는 단순히 권한의 문제가 아니라, 시간 사용 패턴의 변화(연속 집중 → 단속적 개입)로 인해 가능한 일이다. 관리 업무는 맥락 전환이 잦은데, 에이전트가 조사·초안·수정안을 준비하면 관리자는 짧은 틈에 검토·결정·제출을 수행할 수 있다.</p>
+                        <p class="text-block">그가 제시한 과거의 제약은 '3~4시간 집중 블록'이다. 전통적 개발은 환경 세팅, 재현, 디버깅, 수정, 테스트까지 연속 흐름이 필요해 단절된 시간으로는 성과를 내기 어렵다. 클라우드 코드 기반 위임은 이 흐름을 분리해, 조사/분석을 에이전트가 수행하고 인간은 결과를 기반으로 의사결정과 최종 제출을 한다.</p>
+                        <p class="text-block">이 변화는 제품-조직 관계에도 영향을 준다. 매니저가 코드에 직접 개입할 수 있으면, 문제 발견→수정→배포의 루프가 짧아지고, 제품 감각이 문서/리포트가 아니라 실제 코드/PR을 통해 강화될 수 있다. 동시에 품질·권한·리뷰 체계를 어떻게 설계하느냐에 따라 '무서운' 결과(혼란)도 가능하다는 양면성이 존재한다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge insight">INSIGHT</span> 매니저/CEO도 코드 커밋이 가능한 환경이 열리고 있다.</li>
+                            <li><span class="tag-badge metric">METRIC</span> 과거에는 3~4시간짜리 집중 블록이 필요했다고 언급한다.</li>
+                            <li><span class="tag-badge technique">TECHNIQUE</span> 회의 직후 '버그 조사 위임' 후 복귀해 계획/해결책을 받아 PR로 연결한다.</li>
+                            <li><span class="tag-badge tool">TOOL</span> 클라우드 코드가 단속적 작업(쪼개진 집중력)을 가능하게 한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 마법은 아니지만 '가능'해졌다는 것이 핵심 전환점이다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 관리자의 제품 상호작용 방식이 문서 중심에서 코드/PR 중심으로 이동할 수 있다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"매니저가 코드를 커밋할 수 있다는 거에요."</p>
+                        <p>"예전에는 뭔가를 해내려면 3~4시간짜리 집중 블록이 필요했을 거예요."</p>
+                        <p>"회의에서 나오자마자 '이 버그 좀 조사해줘'라고 말해놓고 돌아오면 계획을 갖고 PR을 제출할 수 있어요."</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 16:20 -->
+            <div class="detail-section">
+                <div class="detail-header">
+                    <span class="detail-time">16:20</span>
+                    <h3 class="detail-title">AI 100% 도입이 협업까지 바꾸는 10배 효과</h3>
+                </div>
+                <div class="detail-body">
+                    <div class="image-placeholder">
+                        <div class="icon">🎯</div>
+                        <div class="caption">결론 슬라이드 - "1. 10x difference when you hit 100% AI adoption. 2. A single engineer should be able to build and maintain a complex, production product. 3. Compounding engineering makes each feature easier to build. 4. There are many non-obvious second-order effects once you adopt it. 5. Many people in SF don't know this yet."</div>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">Key Points</div>
+                        <ul class="bullet-list">
+                            <li>100% 도입 시 1인이 복잡한 실서비스 구축·유지</li>
+                            <li>복리형 엔지니어링이 2차 효과로 협업을 개선</li>
+                            <li>Every는 뉴스레터·앱·교육을 구독으로 제공</li>
+                        </ul>
+                    </div>
+
+                    <div class="detail-subsection">
+                        <div class="subsection-label">주요 정보</div>
+                        <p class="text-block">결론에서 발표자는 다시 '10배 격차'와 '100% 도입'의 임계점을 강조한다. 핵심은 AI가 일부 업무를 돕는 수준이 아니라, 조직의 기본 작업 경로가 AI/에이전트 중심으로 재설계될 때 개인과 팀의 산출 한계가 재정의된다는 주장이다. 그 결과로 '1인 엔지니어가 복잡한 실서비스를 구축·유지'하는 운영 모델이 현실화된다고 말한다.</p>
+                        <p class="text-block">그가 제시하는 메커니즘은 복리형 엔지니어링의 누적 효과와 2차 효과다. 기능 개발이 다음 개발을 더 쉽게 만들도록 프로세스/지식이 축적되면, 단순 생산성 향상을 넘어 조직 협업 구조가 바뀐다. 즉, 지식 공유·온보딩·교차 기여가 쉬워지며, 이는 조직 전체의 속도와 품질에 간접적으로 큰 영향을 준다.</p>
+                        <p class="text-block">마지막 부분은 Every의 사업 구성(뉴스레터, 앱, 교육/컨설팅)을 '하나의 구독'으로 묶어 제공한다는 설명이다. 이는 AI 변화 속도가 빠른 환경에서 정보(리뷰/뉴스), 도구(앱), 역량 강화(교육/컨설팅)를 패키지로 제공해 고객의 학습·도입 비용을 낮추려는 포지셔닝으로 해석할 수 있다.</p>
+
+                        <ul class="tag-list">
+                            <li><span class="tag-badge metric">METRIC</span> AI를 100% 도입하면 '10배 차이'가 난다고 재강조한다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 1명의 엔지니어가 복잡한 실서비스 제품을 구축·유지할 수 있어야 한다고 주장한다.</li>
+                            <li><span class="tag-badge definition">DEFINITION</span> '복리형 엔지니어링'은 각 기능이 다음 기능 개발을 더 쉽게 만드는 방식이다.</li>
+                            <li><span class="tag-badge insight">INSIGHT</span> 복리형 접근은 '겉으로 드러나지 않는 2차 효과'로 협업을 쉽게 만든다.</li>
+                            <li><span class="tag-badge tool">TOOL</span> Every는 every.to에서 제공되는 구독 기반 서비스로 소개된다.</li>
+                            <li><span class="tag-badge metric">METRIC</span> Every는 AI 일간 뉴스레터, 앱 번들, 교육/컨설팅을 '하나의 구독·한 가지 가격'에 포함한다고 말한다.</li>
+                        </ul>
+                    </div>
+
+                    <div class="quote">
+                        <span class="quote-mark">Notable Quotes</span>
+                        <p>"인공지능을 100% 도입하는 단계에 도달하면 정말로 10배 차이가 있다고 생각해요."</p>
+                        <p>"한 명의 엔지니어만으로도 복잡한 프로덕션 제품을 구축하고 유지보수할 수 있어야 해요."</p>
+                        <p>"각 기능이 다음 기능을 더 쉽게 만들게 해주고, 2차적 효과로 조직 전체가 협업하기 더 쉬워집니다."</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONCLUSION -->
+        <div class="conclusion">
+            <h3>10배 격차와 <span class="highlight">100% 도입</span>의 임계점</h3>
+            <p>핵심은 AI가 일부 업무를 돕는 수준이 아니라, 조직의 기본 작업 경로가 AI/에이전트 중심으로 재설계될 때 개인과 팀의 산출 한계가 재정의된다는 주장이다.</p>
+            <p>그 결과로 <span class="highlight">'1인 엔지니어가 복잡한 실서비스를 구축·유지'</span>하는 운영 모델이 현실화되며, 컴파운딩 엔지니어링을 통해 조직 전체의 협업과 온보딩 비용이 낮아진다.</p>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <p>Generated by yt2pdf</p>
+            <p>영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.</p>
+        </footer>
+    </div>
+</body>
+</html>
