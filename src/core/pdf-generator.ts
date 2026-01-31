@@ -8,9 +8,21 @@ import * as path from 'path';
 import * as https from 'https';
 import * as http from 'http';
 import { PDFDocument as PDFLibDocument, PDFName } from 'pdf-lib';
-import { PDFContent, PDFSection, VideoMetadata, ContentSummary, ExecutiveBrief } from '../types/index.js';
+import {
+  PDFContent,
+  PDFSection,
+  VideoMetadata,
+  ContentSummary,
+  ExecutiveBrief,
+} from '../types/index.js';
 import { PDFConfig } from '../types/config.js';
-import { formatTimestamp, buildTimestampUrl, cleanSubtitleText, deduplicateSubtitles, cleanMixedLanguageText } from '../utils/index.js';
+import {
+  formatTimestamp,
+  buildTimestampUrl,
+  cleanSubtitleText,
+  deduplicateSubtitles,
+  cleanMixedLanguageText,
+} from '../utils/index.js';
 import { logger } from '../utils/logger.js';
 
 /**
@@ -46,16 +58,47 @@ function normalizeTextForPDF(text: string): string {
   // 7. 확장 라틴 문자 처리 (PDFKit 폰트 폴백 문제 방지)
   // 일반적인 확장 라틴을 기본 ASCII로 변환
   const latinMap: Record<string, string> = {
-    'ħ': 'h', 'Ħ': 'H',
-    'ı': 'i', 'İ': 'I', 'Ĩ': 'I', 'ĩ': 'i',
-    'ł': 'l', 'Ł': 'L',
-    'ñ': 'n', 'Ñ': 'N',
-    'ø': 'o', 'Ø': 'O',
-    'ß': 'ss',
-    'þ': 'th', 'Þ': 'Th',
-    'đ': 'd', 'Đ': 'D',
+    ħ: 'h',
+    Ħ: 'H',
+    ı: 'i',
+    İ: 'I',
+    Ĩ: 'I',
+    ĩ: 'i',
+    ł: 'l',
+    Ł: 'L',
+    ñ: 'n',
+    Ñ: 'N',
+    ø: 'o',
+    Ø: 'O',
+    ß: 'ss',
+    þ: 'th',
+    Þ: 'Th',
+    đ: 'd',
+    Đ: 'D',
   };
   for (const [from, to] of Object.entries(latinMap)) {
+    normalized = normalized.replace(new RegExp(from, 'g'), to);
+  }
+
+  // 7.5. Symbol/Arrow replacements for font compatibility
+  const symbolMap: Record<string, string> = {
+    '→': '->',
+    '←': '<-',
+    '↔': '<->',
+    '⇒': '=>',
+    '⇐': '<=',
+    '⇔': '<=>',
+    '•': '-',
+    '·': '-',
+    '…': '...',
+    '–': '-',
+    '—': '-',
+    '「': '"',
+    '」': '"',
+    '『': '"',
+    '』': '"',
+  };
+  for (const [from, to] of Object.entries(symbolMap)) {
     normalized = normalized.replace(new RegExp(from, 'g'), to);
   }
 
@@ -141,7 +184,7 @@ const VIDEO_TYPE_LABELS: Record<string, string> = {
  * Extracted helper to avoid DRY violations across multiple methods
  */
 function processSubtitles(subtitles: { text: string }[], forPDF: boolean = true): string[] {
-  const subtitleTexts = subtitles.map(sub => {
+  const subtitleTexts = subtitles.map((sub) => {
     const cleaned = cleanSubtitleText(sub.text);
     const mixed = cleanMixedLanguageText(cleaned, 'ko');
     return forPDF ? normalizeTextForPDF(mixed) : mixed;
@@ -375,9 +418,21 @@ export class PDFGenerator {
 
         // 표지 (썸네일 + 요약 포함)
         if (this.config.layout === 'minimal-neon') {
-          this.renderMinimalNeonCoverPage(doc, content.metadata, thumbnailBuffer, content.sections.length, content.summary);
+          this.renderMinimalNeonCoverPage(
+            doc,
+            content.metadata,
+            thumbnailBuffer,
+            content.sections.length,
+            content.summary
+          );
         } else {
-          this.renderCoverPageSync(doc, content.metadata, thumbnailBuffer, content.sections.length, content.summary);
+          this.renderCoverPageSync(
+            doc,
+            content.metadata,
+            thumbnailBuffer,
+            content.sections.length,
+            content.summary
+          );
         }
 
         // 목차 (옵션)
@@ -390,9 +445,12 @@ export class PDFGenerator {
         }
 
         // 섹션 필터링: 최종 처리 후 콘텐츠가 부족한 섹션 제외
-        const validSections = content.sections.filter(section => {
+        const validSections = content.sections.filter((section) => {
           const dedupedTexts = processSubtitles(section.subtitles);
-          const totalWords = dedupedTexts.join(' ').split(/\s+/).filter(w => w.length > 0).length;
+          const totalWords = dedupedTexts
+            .join(' ')
+            .split(/\s+/)
+            .filter((w) => w.length > 0).length;
           return totalWords >= 10; // 최종 처리 후 10단어 이상만 포함
         });
 
@@ -823,29 +881,39 @@ export class PDFGenerator {
   </div>
   <hr>
 
-${content.summary && content.summary.summary ? `
+${
+  content.summary && content.summary.summary
+    ? `
   <!-- 요약 -->
   <div class="summary" style="margin:20px 0;padding:20px;background:var(--section-bg);border-radius:12px;border:1px solid var(--border-color);border-left:4px solid var(--link-color);">
     <h2 style="margin:0 0 12px 0;font-size:18px;color:var(--text-color);">📝 요약</h2>
     <p style="margin:0;line-height:1.8;color:var(--text-color);">${content.summary.summary}</p>
-${content.summary.keyPoints && content.summary.keyPoints.length > 0 ? `
+${
+  content.summary.keyPoints && content.summary.keyPoints.length > 0
+    ? `
     <h3 style="margin:15px 0 8px 0;font-size:14px;color:var(--secondary-color);">💡 핵심 포인트</h3>
     <ul style="margin:0;padding-left:20px;color:var(--text-color);">
 ${content.summary.keyPoints.map((point) => `      <li style="margin:5px 0">${point}</li>`).join('\n')}
     </ul>
-` : ''}
+`
+    : ''
+}
   </div>
   <hr>
-` : ''}
+`
+    : ''
+}
   <!-- 목차 -->
   <nav class="toc">
     <h2>📑 목차 <span style="font-size:12px;font-weight:normal;color:var(--secondary-color)">(${sections.length}개 섹션)</span></h2>
     <ul class="toc-list">
-${sections.map((s) => {
-      const sectionDeduped = processSubtitles(s.subtitles, false);
-      const tsId = timestamp(s.timestamp).replace(/:/g, '');
-      return `      <li><a href="#section-${tsId}" title="${sectionDeduped.length}줄">${timestamp(s.timestamp)}</a></li>`;
-    }).join('\n')}
+${sections
+  .map((s) => {
+    const sectionDeduped = processSubtitles(s.subtitles, false);
+    const tsId = timestamp(s.timestamp).replace(/:/g, '');
+    return `      <li><a href="#section-${tsId}" title="${sectionDeduped.length}줄">${timestamp(s.timestamp)}</a></li>`;
+  })
+  .join('\n')}
     </ul>
   </nav>
 `;
@@ -867,10 +935,14 @@ ${sections.map((s) => {
         sectionSummaryHtml = `
     <div class="section-summary" style="margin:10px 0;padding:12px 15px;background:linear-gradient(135deg, var(--border-color) 0%, transparent 100%);border-radius:8px;border-left:3px solid var(--link-color);">
       <div style="font-size:13px;color:var(--text-color);line-height:1.6;margin-bottom:8px;">${section.sectionSummary.summary}</div>
-      ${section.sectionSummary.keyPoints.length > 0 ? `
+      ${
+        section.sectionSummary.keyPoints.length > 0
+          ? `
       <ul style="margin:0;padding-left:18px;font-size:12px;color:var(--secondary-color);">
         ${section.sectionSummary.keyPoints.map((p) => `<li style="margin:3px 0">${p}</li>`).join('')}
-      </ul>` : ''}
+      </ul>`
+          : ''
+      }
     </div>`;
       }
 
@@ -894,10 +966,7 @@ ${sections.map((s) => {
       } else {
         for (const text of dedupedTexts) {
           // HTML 출력에서는 특수문자 이스케이프
-          const escaped = text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;');
+          const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
           html += `      <p>${escaped}</p>\n`;
         }
       }
@@ -1159,11 +1228,11 @@ ${sections.map((s) => {
     // Helper function to get tag badge class and color
     const getTagBadgeClass = (tag: string): string => {
       const tagMap: Record<string, string> = {
-        'INSIGHT': 'insight',
-        'TECHNIQUE': 'technique',
-        'DEFINITION': 'definition',
-        'METRIC': 'metric',
-        'TOOL': 'tool',
+        INSIGHT: 'insight',
+        TECHNIQUE: 'technique',
+        DEFINITION: 'definition',
+        METRIC: 'metric',
+        TOOL: 'tool',
       };
       return tagMap[tag] || 'insight';
     };
@@ -1179,31 +1248,37 @@ ${sections.map((s) => {
     };
 
     // Build TOC items HTML
-    const tocItemsHtml = sections.map((section, idx) => {
-      const ts = formatTimestamp(section.timestamp);
-      const title = section.chapterTitle ||
-        section.sectionSummary?.summary?.substring(0, 50) ||
-        `섹션 ${idx + 1}`;
-      return `                <div class="toc-item"><span class="toc-time">${ts}</span><span class="toc-title">${this.escapeHtml(title)}</span></div>`;
-    }).join('\n');
+    const tocItemsHtml = sections
+      .map((section, idx) => {
+        const ts = formatTimestamp(section.timestamp);
+        const title =
+          section.chapterTitle ||
+          section.sectionSummary?.summary?.substring(0, 50) ||
+          `섹션 ${idx + 1}`;
+        return `                <div class="toc-item"><span class="toc-time">${ts}</span><span class="toc-title">${this.escapeHtml(title)}</span></div>`;
+      })
+      .join('\n');
 
     // Build Key Insights HTML
     let keyInsightsHtml = '';
     if (summary && summary.keyPoints && summary.keyPoints.length > 0) {
-      const insightCards = summary.keyPoints.map((point, idx) => {
-        const num = String(idx + 1).padStart(2, '0');
-        // Try to extract title from the point (first sentence or first few words)
-        const sentences = point.split(/[.!?]/);
-        const title = sentences[0].length > 50 ? sentences[0].substring(0, 47) + '...' : sentences[0];
-        const description = sentences.length > 1 ? sentences.slice(1).join('.').trim() : '';
-        return `                <div class="insight-card">
+      const insightCards = summary.keyPoints
+        .map((point, idx) => {
+          const num = String(idx + 1).padStart(2, '0');
+          // Try to extract title from the point (first sentence or first few words)
+          const sentences = point.split(/[.!?]/);
+          const title =
+            sentences[0].length > 50 ? sentences[0].substring(0, 47) + '...' : sentences[0];
+          const description = sentences.length > 1 ? sentences.slice(1).join('.').trim() : '';
+          return `                <div class="insight-card">
                     <div class="insight-num">${num}</div>
                     <div class="insight-content">
                         <h4>${this.escapeHtml(title)}</h4>
                         <p>${this.escapeHtml(description || point)}</p>
                     </div>
                 </div>`;
-      }).join('\n');
+        })
+        .join('\n');
 
       keyInsightsHtml = `
         <!-- KEY INSIGHTS -->
@@ -1217,82 +1292,92 @@ ${insightCards}
     }
 
     // Build Detail Sections HTML
-    const detailSectionsHtml = sections.map((section, idx) => {
-      const ts = formatTimestamp(section.timestamp);
-      const title = section.chapterTitle ||
-        section.sectionSummary?.summary?.substring(0, 60) ||
-        `섹션 ${idx + 1}`;
-      const imgName = path.basename(section.screenshot.imagePath);
-      const youtubeLink = buildTimestampUrl(metadata.id, section.timestamp);
+    const detailSectionsHtml = sections
+      .map((section, idx) => {
+        const ts = formatTimestamp(section.timestamp);
+        const title =
+          section.chapterTitle ||
+          section.sectionSummary?.summary?.substring(0, 60) ||
+          `섹션 ${idx + 1}`;
+        const imgName = path.basename(section.screenshot.imagePath);
+        const youtubeLink = buildTimestampUrl(metadata.id, section.timestamp);
 
-      // Key Points HTML
-      let keyPointsHtml = '';
-      if (section.sectionSummary?.keyPoints && section.sectionSummary.keyPoints.length > 0) {
-        const bulletItems = section.sectionSummary.keyPoints.map(point =>
-          `                            <li>${this.escapeHtml(point)}</li>`
-        ).join('\n');
-        keyPointsHtml = `
+        // Key Points HTML
+        let keyPointsHtml = '';
+        if (section.sectionSummary?.keyPoints && section.sectionSummary.keyPoints.length > 0) {
+          const bulletItems = section.sectionSummary.keyPoints
+            .map((point) => `                            <li>${this.escapeHtml(point)}</li>`)
+            .join('\n');
+          keyPointsHtml = `
                     <div class="detail-subsection">
                         <div class="subsection-label">Key Points</div>
                         <ul class="bullet-list">
 ${bulletItems}
                         </ul>
                     </div>`;
-      }
-
-      // Main Information HTML with tags
-      let mainInfoHtml = '';
-      if (section.sectionSummary?.mainInformation) {
-        const mainInfo = section.sectionSummary.mainInformation;
-        let paragraphsHtml = '';
-        let bulletsHtml = '';
-
-        if (mainInfo.paragraphs && mainInfo.paragraphs.length > 0) {
-          paragraphsHtml = mainInfo.paragraphs.map(para =>
-            `                        <p class="text-block">${this.escapeHtml(para)}</p>`
-          ).join('\n');
         }
 
-        if (mainInfo.bullets && mainInfo.bullets.length > 0) {
-          const taggedBullets = mainInfo.bullets.map(bullet => {
-            const { tag, content } = parseTaggedBullet(bullet);
-            if (tag) {
-              const tagClass = getTagBadgeClass(tag);
-              return `                            <li><span class="tag-badge ${tagClass}">${tag}</span> ${this.escapeHtml(content)}</li>`;
-            }
-            return `                            <li>${this.escapeHtml(bullet)}</li>`;
-          }).join('\n');
+        // Main Information HTML with tags
+        let mainInfoHtml = '';
+        if (section.sectionSummary?.mainInformation) {
+          const mainInfo = section.sectionSummary.mainInformation;
+          let paragraphsHtml = '';
+          let bulletsHtml = '';
 
-          bulletsHtml = `
+          if (mainInfo.paragraphs && mainInfo.paragraphs.length > 0) {
+            paragraphsHtml = mainInfo.paragraphs
+              .map(
+                (para) =>
+                  `                        <p class="text-block">${this.escapeHtml(para)}</p>`
+              )
+              .join('\n');
+          }
+
+          if (mainInfo.bullets && mainInfo.bullets.length > 0) {
+            const taggedBullets = mainInfo.bullets
+              .map((bullet) => {
+                const { tag, content } = parseTaggedBullet(bullet);
+                if (tag) {
+                  const tagClass = getTagBadgeClass(tag);
+                  return `                            <li><span class="tag-badge ${tagClass}">${tag}</span> ${this.escapeHtml(content)}</li>`;
+                }
+                return `                            <li>${this.escapeHtml(bullet)}</li>`;
+              })
+              .join('\n');
+
+            bulletsHtml = `
                         <ul class="tag-list">
 ${taggedBullets}
                         </ul>`;
-        }
+          }
 
-        if (paragraphsHtml || bulletsHtml) {
-          mainInfoHtml = `
+          if (paragraphsHtml || bulletsHtml) {
+            mainInfoHtml = `
                     <div class="detail-subsection">
                         <div class="subsection-label">주요 정보</div>
 ${paragraphsHtml}
 ${bulletsHtml}
                     </div>`;
+          }
         }
-      }
 
-      // Notable Quotes HTML
-      let quotesHtml = '';
-      if (section.sectionSummary?.notableQuotes && section.sectionSummary.notableQuotes.length > 0) {
-        const quoteItems = section.sectionSummary.notableQuotes.map(quote =>
-          `                        <p>"${this.escapeHtml(quote)}"</p>`
-        ).join('\n');
-        quotesHtml = `
+        // Notable Quotes HTML
+        let quotesHtml = '';
+        if (
+          section.sectionSummary?.notableQuotes &&
+          section.sectionSummary.notableQuotes.length > 0
+        ) {
+          const quoteItems = section.sectionSummary.notableQuotes
+            .map((quote) => `                        <p>"${this.escapeHtml(quote)}"</p>`)
+            .join('\n');
+          quotesHtml = `
                     <div class="quote">
                         <span class="quote-mark">Notable Quotes</span>
 ${quoteItems}
                     </div>`;
-      }
+        }
 
-      return `
+        return `
             <div class="detail-section">
                 <div class="detail-header">
                     <a href="${youtubeLink}" target="_blank" class="detail-time">${ts}</a>
@@ -1308,16 +1393,17 @@ ${quotesHtml}
                 </div>
             </div>
 `;
-    }).join('\n');
+      })
+      .join('\n');
 
     // Executive Summary HTML
     let execSummaryHtml = '';
     if (summary && summary.summary) {
       // Split summary into paragraphs
-      const paragraphs = summary.summary.split(/\n\n|\n/).filter(p => p.trim());
-      const paragraphsHtml = paragraphs.map(para =>
-        `            <p class="text-block">${this.escapeHtml(para)}</p>`
-      ).join('\n');
+      const paragraphs = summary.summary.split(/\n\n|\n/).filter((p) => p.trim());
+      const paragraphsHtml = paragraphs
+        .map((para) => `            <p class="text-block">${this.escapeHtml(para)}</p>`)
+        .join('\n');
 
       execSummaryHtml = `
         <!-- EXECUTIVE SUMMARY -->
@@ -2142,16 +2228,22 @@ ${detailSectionsHtml}
     <p class="summary-text">${brief.summary}</p>
   </section>
 
-${brief.keyTakeaways.length > 0 ? `
+${
+  brief.keyTakeaways.length > 0
+    ? `
   <section>
     <h2>💡 Key Takeaways</h2>
     <ul>
-${brief.keyTakeaways.map(point => `      <li>${point}</li>`).join('\n')}
+${brief.keyTakeaways.map((point) => `      <li>${point}</li>`).join('\n')}
     </ul>
   </section>
-` : ''}
+`
+    : ''
+}
 
-${brief.chapterSummaries.length > 0 ? `
+${
+  brief.chapterSummaries.length > 0
+    ? `
   <section>
     <h2>📑 챕터별 요약</h2>
     <table class="chapter-table">
@@ -2159,22 +2251,32 @@ ${brief.chapterSummaries.length > 0 ? `
         <tr><th>시간</th><th>챕터</th><th>요약</th></tr>
       </thead>
       <tbody>
-${brief.chapterSummaries.map(ch => `        <tr>
+${brief.chapterSummaries
+  .map(
+    (ch) => `        <tr>
           <td><a href="${buildTimestampUrl(brief.metadata.videoId, ch.startTime)}" target="_blank">${formatTimestamp(ch.startTime)}</a></td>
           <td>${ch.title}</td>
           <td>${ch.summary}</td>
-        </tr>`).join('\n')}
+        </tr>`
+  )
+  .join('\n')}
       </tbody>
     </table>
   </section>
-` : ''}
+`
+    : ''
+}
 
-${brief.actionItems && brief.actionItems.length > 0 ? `
+${
+  brief.actionItems && brief.actionItems.length > 0
+    ? `
   <section class="card">
     <h2>🎯 Action Items</h2>
-${brief.actionItems.map(item => `    <div class="action-item"><input type="checkbox"><span>${item}</span></div>`).join('\n')}
+${brief.actionItems.map((item) => `    <div class="action-item"><input type="checkbox"><span>${item}</span></div>`).join('\n')}
   </section>
-` : ''}
+`
+    : ''
+}
 
   <footer class="footer">
     <p>📎 <a href="https://youtube.com/watch?v=${brief.metadata.videoId}" target="_blank">YouTube에서 보기</a></p>
@@ -2192,7 +2294,9 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
    */
   private drawBriefSeparator(doc: PDFKit.PDFDocument): void {
     const { theme } = this;
-    doc.strokeColor(theme.colors.secondary).lineWidth(0.5)
+    doc
+      .strokeColor(theme.colors.secondary)
+      .lineWidth(0.5)
       .moveTo(theme.margins.left, doc.y)
       .lineTo(doc.page.width - theme.margins.right, doc.y)
       .stroke();
@@ -2223,7 +2327,9 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .fontSize(10)
       .fillColor(theme.colors.secondary)
       .text(
-        normalizeTextForPDF(`채널: ${brief.metadata.channel} | 길이: ${formatTimestamp(brief.metadata.duration)} | 유형: ${VIDEO_TYPE_LABELS[brief.metadata.videoType] || brief.metadata.videoType}`),
+        normalizeTextForPDF(
+          `채널: ${brief.metadata.channel} | 길이: ${formatTimestamp(brief.metadata.duration)} | 유형: ${VIDEO_TYPE_LABELS[brief.metadata.videoType] || brief.metadata.videoType}`
+        ),
         { width: pageWidth }
       );
 
@@ -2273,7 +2379,11 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
       doc.font(theme.fonts.body.name).fontSize(10).fillColor(theme.colors.text);
       for (const point of brief.keyTakeaways) {
-        doc.text(normalizeTextForPDF(`• ${point}`), { width: pageWidth - 15, indent: 10, lineGap: 2 });
+        doc.text(normalizeTextForPDF(`• ${point}`), {
+          width: pageWidth - 15,
+          indent: 10,
+          lineGap: 2,
+        });
       }
 
       doc.moveDown(0.8);
@@ -2306,9 +2416,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
           .text(normalizeTextForPDF(chapter.title), { continued: chapter.summary ? true : false });
 
         if (chapter.summary) {
-          doc
-            .fillColor(theme.colors.secondary)
-            .text(normalizeTextForPDF(` - ${chapter.summary}`));
+          doc.fillColor(theme.colors.secondary).text(normalizeTextForPDF(` - ${chapter.summary}`));
         }
       }
 
@@ -2330,7 +2438,11 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
       doc.font(theme.fonts.body.name).fontSize(10).fillColor(theme.colors.text);
       for (const item of brief.actionItems) {
-        doc.text(normalizeTextForPDF(`□ ${item}`), { width: pageWidth - 15, indent: 10, lineGap: 2 });
+        doc.text(normalizeTextForPDF(`□ ${item}`), {
+          width: pageWidth - 15,
+          indent: 10,
+          lineGap: 2,
+        });
       }
     }
 
@@ -2339,13 +2451,21 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     doc
       .fontSize(8)
       .fillColor(theme.colors.secondary)
-      .text(`원본: https://youtube.com/watch?v=${brief.metadata.videoId}`, { align: 'center', link: `https://youtube.com/watch?v=${brief.metadata.videoId}` });
+      .text(`원본: https://youtube.com/watch?v=${brief.metadata.videoId}`, {
+        align: 'center',
+        link: `https://youtube.com/watch?v=${brief.metadata.videoId}`,
+      });
 
     doc.moveDown(0.3);
     doc
       .fontSize(7)
       .fillColor('#9ca3af')
-      .text('Generated by yt2pdf | 영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.', { align: 'center' });
+      .text(
+        normalizeTextForPDF(
+          'Generated by yt2pdf | 영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.'
+        ),
+        { align: 'center' }
+      );
   }
 
   /**
@@ -2452,10 +2572,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
       doc.moveDown(0.3);
 
-      doc
-        .font(theme.fonts.body.name)
-        .fontSize(theme.fonts.body.size)
-        .fillColor(theme.colors.text);
+      doc.font(theme.fonts.body.name).fontSize(theme.fonts.body.size).fillColor(theme.colors.text);
 
       for (const point of summary.keyPoints) {
         doc.text(normalizeTextForPDF(`• ${point}`), { indent: 10, width: pageWidth - 10 });
@@ -2468,16 +2585,15 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
    */
   private renderCoverFooter(doc: PDFKit.PDFDocument): void {
     doc.moveDown(2);
-    doc
-      .fontSize(9)
-      .fillColor('#9ca3af')
-      .text('Generated by yt2pdf', { align: 'center' });
+    doc.fontSize(9).fillColor('#9ca3af').text('Generated by yt2pdf', { align: 'center' });
 
     doc.moveDown(0.5);
     doc
       .fontSize(8)
       .fillColor('#9ca3af')
-      .text('영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.', { align: 'center' });
+      .text(normalizeTextForPDF('영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.'), {
+        align: 'center',
+      });
   }
 
   /**
@@ -2639,10 +2755,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         .text('💡 핵심 포인트', { width: pageWidth });
       doc.moveDown(0.3);
 
-      doc
-        .font(theme.fonts.body.name)
-        .fontSize(10)
-        .fillColor(theme.colors.text);
+      doc.font(theme.fonts.body.name).fontSize(10).fillColor(theme.colors.text);
 
       for (const point of section.sectionSummary.keyPoints) {
         doc.text(normalizeTextForPDF(`• ${point}`), { width: pageWidth, indent: 10 });
@@ -2661,10 +2774,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         .text('📋 주요 정보', { width: pageWidth });
       doc.moveDown(0.3);
 
-      doc
-        .font(theme.fonts.body.name)
-        .fontSize(10)
-        .fillColor(theme.colors.text);
+      doc.font(theme.fonts.body.name).fontSize(10).fillColor(theme.colors.text);
 
       // Paragraphs
       if (mainInfo.paragraphs && mainInfo.paragraphs.length > 0) {
@@ -2688,7 +2798,11 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
             doc
               .fillColor(dimGray)
-              .text(normalizeTextForPDF(`• ${tag}`), { width: pageWidth, indent: 10, continued: true })
+              .text(normalizeTextForPDF(`• ${tag}`), {
+                width: pageWidth,
+                indent: 10,
+                continued: true,
+              })
               .fillColor(theme.colors.text)
               .text(normalizeTextForPDF(content));
           } else {
@@ -2710,10 +2824,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         .text('💬 주목할 만한 인용', { width: pageWidth });
       doc.moveDown(0.3);
 
-      doc
-        .font(theme.fonts.body.name)
-        .fontSize(9)
-        .fillColor(theme.colors.secondary);
+      doc.font(theme.fonts.body.name).fontSize(9).fillColor(theme.colors.secondary);
 
       for (const quote of section.sectionSummary.notableQuotes) {
         doc.text(normalizeTextForPDF(`"${quote}"`), { width: pageWidth, indent: 10 });
@@ -2741,10 +2852,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         .fillColor(theme.colors.secondary)
         .text('(이 구간에 자막이 없습니다)', { align: 'center' });
     } else {
-      doc
-        .font(theme.fonts.body.name)
-        .fontSize(theme.fonts.body.size)
-        .fillColor(theme.colors.text);
+      doc.font(theme.fonts.body.name).fontSize(theme.fonts.body.size).fillColor(theme.colors.text);
 
       const maxY = doc.page.height - theme.margins.bottom - 50;
 
@@ -2765,11 +2873,14 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
    * Check if section has AI-enhanced content
    */
   private hasEnhancedContent(section: PDFSection): boolean {
-    return !!(section.sectionSummary && (
-      (section.sectionSummary.keyPoints && section.sectionSummary.keyPoints.length > 0) ||
-      (section.sectionSummary.mainInformation?.paragraphs && section.sectionSummary.mainInformation.paragraphs.length > 0) ||
-      (section.sectionSummary.mainInformation?.bullets && section.sectionSummary.mainInformation.bullets.length > 0)
-    ));
+    return !!(
+      section.sectionSummary &&
+      ((section.sectionSummary.keyPoints && section.sectionSummary.keyPoints.length > 0) ||
+        (section.sectionSummary.mainInformation?.paragraphs &&
+          section.sectionSummary.mainInformation.paragraphs.length > 0) ||
+        (section.sectionSummary.mainInformation?.bullets &&
+          section.sectionSummary.mainInformation.bullets.length > 0))
+    );
   }
 
   /**
@@ -2860,10 +2971,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         .fillColor(theme.colors.secondary)
         .text('(이 구간에 자막이 없습니다)', rightX, doc.y, { width: halfWidth });
     } else {
-      doc
-        .font(theme.fonts.body.name)
-        .fontSize(theme.fonts.body.size)
-        .fillColor(theme.colors.text);
+      doc.font(theme.fonts.body.name).fontSize(theme.fonts.body.size).fillColor(theme.colors.text);
 
       // 남은 공간 계산 - 오버플로우 방지
       const maxY = doc.page.height - theme.margins.bottom - 50; // 50px for footer
@@ -2890,8 +2998,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
    * Fill page background with dark color for minimal-neon layout
    */
   private fillMinimalNeonBackground(doc: PDFKit.PDFDocument): void {
-    doc.rect(0, 0, doc.page.width, doc.page.height)
-      .fill(MINIMAL_NEON_COLORS.bg);
+    doc.rect(0, 0, doc.page.width, doc.page.height).fill(MINIMAL_NEON_COLORS.bg);
   }
 
   /**
@@ -2925,7 +3032,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .stroke();
 
     doc.text(''); // Complete the continued text
-    doc.moveDown(0.8);
+    doc.moveDown(0.5);
   }
 
   /**
@@ -2948,9 +3055,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     const tagBadgeY = theme.margins.top;
 
     // Tag badge with dot
-    doc
-      .circle(theme.margins.left + 4, tagBadgeY + 5, 4)
-      .fill(MINIMAL_NEON_COLORS.neonGreen);
+    doc.circle(theme.margins.left + 4, tagBadgeY + 5, 4).fill(MINIMAL_NEON_COLORS.neonGreen);
 
     doc
       .font(theme.fonts.timestamp.name)
@@ -2959,7 +3064,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .text('VIDEO SUMMARY', theme.margins.left + 16, tagBadgeY);
 
     // Date (right side)
-    const dateText = `생성일: ${new Date().toISOString().split('T')[0]}`;
+    const dateText = normalizeTextForPDF(`생성일: ${new Date().toISOString().split('T')[0]}`);
     doc
       .font(theme.fonts.body.name)
       .fontSize(10)
@@ -2978,7 +3083,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .lineTo(doc.page.width - theme.margins.right, doc.y)
       .stroke();
 
-    doc.moveDown(2);
+    doc.moveDown(1.5);
 
     // Title (large, bold)
     doc
@@ -3033,7 +3138,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
       doc
         .font(theme.fonts.body.name)
-        .fontSize(14)
+        .fontSize(13)
         .fillColor(MINIMAL_NEON_COLORS.white)
         .text(normalizeTextForPDF(item.value), x, metaStartY + 15, { width: colWidth - 10 });
     });
@@ -3061,22 +3166,22 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     const youtubeUrl = `https://youtube.com/watch?v=${metadata.id}`;
     doc
       .font(theme.fonts.body.name)
-      .fontSize(14)
+      .fontSize(13)
       .fillColor(MINIMAL_NEON_COLORS.neonBlue)
       .text(youtubeUrl, { link: youtubeUrl });
 
     // Summary section (if available)
     if (summary && summary.summary) {
-      doc.moveDown(2);
+      doc.moveDown(1.5);
       this.renderMinimalNeonSectionLabel(doc, 'Executive Summary', pageWidth);
 
       doc
         .font(theme.fonts.body.name)
-        .fontSize(14)
+        .fontSize(13)
         .fillColor(MINIMAL_NEON_COLORS.gray100)
         .text(normalizeTextForPDF(summary.summary), {
           width: pageWidth,
-          lineGap: 13,
+          lineGap: 15,
         });
 
       // Key insights (if available)
@@ -3093,12 +3198,14 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .font(theme.fonts.body.name)
       .fontSize(9)
       .fillColor(MINIMAL_NEON_COLORS.gray500)
-      .text('Generated by yt2pdf', { align: 'center' });
+      .text(normalizeTextForPDF('Generated by yt2pdf'), { align: 'center' });
 
     doc.moveDown(0.3);
     doc
       .fontSize(8)
-      .text('영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.', { align: 'center' });
+      .text(normalizeTextForPDF('영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.'), {
+        align: 'center',
+      });
   }
 
   /**
@@ -3132,20 +3239,20 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       const numStr = String(idx + 1).padStart(2, '0');
       doc
         .font(theme.fonts.title.name)
-        .fontSize(30)
+        .fontSize(26)
         .fillColor(MINIMAL_NEON_COLORS.neonGreen)
         .text(numStr, theme.margins.left, doc.y, { width: 50 });
 
       // Content (right column)
       doc
         .font(theme.fonts.body.name)
-        .fontSize(14)
+        .fontSize(13)
         .fillColor(MINIMAL_NEON_COLORS.gray300)
         .text(normalizeTextForPDF(point), theme.margins.left + 60, doc.y, {
           width: pageWidth - 70,
         });
 
-      doc.moveDown(0.8);
+      doc.moveDown(0.4);
     });
 
     // Draw border around all cards
@@ -3172,14 +3279,14 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     const pageWidth = doc.page.width - theme.margins.left - theme.margins.right;
 
     this.renderMinimalNeonSectionLabel(doc, 'Table of Contents', pageWidth);
-    doc.moveDown(0.5);
 
     // Draw TOC border
     const tocStartY = doc.y;
 
     sections.forEach((section, idx) => {
       const timestamp = formatTimestamp(section.timestamp);
-      const title = section.chapterTitle ||
+      const title =
+        section.chapterTitle ||
         section.sectionSummary?.summary?.substring(0, 50) ||
         `섹션 ${idx + 1}`;
 
@@ -3248,7 +3355,6 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     // Detailed Analysis section label (only for first section after TOC)
     if (sectionIndex === 0) {
       this.renderMinimalNeonSectionLabel(doc, 'Detailed Analysis', pageWidth);
-      doc.moveDown(0.5);
     }
 
     // Detail section box
@@ -3262,9 +3368,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .stroke();
 
     // Header bar (elevated background)
-    doc
-      .rect(theme.margins.left, sectionStartY, pageWidth, 45)
-      .fill(MINIMAL_NEON_COLORS.bgElevated);
+    doc.rect(theme.margins.left, sectionStartY, pageWidth, 45).fill(MINIMAL_NEON_COLORS.bgElevated);
 
     // Time badge (neon-green background)
     const timestamp = formatTimestamp(section.timestamp);
@@ -3283,7 +3387,8 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       });
 
     // Section title
-    const sectionTitle = section.chapterTitle ||
+    const sectionTitle =
+      section.chapterTitle ||
       section.sectionSummary?.summary?.substring(0, 60) ||
       `섹션 ${sectionIndex + 1}`;
 
@@ -3291,9 +3396,14 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .font(theme.fonts.heading.name)
       .fontSize(18)
       .fillColor(MINIMAL_NEON_COLORS.white)
-      .text(normalizeTextForPDF(sectionTitle), theme.margins.left + timeBadgeWidth + 30, sectionStartY + 15, {
-        width: pageWidth - timeBadgeWidth - 50,
-      });
+      .text(
+        normalizeTextForPDF(sectionTitle),
+        theme.margins.left + timeBadgeWidth + 30,
+        sectionStartY + 15,
+        {
+          width: pageWidth - timeBadgeWidth - 50,
+        }
+      );
 
     // Header bottom border
     doc.y = sectionStartY + 45;
@@ -3309,13 +3419,11 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     // Screenshot with rounded corners (simulated)
     try {
       const imgWidth = Math.min(pageWidth - 40, 400);
-      const imgHeight = imgWidth * 9 / 16;
+      const imgHeight = (imgWidth * 9) / 16;
       const imgX = theme.margins.left + 20;
 
       // Image background placeholder
-      doc
-        .rect(imgX, doc.y, imgWidth, imgHeight)
-        .fill(MINIMAL_NEON_COLORS.bgElevated);
+      doc.rect(imgX, doc.y, imgWidth, imgHeight).fill(MINIMAL_NEON_COLORS.bgElevated);
 
       doc.image(section.screenshot.imagePath, imgX, doc.y, {
         fit: [imgWidth, imgHeight],
@@ -3333,6 +3441,14 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
     // Key Points with left border
     if (section.sectionSummary?.keyPoints && section.sectionSummary.keyPoints.length > 0) {
+      // Check remaining page space before Key Points
+      const remainingSpaceForKeyPoints = doc.page.height - doc.y - theme.margins.bottom - 60;
+      if (remainingSpaceForKeyPoints < 150) {
+        doc.addPage();
+        this.fillMinimalNeonBackground(doc);
+        doc.y = theme.margins.top;
+      }
+
       doc
         .font(theme.fonts.timestamp.name)
         .fontSize(9)
@@ -3352,7 +3468,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
         doc
           .font(theme.fonts.body.name)
-          .fontSize(14)
+          .fontSize(13)
           .fillColor(MINIMAL_NEON_COLORS.gray100)
           .text(normalizeTextForPDF(point), theme.margins.left + 35, doc.y, {
             width: pageWidth - 55,
@@ -3363,8 +3479,19 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     }
 
     // Main Information bullets with tags
-    if (section.sectionSummary?.mainInformation?.bullets && section.sectionSummary.mainInformation.bullets.length > 0) {
+    if (
+      section.sectionSummary?.mainInformation?.bullets &&
+      section.sectionSummary.mainInformation.bullets.length > 0
+    ) {
       doc.moveDown(0.5);
+
+      // Check remaining page space before Main Information
+      const remainingSpaceForMainInfo = doc.page.height - doc.y - theme.margins.bottom - 60;
+      if (remainingSpaceForMainInfo < 120) {
+        doc.addPage();
+        this.fillMinimalNeonBackground(doc);
+        doc.y = theme.margins.top;
+      }
 
       doc
         .font(theme.fonts.timestamp.name)
@@ -3383,13 +3510,14 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         if (tagMatch) {
           const tagName = tagMatch[1];
           const content = bullet.slice(tagMatch[0].length);
-          const tagColors = MINIMAL_NEON_TAG_COLORS[tagName] || { bg: MINIMAL_NEON_COLORS.bgSubtle, text: MINIMAL_NEON_COLORS.gray300 };
+          const tagColors = MINIMAL_NEON_TAG_COLORS[tagName] || {
+            bg: MINIMAL_NEON_COLORS.bgSubtle,
+            text: MINIMAL_NEON_COLORS.gray300,
+          };
 
           // Tag badge
           const tagWidth = doc.widthOfString(tagName) + 12;
-          doc
-            .roundedRect(startX, doc.y - 2, tagWidth, 16, 4)
-            .fill(tagColors.bg);
+          doc.roundedRect(startX, doc.y - 2, tagWidth, 16, 4).fill(tagColors.bg);
 
           doc
             .font(theme.fonts.timestamp.name)
@@ -3399,7 +3527,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
 
           doc
             .font(theme.fonts.body.name)
-            .fontSize(14)
+            .fontSize(13)
             .fillColor(MINIMAL_NEON_COLORS.gray300)
             .text(normalizeTextForPDF(content), startX + tagWidth + 10, doc.y - 14, {
               width: pageWidth - tagWidth - 50,
@@ -3407,7 +3535,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         } else {
           doc
             .font(theme.fonts.body.name)
-            .fontSize(14)
+            .fontSize(13)
             .fillColor(MINIMAL_NEON_COLORS.gray300)
             .text(normalizeTextForPDF(`• ${bullet}`), startX, doc.y, {
               width: pageWidth - 40,
@@ -3422,9 +3550,24 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
     if (section.sectionSummary?.notableQuotes && section.sectionSummary.notableQuotes.length > 0) {
       doc.moveDown(0.8);
 
+      // Check remaining page space before Notable Quotes
+      const remainingSpaceForQuotes = doc.page.height - doc.y - theme.margins.bottom - 60;
+      if (remainingSpaceForQuotes < 100) {
+        doc.addPage();
+        this.fillMinimalNeonBackground(doc);
+        doc.y = theme.margins.top;
+      }
+
       // Quote block background
       const quoteStartY = doc.y;
-      const quoteBoxHeight = 20 + section.sectionSummary.notableQuotes.length * 25;
+      // Calculate actual quote box height based on text wrapping
+      // Set font size before calculating height (fontSize not valid in heightOfString options)
+      doc.fontSize(13);
+      let quoteBoxHeight = 30; // header + padding
+      section.sectionSummary.notableQuotes.forEach((quote) => {
+        const quoteText = `"${normalizeTextForPDF(quote)}"`;
+        quoteBoxHeight += doc.heightOfString(quoteText, { width: pageWidth - 60 }) + 12;
+      });
 
       doc
         .rect(theme.margins.left + 20, quoteStartY, pageWidth - 40, quoteBoxHeight)
@@ -3446,7 +3589,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       section.sectionSummary.notableQuotes.forEach((quote) => {
         doc
           .font(theme.fonts.body.name)
-          .fontSize(14)
+          .fontSize(13)
           .fillColor(MINIMAL_NEON_COLORS.white)
           .text(normalizeTextForPDF(`"${quote}"`), theme.margins.left + 35, doc.y, {
             width: pageWidth - 60,

@@ -31,7 +31,9 @@ export function decodeHtmlEntities(text: string): string {
   result = result.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
 
   // Numeric entities (hex)
-  result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+  result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
 
   return result;
 }
@@ -57,7 +59,12 @@ export function isGarbageText(text: string): boolean {
   // 패턴 4: 한글+숫자+기호 비정상 혼합
   const weirdMixPattern = /[가-힣]\d+[:;][가-힣]/;
 
-  return mixedPattern.test(text) || symbolPattern.test(text) || jamoPattern.test(text) || weirdMixPattern.test(text);
+  return (
+    mixedPattern.test(text) ||
+    symbolPattern.test(text) ||
+    jamoPattern.test(text) ||
+    weirdMixPattern.test(text)
+  );
 }
 
 /**
@@ -68,7 +75,7 @@ export function deduplicateSubtitles(texts: string[]): string[] {
   if (texts.length === 0) return [];
 
   // 1단계: 빈 문자열 및 공백만 있는 항목 제거
-  const filtered = texts.map(t => t.trim()).filter(t => t.length > 0);
+  const filtered = texts.map((t) => t.trim()).filter((t) => t.length > 0);
   if (filtered.length === 0) return [];
 
   // 2단계: 롤링 자막 병합
@@ -113,7 +120,7 @@ export function deduplicateSubtitles(texts: string[]): string[] {
   }
 
   // 6단계: 쓰레기 텍스트 제거
-  const finalResult = result.filter(text => !isGarbageText(text));
+  const finalResult = result.filter((text) => !isGarbageText(text));
   return finalResult;
 }
 
@@ -157,9 +164,12 @@ function mergeRollingSubtitles(texts: string[]): string[] {
 /**
  * 두 텍스트의 suffix-prefix 겹침 찾기
  */
-function findWordOverlap(text1: string, text2: string): { overlapText: string; overlapLength: number } {
-  const words1 = text1.split(/\s+/).filter(w => w.length > 0);
-  const words2 = text2.split(/\s+/).filter(w => w.length > 0);
+function findWordOverlap(
+  text1: string,
+  text2: string
+): { overlapText: string; overlapLength: number } {
+  const words1 = text1.split(/\s+/).filter((w) => w.length > 0);
+  const words2 = text2.split(/\s+/).filter((w) => w.length > 0);
 
   // 최대 겹침 단어 수 (YouTube 롤링 자막 패턴 대응 - 더 넓은 범위 검사)
   const maxOverlap = Math.min(words1.length, words2.length - 1, 15);
