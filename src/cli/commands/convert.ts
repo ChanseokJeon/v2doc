@@ -13,6 +13,7 @@ import { formatBytes } from '../../utils/file.js';
 import { formatTimestamp } from '../../utils/index.js';
 import { validateCLIOptions } from '../../utils/validation.js';
 import { CLIOptions, OutputFormat, PDFLayout, ImageQuality } from '../../types/config.js';
+import { buildTheme } from '../../core/theme-builder.js';
 
 interface ConvertCommandOptions {
   output?: string;
@@ -20,6 +21,7 @@ interface ConvertCommandOptions {
   interval?: string;
   layout?: string;
   theme?: string;
+  themeFrom?: string;
   quality?: string;
   lang?: string;
   summary?: boolean;
@@ -82,6 +84,24 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
     // 설정 로드
     spinner.text = '설정 로드 중...';
     const config = await configManager.load(cliOptions);
+
+    // --theme-from 옵션 처리: URL/이미지/프리셋에서 테마 추출
+    if (options.themeFrom) {
+      spinner.text = '테마 추출 중...';
+      try {
+        const extractedTheme = await buildTheme(options.themeFrom, {
+          name: `extracted-${Date.now()}`,
+        });
+        // 추출된 테마를 config에 적용
+        config.pdf.theme = extractedTheme.name;
+        // customTheme 필드가 없으므로 직접 테마 값을 저장
+        (config.pdf as { extractedTheme?: typeof extractedTheme }).extractedTheme = extractedTheme;
+        logger.info(`테마 추출 완료: ${extractedTheme.colors.primary}`);
+      } catch (error) {
+        const err = error as Error;
+        logger.warn(`테마 추출 실패, 기본 테마 사용: ${err.message}`);
+      }
+    }
 
     // CLI 옵션으로 요약/번역 설정 오버라이드
     if (options.summary !== undefined) {

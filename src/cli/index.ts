@@ -23,6 +23,7 @@ program
   .option('-i, --interval <seconds>', '스크린샷 간격 (초)', '60')
   .option('-l, --layout <type>', 'PDF 레이아웃 (vertical, horizontal)', 'vertical')
   .option('-t, --theme <name>', 'PDF 테마', 'default')
+  .option('--theme-from <source>', 'URL, 이미지, 또는 프리셋에서 테마 추출')
   .option('-q, --quality <level>', '스크린샷 품질 (low, medium, high)', 'low')
   .option('--lang <code>', '자막 언어 (ko, en)')
   .option('--summary', 'AI 요약 생성 (기본: 켜짐)', true)
