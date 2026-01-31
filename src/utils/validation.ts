@@ -87,7 +87,9 @@ export function validateImageQuality(quality: string | undefined): ValidationRes
   if (!validQualities.includes(quality as ImageQuality)) {
     return {
       valid: false,
-      errors: [`유효하지 않은 이미지 품질입니다: ${quality}. 가능한 값: ${validQualities.join(', ')}`],
+      errors: [
+        `유효하지 않은 이미지 품질입니다: ${quality}. 가능한 값: ${validQualities.join(', ')}`,
+      ],
     };
   }
 

@@ -15,54 +15,52 @@ export function setupCommand(): Command {
   const setup = new Command('setup').description('외부 의존성 설치 및 확인');
 
   // yt2pdf setup
-  setup
-    .option('-c, --check', '설치 상태만 확인')
-    .action(async (options: { check?: boolean }) => {
-      console.log(chalk.bold('\n🔧 yt2pdf 의존성 확인\n'));
+  setup.option('-c, --check', '설치 상태만 확인').action(async (options: { check?: boolean }) => {
+    console.log(chalk.bold('\n🔧 yt2pdf 의존성 확인\n'));
 
-      // ffmpeg 확인
-      const ffmpegInstalled = await FFmpegWrapper.checkInstallation();
-      if (ffmpegInstalled) {
-        console.log(chalk.green('  ✓ ffmpeg 설치됨'));
-      } else {
-        console.log(chalk.red('  ✖ ffmpeg 미설치'));
-      }
+    // ffmpeg 확인
+    const ffmpegInstalled = await FFmpegWrapper.checkInstallation();
+    if (ffmpegInstalled) {
+      console.log(chalk.green('  ✓ ffmpeg 설치됨'));
+    } else {
+      console.log(chalk.red('  ✖ ffmpeg 미설치'));
+    }
 
-      // yt-dlp 확인
-      const ytdlpInstalled = await YouTubeProvider.checkInstallation();
-      if (ytdlpInstalled) {
-        console.log(chalk.green('  ✓ yt-dlp 설치됨'));
-      } else {
-        console.log(chalk.red('  ✖ yt-dlp 미설치'));
-      }
+    // yt-dlp 확인
+    const ytdlpInstalled = await YouTubeProvider.checkInstallation();
+    if (ytdlpInstalled) {
+      console.log(chalk.green('  ✓ yt-dlp 설치됨'));
+    } else {
+      console.log(chalk.red('  ✖ yt-dlp 미설치'));
+    }
 
-      // 확인만 하는 경우
-      if (options.check) {
-        if (!ffmpegInstalled || !ytdlpInstalled) {
-          console.log(chalk.yellow('\n누락된 의존성을 설치하려면: yt2pdf setup'));
-        }
-        return;
-      }
-
-      // 설치 진행
+    // 확인만 하는 경우
+    if (options.check) {
       if (!ffmpegInstalled || !ytdlpInstalled) {
-        console.log(chalk.bold('\n📦 누락된 의존성 설치 중...\n'));
-
-        const platform = process.platform;
-
-        if (!ffmpegInstalled) {
-          await installFFmpeg(platform);
-        }
-
-        if (!ytdlpInstalled) {
-          await installYtDlp(platform);
-        }
-
-        console.log(chalk.green('\n✓ 모든 의존성 설치 완료!'));
-      } else {
-        console.log(chalk.green('\n✓ 모든 의존성이 이미 설치되어 있습니다.'));
+        console.log(chalk.yellow('\n누락된 의존성을 설치하려면: yt2pdf setup'));
       }
-    });
+      return;
+    }
+
+    // 설치 진행
+    if (!ffmpegInstalled || !ytdlpInstalled) {
+      console.log(chalk.bold('\n📦 누락된 의존성 설치 중...\n'));
+
+      const platform = process.platform;
+
+      if (!ffmpegInstalled) {
+        await installFFmpeg(platform);
+      }
+
+      if (!ytdlpInstalled) {
+        await installYtDlp(platform);
+      }
+
+      console.log(chalk.green('\n✓ 모든 의존성 설치 완료!'));
+    } else {
+      console.log(chalk.green('\n✓ 모든 의존성이 이미 설치되어 있습니다.'));
+    }
+  });
 
   return setup;
 }

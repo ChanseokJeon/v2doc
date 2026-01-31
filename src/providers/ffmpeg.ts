@@ -128,7 +128,11 @@ export class FFmpegWrapper {
       );
     } catch (error) {
       const err = error as Error;
-      throw new Yt2PdfError(ErrorCode.VIDEO_DOWNLOAD_FAILED, `오디오 추출 실패: ${err.message}`, err);
+      throw new Yt2PdfError(
+        ErrorCode.VIDEO_DOWNLOAD_FAILED,
+        `오디오 추출 실패: ${err.message}`,
+        err
+      );
     }
   }
 
@@ -142,7 +146,9 @@ export class FFmpegWrapper {
       );
 
       const data = JSON.parse(stdout);
-      const videoStream = data.streams?.find((s: { codec_type: string }) => s.codec_type === 'video');
+      const videoStream = data.streams?.find(
+        (s: { codec_type: string }) => s.codec_type === 'video'
+      );
 
       return {
         duration: parseFloat(data.format?.duration || '0'),
@@ -152,7 +158,11 @@ export class FFmpegWrapper {
       };
     } catch (error) {
       const err = error as Error;
-      throw new Yt2PdfError(ErrorCode.VIDEO_DOWNLOAD_FAILED, `영상 정보 조회 실패: ${err.message}`, err);
+      throw new Yt2PdfError(
+        ErrorCode.VIDEO_DOWNLOAD_FAILED,
+        `영상 정보 조회 실패: ${err.message}`,
+        err
+      );
     }
   }
 

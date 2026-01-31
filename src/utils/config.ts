@@ -168,7 +168,10 @@ export class ConfigManager {
       result.pdf = { ...result.pdf, theme: options.theme };
     }
     if (options.lang) {
-      result.subtitle = { ...result.subtitle, languages: [options.lang, ...result.subtitle.languages.filter(l => l !== options.lang)] };
+      result.subtitle = {
+        ...result.subtitle,
+        languages: [options.lang, ...result.subtitle.languages.filter((l) => l !== options.lang)],
+      };
     }
     if (options.noCache) {
       result.cache = { ...result.cache, enabled: false };

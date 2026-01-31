@@ -75,10 +75,7 @@ export class UnifiedContentProcessor {
   /**
    * 배치 생성 (토큰 한계 기준)
    */
-  createBatches<T extends { rawText: string }>(
-    sections: T[],
-    maxTokens: number = 80000
-  ): T[][] {
+  createBatches<T extends { rawText: string }>(sections: T[], maxTokens: number = 80000): T[][] {
     const batches: T[][] = [];
     let currentBatch: T[] = [];
     let currentTokens = 500; // 프롬프트 오버헤드
@@ -121,12 +118,15 @@ export class UnifiedContentProcessor {
    * 설정 해시 생성
    */
   private hashConfig(options: UnifiedProcessOptions): string {
-    return crypto.createHash('md5')
-      .update(JSON.stringify({
-        targetLanguage: options.targetLanguage,
-        maxKeyPoints: options.maxKeyPoints,
-        includeQuotes: options.includeQuotes,
-      }))
+    return crypto
+      .createHash('md5')
+      .update(
+        JSON.stringify({
+          targetLanguage: options.targetLanguage,
+          maxKeyPoints: options.maxKeyPoints,
+          includeQuotes: options.includeQuotes,
+        })
+      )
       .digest('hex')
       .substring(0, 8);
   }
@@ -148,9 +148,12 @@ export class UnifiedContentProcessor {
       }
 
       // Map 복원
-      content.result.sections = new Map(Object.entries(content.result.sections).map(
-        ([k, v]) => [Number(k), v as EnhancedSectionContent]
-      ));
+      content.result.sections = new Map(
+        Object.entries(content.result.sections).map(([k, v]) => [
+          Number(k),
+          v as EnhancedSectionContent,
+        ])
+      );
 
       return { ...content.result, fromCache: true };
     } catch {
@@ -185,7 +188,11 @@ export class UnifiedContentProcessor {
   /**
    * 통합 프롬프트 생성 - GPT-5.2 최적화
    */
-  private buildPrompt(targetLanguage: string, maxKeyPoints: number, includeQuotes: boolean): string {
+  private buildPrompt(
+    targetLanguage: string,
+    maxKeyPoints: number,
+    includeQuotes: boolean
+  ): string {
     const langName = this.getLanguageName(targetLanguage);
 
     return `Process ALL sections. Output ${langName}.
@@ -197,9 +204,13 @@ For EACH section, extract:
 4. mainInformation:
    - paragraphs: 3 analytical paragraphs (not translation summary)
    - bullets: 6 facts with tags [METRIC/TOOL/TECHNIQUE/DEFINITION/INSIGHT]
-${includeQuotes ? `5. notableQuotes: 3 quotes about CORE CONTENT only
+${
+  includeQuotes
+    ? `5. notableQuotes: 3 quotes about CORE CONTENT only
    ❌ NEVER extract: speaker intro ("저는 마지막 연사"), meta-talk ("이 발표에서는", "제가 할 수 있는 최선은"), transitions ("다음으로"), audience mentions ("여러분")
-   ✓ MUST contain: specific numbers/data, key claims, methodology, definitions` : ''}
+   ✓ MUST contain: specific numbers/data, key claims, methodology, definitions`
+    : ''
+}
 
 Output JSON:
 {
@@ -212,8 +223,12 @@ Output JSON:
       "mainInformation": {
         "paragraphs": ["...", "...", "..."],
         "bullets": ["[METRIC] ...", "[TOOL] ...", "[TECHNIQUE] ...", "[DEFINITION] ...", "[INSIGHT] ...", "[INSIGHT] ..."]
-      }${includeQuotes ? `,
-      "notableQuotes": [{"text": "...", "speaker": "발표자"}, {"text": "...", "speaker": "발표자"}, {"text": "...", "speaker": "발표자"}]` : ''}
+      }${
+        includeQuotes
+          ? `,
+      "notableQuotes": [{"text": "...", "speaker": "발표자"}, {"text": "...", "speaker": "발표자"}, {"text": "...", "speaker": "발표자"}]`
+          : ''
+      }
     }
   ]
 }
@@ -226,7 +241,10 @@ Output JSON:
    */
   private getLanguageName(code: string): string {
     const map: Record<string, string> = {
-      ko: '한국어', en: 'English', ja: '日本語', zh: '中文',
+      ko: '한국어',
+      en: 'English',
+      ja: '日本語',
+      zh: '中文',
     };
     return map[code] || code;
   }
@@ -240,9 +258,9 @@ Output JSON:
   ): Promise<{ sections: Map<number, EnhancedSectionContent>; tokensUsed: number }> {
     const { targetLanguage, maxKeyPoints = 3, includeQuotes = true } = options;
 
-    const sectionsText = sections.map((s, idx) =>
-      `[SECTION ${idx}] (timestamp: ${s.timestamp}s)\n${s.rawText}`
-    ).join('\n\n---\n\n');
+    const sectionsText = sections
+      .map((s, idx) => `[SECTION ${idx}] (timestamp: ${s.timestamp}s)\n${s.rawText}`)
+      .join('\n\n---\n\n');
 
     const systemPrompt = this.buildPrompt(targetLanguage, maxKeyPoints, includeQuotes);
 
@@ -302,7 +320,7 @@ Output JSON:
       } catch (e) {
         retries++;
         if (retries >= maxRetries) throw e;
-        await new Promise(r => setTimeout(r, 1000 * Math.pow(2, retries)));
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, retries)));
       }
     }
 
@@ -312,14 +330,16 @@ Output JSON:
   /**
    * JSON 응답 파싱 (복구 로직 포함)
    */
-  private parseResponse(raw: string): { sections: Array<{
-    index: number;
-    oneLiner: string;
-    keyPoints: string[];
-    mainInformation: { paragraphs: string[]; bullets: string[] };
-    translatedText: string;
-    notableQuotes: Array<{ text: string; speaker?: string }>;
-  }> } {
+  private parseResponse(raw: string): {
+    sections: Array<{
+      index: number;
+      oneLiner: string;
+      keyPoints: string[];
+      mainInformation: { paragraphs: string[]; bullets: string[] };
+      translatedText: string;
+      notableQuotes: Array<{ text: string; speaker?: string }>;
+    }>;
+  } {
     // JSON 블록 추출
     const jsonMatch = raw.match(/```json\s*([\s\S]*?)\s*```/);
     if (jsonMatch) raw = jsonMatch[1];
@@ -346,13 +366,16 @@ Output JSON:
     const { videoId, enableCache = true } = options;
 
     // 섹션 준비
-    const prepared = sections.map(s => ({
+    const prepared = sections.map((s) => ({
       timestamp: s.timestamp,
-      rawText: s.subtitles.map(seg => seg.text).join(' ').trim(),
+      rawText: s.subtitles
+        .map((seg) => seg.text)
+        .join(' ')
+        .trim(),
     }));
 
     // 캐시 키 생성
-    const contentHash = this.hashContent(prepared.map(p => p.rawText));
+    const contentHash = this.hashContent(prepared.map((p) => p.rawText));
     const configHash = this.hashConfig(options);
     const cacheKey = this.generateCacheKey(videoId, contentHash, configHash);
 
@@ -411,8 +434,8 @@ Output JSON:
   ): Promise<{ summary: string; keyPoints: string[] }> {
     const langName = this.getLanguageName(targetLanguage);
 
-    const allOneLiners = sectionContents.map(s => s.oneLiner).filter(Boolean);
-    const allKeyPoints = sectionContents.flatMap(s => s.keyPoints).filter(Boolean);
+    const allOneLiners = sectionContents.map((s) => s.oneLiner).filter(Boolean);
+    const allKeyPoints = sectionContents.flatMap((s) => s.keyPoints).filter(Boolean);
 
     if (allOneLiners.length === 0) {
       return { summary: '', keyPoints: [] };

@@ -39,7 +39,11 @@ export class ScreenshotCapturer {
    * @param duration - 영상 길이 (초)
    * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
    */
-  async *captureStream(videoId: string, duration: number, thumbnailUrl?: string): AsyncGenerator<Screenshot> {
+  async *captureStream(
+    videoId: string,
+    duration: number,
+    thumbnailUrl?: string
+  ): AsyncGenerator<Screenshot> {
     const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
 
     try {
@@ -97,7 +101,11 @@ export class ScreenshotCapturer {
    * @param duration - 영상 길이 (초)
    * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
    */
-  async captureAll(videoId: string, duration: number, thumbnailUrl?: string): Promise<Screenshot[]> {
+  async captureAll(
+    videoId: string,
+    duration: number,
+    thumbnailUrl?: string
+  ): Promise<Screenshot[]> {
     const screenshots: Screenshot[] = [];
 
     for await (const screenshot of this.captureStream(videoId, duration, thumbnailUrl)) {
@@ -113,7 +121,11 @@ export class ScreenshotCapturer {
    * @param chapters - 챕터 목록
    * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
    */
-  async captureForChapters(videoId: string, chapters: Chapter[], thumbnailUrl?: string): Promise<Screenshot[]> {
+  async captureForChapters(
+    videoId: string,
+    chapters: Chapter[],
+    thumbnailUrl?: string
+  ): Promise<Screenshot[]> {
     if (chapters.length === 0) {
       return [];
     }

@@ -130,7 +130,11 @@ export class Orchestrator {
       return [result];
     }
 
-    this.updateState({ status: 'fetching', currentStep: '플레이리스트 정보 가져오기', progress: 0 });
+    this.updateState({
+      status: 'fetching',
+      currentStep: '플레이리스트 정보 가져오기',
+      progress: 0,
+    });
 
     const videos = await this.youtube.getPlaylistVideos(url);
     const results: ConvertResult[] = [];
@@ -165,12 +169,16 @@ export class Orchestrator {
 
       // 2. 자막 추출 및 번역
       const { subtitles, processedSegments } = await this.extractAndTranslateSubtitles(
-        videoId, metadata, tempDir
+        videoId,
+        metadata,
+        tempDir
       );
 
       // 3. 영상 분류 및 챕터 생성
       const chapters = await this.classifyAndGenerateChapters(
-        metadata, processedSegments, initialChapters
+        metadata,
+        processedSegments,
+        initialChapters
       );
 
       // 4. 요약 생성
@@ -178,17 +186,33 @@ export class Orchestrator {
 
       // 5. 스크린샷 캡처
       const { screenshots, useChapters } = await this.captureScreenshots(
-        videoId, metadata, chapters, tempDir
+        videoId,
+        metadata,
+        chapters,
+        tempDir
       );
 
       // 6. 콘텐츠 병합 및 AI 처리
       const content = await this.mergeContentWithAI(
-        metadata, { ...subtitles, segments: processedSegments }, screenshots, chapters, videoId, summary, useChapters
+        metadata,
+        { ...subtitles, segments: processedSegments },
+        screenshots,
+        chapters,
+        videoId,
+        summary,
+        useChapters
       );
 
       // 7. 출력 생성
       return await this.generateOutput(
-        options, videoId, metadata, content, chapters, processedSegments, summary, screenshots
+        options,
+        videoId,
+        metadata,
+        content,
+        chapters,
+        processedSegments,
+        summary,
+        screenshots
       );
     } finally {
       if (!this.config.cache.enabled) {
@@ -208,11 +232,17 @@ export class Orchestrator {
     const metadata = await this.youtube.getMetadata(buildVideoUrl(videoId));
 
     if (metadata.duration > this.config.processing.maxDuration) {
-      logger.warn(`영상 길이(${metadata.duration}초)가 제한(${this.config.processing.maxDuration}초)을 초과합니다.`);
+      logger.warn(
+        `영상 길이(${metadata.duration}초)가 제한(${this.config.processing.maxDuration}초)을 초과합니다.`
+      );
     }
 
     let chapters: Chapter[] = [];
-    if (this.config.chapter.useYouTubeChapters && metadata.chapters && metadata.chapters.length > 0) {
+    if (
+      this.config.chapter.useYouTubeChapters &&
+      metadata.chapters &&
+      metadata.chapters.length > 0
+    ) {
       chapters = metadata.chapters;
       logger.info(`YouTube 챕터 발견: ${chapters.length}개`);
     }
@@ -260,7 +290,10 @@ export class Orchestrator {
       const subtitleLang = subtitles.language;
 
       if (subtitleLang && subtitleLang !== defaultLang) {
-        this.updateState({ currentStep: `번역 중 (${subtitleLang} → ${defaultLang})`, progress: 32 });
+        this.updateState({
+          currentStep: `번역 중 (${subtitleLang} → ${defaultLang})`,
+          progress: 32,
+        });
         logger.info(`자막 번역: ${subtitleLang} → ${defaultLang}`);
 
         try {
@@ -294,21 +327,31 @@ export class Orchestrator {
       this.updateState({ currentStep: '영상 유형 분류', progress: 34 });
 
       try {
-        const subtitleSample = processedSegments.slice(0, 10).map(s => s.text).join(' ');
+        const subtitleSample = processedSegments
+          .slice(0, 10)
+          .map((s) => s.text)
+          .join(' ');
         const typeResult = await this.ai.classifyVideoType(
           { title: metadata.title, description: metadata.description, channel: metadata.channel },
           subtitleSample
         );
         metadata.videoType = typeResult.type;
         metadata.videoTypeConfidence = typeResult.confidence;
-        logger.info(`영상 유형: ${typeResult.type} (신뢰도: ${(typeResult.confidence * 100).toFixed(0)}%)`);
+        logger.info(
+          `영상 유형: ${typeResult.type} (신뢰도: ${(typeResult.confidence * 100).toFixed(0)}%)`
+        );
       } catch (e) {
         logger.warn('영상 유형 분류 실패', e as Error);
       }
     }
 
     // 챕터 자동 생성
-    if (chapters.length === 0 && this.config.chapter.autoGenerate && this.ai && processedSegments.length > 0) {
+    if (
+      chapters.length === 0 &&
+      this.config.chapter.autoGenerate &&
+      this.ai &&
+      processedSegments.length > 0
+    ) {
       this.updateState({ currentStep: '챕터 자동 생성', progress: 35 });
       logger.info('AI 기반 챕터 자동 생성 중...');
 
@@ -336,7 +379,9 @@ export class Orchestrator {
   /**
    * 요약 생성
    */
-  private async generateSummary(processedSegments: SubtitleSegment[]): Promise<ContentSummary | undefined> {
+  private async generateSummary(
+    processedSegments: SubtitleSegment[]
+  ): Promise<ContentSummary | undefined> {
     if (!this.config.summary.enabled || !this.ai || processedSegments.length === 0) {
       return undefined;
     }
@@ -396,9 +441,17 @@ export class Orchestrator {
 
     if (useChapters) {
       logger.info(`챕터 기준 스크린샷 캡처: ${chapters.length}개 챕터`);
-      screenshots = await screenshotCapturer.captureForChapters(videoId, chapters, metadata.thumbnail);
+      screenshots = await screenshotCapturer.captureForChapters(
+        videoId,
+        chapters,
+        metadata.thumbnail
+      );
     } else {
-      screenshots = await screenshotCapturer.captureAll(videoId, metadata.duration, metadata.thumbnail);
+      screenshots = await screenshotCapturer.captureAll(
+        videoId,
+        metadata.duration,
+        metadata.thumbnail
+      );
     }
 
     this.updateState({ progress: 70 });
@@ -451,7 +504,12 @@ export class Orchestrator {
     videoId: string,
     useChapters: boolean
   ): Promise<void> {
-    if (!this.unifiedProcessor || !this.config.summary.enabled || !this.config.summary.perSection || content.sections.length === 0) {
+    if (
+      !this.unifiedProcessor ||
+      !this.config.summary.enabled ||
+      !this.config.summary.perSection ||
+      content.sections.length === 0
+    ) {
       return;
     }
 
@@ -462,7 +520,7 @@ export class Orchestrator {
 
       const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
       const unifiedResult = await this.unifiedProcessor.processAllSections(
-        content.sections.map(s => ({ timestamp: s.timestamp, subtitles: s.subtitles })),
+        content.sections.map((s) => ({ timestamp: s.timestamp, subtitles: s.subtitles })),
         {
           videoId,
           sourceLanguage: subtitles.language || 'en',
@@ -478,18 +536,20 @@ export class Orchestrator {
         const enhanced = unifiedResult.sections.get(section.timestamp);
         if (enhanced) {
           if (enhanced.translatedText && subtitles.language !== summaryLang) {
-            section.subtitles = [{
-              start: section.timestamp,
-              end: section.timestamp + 60,
-              text: enhanced.translatedText,
-            }];
+            section.subtitles = [
+              {
+                start: section.timestamp,
+                end: section.timestamp + 60,
+                text: enhanced.translatedText,
+              },
+            ];
           }
 
           section.sectionSummary = {
             summary: enhanced.oneLiner,
             keyPoints: enhanced.keyPoints,
             mainInformation: enhanced.mainInformation,
-            notableQuotes: enhanced.notableQuotes?.map(q => q.text) || [],
+            notableQuotes: enhanced.notableQuotes?.map((q) => q.text) || [],
           };
         }
       }
@@ -516,7 +576,13 @@ export class Orchestrator {
     content: ReturnType<ContentMerger['merge']>,
     useChapters: boolean
   ): Promise<void> {
-    if (!this.config.summary.enabled || !this.config.summary.perSection || !this.ai || content.sections.length === 0 || this.unifiedProcessor) {
+    if (
+      !this.config.summary.enabled ||
+      !this.config.summary.perSection ||
+      !this.ai ||
+      content.sections.length === 0 ||
+      this.unifiedProcessor
+    ) {
       return;
     }
 
@@ -527,7 +593,7 @@ export class Orchestrator {
     try {
       const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
       const sectionSummaries = await this.ai.summarizeSections(
-        content.sections.map(s => ({ timestamp: s.timestamp, subtitles: s.subtitles })),
+        content.sections.map((s) => ({ timestamp: s.timestamp, subtitles: s.subtitles })),
         {
           language: summaryLang,
           maxSummaryLength: this.config.summary.sectionMaxLength,
@@ -536,7 +602,9 @@ export class Orchestrator {
       );
 
       for (let i = 0; i < content.sections.length; i++) {
-        const sectionSummary = sectionSummaries.find(s => s.timestamp === content.sections[i].timestamp);
+        const sectionSummary = sectionSummaries.find(
+          (s) => s.timestamp === content.sections[i].timestamp
+        );
         if (sectionSummary && sectionSummary.summary) {
           const existingTitle = content.sections[i].sectionSummary?.summary;
           content.sections[i].sectionSummary = {
@@ -549,7 +617,9 @@ export class Orchestrator {
         }
       }
 
-      logger.debug(`${sectionType} 요약 완료: ${sectionSummaries.filter(s => s.summary).length}개`);
+      logger.debug(
+        `${sectionType} 요약 완료: ${sectionSummaries.filter((s) => s.summary).length}개`
+      );
     } catch (e) {
       logger.warn(`${sectionType} 요약 생성 실패`, e as Error);
     }
@@ -588,13 +658,25 @@ export class Orchestrator {
     // brief 형식 처리
     if (format === 'brief') {
       return await this.generateBriefOutput(
-        outputDir, filename, metadata, chapters, processedSegments, summary, pdfGenerator
+        outputDir,
+        filename,
+        metadata,
+        chapters,
+        processedSegments,
+        summary,
+        pdfGenerator
       );
     }
 
     // 기존 형식 처리 (pdf, md, html)
     return await this.generateStandardOutput(
-      outputDir, filename, format, metadata, content, screenshots, pdfGenerator
+      outputDir,
+      filename,
+      format,
+      metadata,
+      content,
+      screenshots,
+      pdfGenerator
     );
   }
 
@@ -615,7 +697,9 @@ export class Orchestrator {
     let brief: ExecutiveBrief;
     if (this.ai && chapters.length > 0) {
       const summaryLang = this.config.summary.language || this.config.translation.defaultLanguage;
-      brief = await this.ai.generateExecutiveBrief(metadata, chapters, processedSegments, { language: summaryLang });
+      brief = await this.ai.generateExecutiveBrief(metadata, chapters, processedSegments, {
+        language: summaryLang,
+      });
     } else {
       brief = {
         title: metadata.title,
@@ -628,7 +712,7 @@ export class Orchestrator {
         },
         summary: summary?.summary || '요약을 생성할 수 없습니다.',
         keyTakeaways: summary?.keyPoints || [],
-        chapterSummaries: chapters.map(c => ({
+        chapterSummaries: chapters.map((c) => ({
           title: c.title,
           startTime: c.startTime,
           summary: '',

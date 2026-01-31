@@ -27,7 +27,10 @@ export class WhisperProvider {
   constructor(apiKey?: string) {
     const key = apiKey || process.env.OPENAI_API_KEY;
     if (!key) {
-      throw new Yt2PdfError(ErrorCode.API_KEY_MISSING, 'OpenAI API 키가 필요합니다. OPENAI_API_KEY 환경변수를 설정하세요.');
+      throw new Yt2PdfError(
+        ErrorCode.API_KEY_MISSING,
+        'OpenAI API 키가 필요합니다. OPENAI_API_KEY 환경변수를 설정하세요.'
+      );
     }
     this.client = new OpenAI({ apiKey: key });
   }

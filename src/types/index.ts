@@ -17,13 +17,13 @@ export type SubtitleSource = 'youtube' | 'whisper';
 // ============================================================
 
 export type VideoType =
-  | 'conference_talk'  // 컨퍼런스 발표
-  | 'tutorial'         // 튜토리얼/강좌
-  | 'interview'        // 인터뷰
-  | 'lecture'          // 강의
-  | 'demo'             // 제품 데모
-  | 'discussion'       // 토론/패널
-  | 'unknown';         // 분류 불가
+  | 'conference_talk' // 컨퍼런스 발표
+  | 'tutorial' // 튜토리얼/강좌
+  | 'interview' // 인터뷰
+  | 'lecture' // 강의
+  | 'demo' // 제품 데모
+  | 'discussion' // 토론/패널
+  | 'unknown'; // 분류 불가
 
 // ============================================================
 // 챕터 (Chapter)
@@ -31,8 +31,8 @@ export type VideoType =
 
 export interface Chapter {
   title: string;
-  startTime: number;  // 초
-  endTime: number;    // 초
+  startTime: number; // 초
+  endTime: number; // 초
 }
 
 // ============================================================
@@ -55,9 +55,9 @@ export interface VideoMetadata {
   uploadDate: string;
   viewCount: number;
   availableCaptions: CaptionTrack[];
-  chapters?: Chapter[];           // YouTube 챕터 (있는 경우)
-  videoType?: VideoType;          // 영상 유형
-  videoTypeConfidence?: number;   // 영상 유형 판별 신뢰도 (0-1)
+  chapters?: Chapter[]; // YouTube 챕터 (있는 경우)
+  videoType?: VideoType; // 영상 유형
+  videoTypeConfidence?: number; // 영상 유형 판별 신뢰도 (0-1)
 }
 
 // ============================================================
@@ -137,7 +137,7 @@ export interface SectionSummary {
   summary: string;
   keyPoints: string[];
   mainInformation?: MainInformation;
-  notableQuotes?: string[];  // Simplified from NotableQuote[] to string[] for PDF rendering
+  notableQuotes?: string[]; // Simplified from NotableQuote[] to string[] for PDF rendering
 }
 
 export interface PDFSection {
@@ -145,7 +145,7 @@ export interface PDFSection {
   screenshot: Screenshot;
   subtitles: SubtitleSegment[];
   sectionSummary?: SectionSummary;
-  chapterTitle?: string;  // 챕터 제목 (챕터 기반 섹션인 경우)
+  chapterTitle?: string; // 챕터 제목 (챕터 기반 섹션인 경우)
 }
 
 export interface ContentSummary {
@@ -173,14 +173,14 @@ export interface ExecutiveBrief {
     uploadDate?: string;
     videoId: string;
   };
-  summary: string;                    // 3-5문장 핵심 요약
-  keyTakeaways: string[];             // 핵심 포인트 (3-5개)
+  summary: string; // 3-5문장 핵심 요약
+  keyTakeaways: string[]; // 핵심 포인트 (3-5개)
   chapterSummaries: Array<{
     title: string;
     startTime: number;
-    summary: string;                  // 한 줄 요약
+    summary: string; // 한 줄 요약
   }>;
-  actionItems?: string[];             // 실행 항목 (해당시)
+  actionItems?: string[]; // 실행 항목 (해당시)
 }
 
 export interface PDFOptions {

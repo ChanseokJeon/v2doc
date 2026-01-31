@@ -73,8 +73,8 @@ export const AIConfigSchema = z.object({
 });
 
 export const ChapterConfigSchema = z.object({
-  useYouTubeChapters: z.boolean().default(true),    // YouTube 챕터 우선 사용
-  autoGenerate: z.boolean().default(true),          // 없으면 자동 생성
+  useYouTubeChapters: z.boolean().default(true), // YouTube 챕터 우선 사용
+  autoGenerate: z.boolean().default(true), // 없으면 자동 생성
   minChapterLength: z.number().min(30).default(60), // 최소 챕터 길이 (초)
   maxChapters: z.number().min(1).max(50).default(20), // 최대 챕터 수
 });

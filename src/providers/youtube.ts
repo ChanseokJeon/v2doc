@@ -7,7 +7,14 @@ import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-import { VideoMetadata, CaptionTrack, SubtitleSegment, ErrorCode, Yt2PdfError, Chapter } from '../types/index.js';
+import {
+  VideoMetadata,
+  CaptionTrack,
+  SubtitleSegment,
+  ErrorCode,
+  Yt2PdfError,
+  Chapter,
+} from '../types/index.js';
 import { isValidYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 import { logger } from '../utils/logger.js';
 
@@ -65,7 +72,11 @@ export class YouTubeProvider {
       if (err.message.includes('Video unavailable') || err.message.includes('Private video')) {
         throw new Yt2PdfError(ErrorCode.VIDEO_PRIVATE, '비공개 또는 삭제된 영상입니다.');
       }
-      throw new Yt2PdfError(ErrorCode.VIDEO_NOT_FOUND, `영상 정보를 가져올 수 없습니다: ${err.message}`, err);
+      throw new Yt2PdfError(
+        ErrorCode.VIDEO_NOT_FOUND,
+        `영상 정보를 가져올 수 없습니다: ${err.message}`,
+        err
+      );
     }
   }
 
@@ -103,7 +114,11 @@ export class YouTubeProvider {
     } catch (error) {
       if (error instanceof Yt2PdfError) throw error;
       const err = error as Error;
-      throw new Yt2PdfError(ErrorCode.PLAYLIST_EMPTY, `플레이리스트 정보를 가져올 수 없습니다: ${err.message}`, err);
+      throw new Yt2PdfError(
+        ErrorCode.PLAYLIST_EMPTY,
+        `플레이리스트 정보를 가져올 수 없습니다: ${err.message}`,
+        err
+      );
     }
   }
 
@@ -156,21 +171,28 @@ export class YouTubeProvider {
       const url = buildVideoUrl(videoId);
 
       await execAsync(
-        `${this.ytdlpPath} -x --audio-format mp3 --audio-quality 0 ` +
-          `-o "${outputPath}" "${url}"`
+        `${this.ytdlpPath} -x --audio-format mp3 --audio-quality 0 ` + `-o "${outputPath}" "${url}"`
       );
 
       return outputPath;
     } catch (error) {
       const err = error as Error;
-      throw new Yt2PdfError(ErrorCode.VIDEO_DOWNLOAD_FAILED, `오디오 다운로드 실패: ${err.message}`, err);
+      throw new Yt2PdfError(
+        ErrorCode.VIDEO_DOWNLOAD_FAILED,
+        `오디오 다운로드 실패: ${err.message}`,
+        err
+      );
     }
   }
 
   /**
    * 영상 다운로드
    */
-  async downloadVideo(videoId: string, outputDir: string, format: string = 'worst[height>=480]'): Promise<string> {
+  async downloadVideo(
+    videoId: string,
+    outputDir: string,
+    format: string = 'worst[height>=480]'
+  ): Promise<string> {
     const outputPath = path.join(outputDir, `${videoId}.mp4`);
 
     try {
@@ -185,7 +207,11 @@ export class YouTubeProvider {
       return outputPath;
     } catch (error) {
       const err = error as Error;
-      throw new Yt2PdfError(ErrorCode.VIDEO_DOWNLOAD_FAILED, `영상 다운로드 실패: ${err.message}`, err);
+      throw new Yt2PdfError(
+        ErrorCode.VIDEO_DOWNLOAD_FAILED,
+        `영상 다운로드 실패: ${err.message}`,
+        err
+      );
     }
   }
 
@@ -237,7 +263,11 @@ export class YouTubeProvider {
     } catch (error) {
       const err = error as Error;
       logger.warn(`썸네일 다운로드 실패: ${err.message}`);
-      throw new Yt2PdfError(ErrorCode.VIDEO_DOWNLOAD_FAILED, `썸네일 다운로드 실패: ${err.message}`, err);
+      throw new Yt2PdfError(
+        ErrorCode.VIDEO_DOWNLOAD_FAILED,
+        `썸네일 다운로드 실패: ${err.message}`,
+        err
+      );
     }
   }
 
@@ -313,7 +343,10 @@ export class YouTubeProvider {
   /**
    * 자막 정보 파싱
    */
-  private parseCaptions(subtitles?: Record<string, unknown[]>, autoCaptions?: Record<string, unknown[]>): CaptionTrack[] {
+  private parseCaptions(
+    subtitles?: Record<string, unknown[]>,
+    autoCaptions?: Record<string, unknown[]>
+  ): CaptionTrack[] {
     const tracks: CaptionTrack[] = [];
 
     // 수동 자막
@@ -348,7 +381,10 @@ export class YouTubeProvider {
    * YouTube 챕터 파싱
    * yt-dlp chapters 형식: [{ "title": "...", "start_time": 0, "end_time": 60 }, ...]
    */
-  private parseChapters(chapters?: Array<{ title?: string; start_time?: number; end_time?: number }>, duration?: number): Chapter[] {
+  private parseChapters(
+    chapters?: Array<{ title?: string; start_time?: number; end_time?: number }>,
+    duration?: number
+  ): Chapter[] {
     if (!chapters || !Array.isArray(chapters) || chapters.length === 0) {
       return [];
     }

@@ -44,7 +44,9 @@ export class CostEstimator {
 
     if (estimate.breakdown.whisper) {
       const { minutes, costPerMinute } = estimate.breakdown.whisper;
-      lines.push(`  - Whisper API: ${minutes}분 × $${costPerMinute}/분 = $${estimate.whisperCost.toFixed(3)}`);
+      lines.push(
+        `  - Whisper API: ${minutes}분 × $${costPerMinute}/분 = $${estimate.whisperCost.toFixed(3)}`
+      );
     }
 
     lines.push(`  - 총 비용: ${this.formatCost(estimate)}`);

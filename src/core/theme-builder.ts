@@ -146,7 +146,9 @@ export async function extractFromUrl(url: string, timeout: number): Promise<Colo
         const el = document.querySelector(selector);
         if (!el) return '';
         const style = getComputedStyle(el);
-        return style.getPropertyValue(prop) || (style as unknown as Record<string, string>)[prop] || '';
+        return (
+          style.getPropertyValue(prop) || (style as unknown as Record<string, string>)[prop] || ''
+        );
       };
 
       const rgbToHex = (rgb: string): string => {

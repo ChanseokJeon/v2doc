@@ -2,7 +2,15 @@
  * 콘텐츠 병합기 - 스크린샷과 자막을 타임스탬프 기준으로 병합
  */
 
-import { VideoMetadata, SubtitleResult, Screenshot, PDFContent, PDFSection, SubtitleSegment, Chapter } from '../types/index.js';
+import {
+  VideoMetadata,
+  SubtitleResult,
+  Screenshot,
+  PDFContent,
+  PDFSection,
+  SubtitleSegment,
+  Chapter,
+} from '../types/index.js';
 import { ScreenshotConfig } from '../types/config.js';
 
 export interface ContentMergerOptions {
@@ -19,11 +27,7 @@ export class ContentMerger {
   /**
    * 콘텐츠 병합 (interval 기준)
    */
-  merge(
-    metadata: VideoMetadata,
-    subtitles: SubtitleResult,
-    screenshots: Screenshot[]
-  ): PDFContent {
+  merge(metadata: VideoMetadata, subtitles: SubtitleResult, screenshots: Screenshot[]): PDFContent {
     const sections: PDFSection[] = [];
 
     for (const screenshot of screenshots) {
@@ -36,10 +40,11 @@ export class ContentMerger {
 
       // 자막이 충분한 섹션만 추가 (빈 페이지 방지)
       // 조건: 단어 수 15개 이상 AND 구간 대비 음성 비율 20% 이상
-      const totalText = relevantSubtitles.map(s => s.text).join(' ');
-      const wordCount = totalText.split(/\s+/).filter(w => w.length > 0).length;
+      const totalText = relevantSubtitles.map((s) => s.text).join(' ');
+      const wordCount = totalText.split(/\s+/).filter((w) => w.length > 0).length;
       const speechDuration = relevantSubtitles.reduce((sum, s) => sum + (s.end - s.start), 0);
-      const durationRatio = this.screenshotInterval > 0 ? speechDuration / this.screenshotInterval : 0;
+      const durationRatio =
+        this.screenshotInterval > 0 ? speechDuration / this.screenshotInterval : 0;
 
       if (wordCount >= 15 && durationRatio >= 0.2) {
         sections.push({
@@ -82,8 +87,8 @@ export class ContentMerger {
 
       // 자막이 충분한 섹션만 추가 (빈 페이지 방지)
       // 조건: 단어 수 15개 이상 AND 챕터 구간 대비 음성 비율 20% 이상
-      const totalText = chapterSubtitles.map(s => s.text).join(' ');
-      const wordCount = totalText.split(/\s+/).filter(w => w.length > 0).length;
+      const totalText = chapterSubtitles.map((s) => s.text).join(' ');
+      const wordCount = totalText.split(/\s+/).filter((w) => w.length > 0).length;
       const chapterDuration = chapter.endTime - chapter.startTime;
       const speechDuration = chapterSubtitles.reduce((sum, s) => sum + (s.end - s.start), 0);
       const durationRatio = chapterDuration > 0 ? speechDuration / chapterDuration : 0;
