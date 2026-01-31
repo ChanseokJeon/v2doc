@@ -252,7 +252,7 @@ const MINIMAL_NEON_TAG_COLORS: Record<string, { bg: string; text: string }> = {
 
 const MINIMAL_NEON_THEME: Theme = {
   name: 'minimal-neon',
-  margins: { top: 72, bottom: 72, left: 50, right: 50 },
+  margins: { top: 80, bottom: 80, left: 48, right: 48 },
   fonts: {
     title: { name: 'NotoSansKR-Bold', size: 36 },
     heading: { name: 'NotoSansKR-Bold', size: 18 },
@@ -2179,7 +2179,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
       .text(normalizeTextForPDF(metadata.title), theme.margins.left, doc.y, {
         width: pageWidth,
         align: 'left',
-        lineGap: -2,
+        lineGap: 5,
       });
 
     doc.moveDown(0.5);
@@ -2267,7 +2267,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
         .fillColor(MINIMAL_NEON_COLORS.gray100)
         .text(normalizeTextForPDF(summary.summary), {
           width: pageWidth,
-          lineGap: 6,
+          lineGap: 13,
         });
 
       // Key insights (if available)
@@ -2579,7 +2579,7 @@ ${brief.actionItems.map(item => `    <div class="action-item"><input type="check
           // Tag badge
           const tagWidth = doc.widthOfString(tagName) + 12;
           doc
-            .rect(startX, doc.y - 2, tagWidth, 16)
+            .roundedRect(startX, doc.y - 2, tagWidth, 16, 4)
             .fill(tagColors.bg);
 
           doc
