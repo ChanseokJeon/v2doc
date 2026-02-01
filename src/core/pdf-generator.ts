@@ -8,6 +8,7 @@ import * as path from 'path';
 import * as https from 'https';
 import * as http from 'http';
 import { PDFDocument as PDFLibDocument, PDFName } from 'pdf-lib';
+import puppeteer from 'puppeteer';
 import {
   PDFContent,
   PDFSection,
@@ -346,6 +347,17 @@ export class PDFGenerator {
    * PDF 생성
    */
   async generatePDF(content: PDFContent, outputPath: string): Promise<void> {
+    // Use Puppeteer for minimal-neon layout (better Korean text support)
+    if (this.config.layout === 'minimal-neon') {
+      try {
+        return await this.generatePDFViaPuppeteer(content, outputPath);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        logger.warn(`Puppeteer PDF 생성 실패, PDFKit으로 폴백: ${errorMessage}`);
+        // Fall through to PDFKit
+      }
+    }
+
     // 썸네일 다운로드 (비동기)
     let thumbnailBuffer: Buffer | null = null;
     if (content.metadata.thumbnail) {
@@ -2006,6 +2018,114 @@ ${detailSectionsHtml}
 
     await fs.promises.writeFile(outputPath, html, 'utf-8');
     logger.success(`Minimal Neon HTML 생성 완료: ${outputPath}`);
+  }
+
+  /**
+   * Puppeteer를 사용한 PDF 생성 (minimal-neon 레이아웃용)
+   * - 한글 텍스트 지원 개선
+   * - CSS 스타일링 완벽 지원
+   */
+  async generatePDFViaPuppeteer(content: PDFContent, outputPath: string): Promise<void> {
+    // Generate HTML to temp file
+    const tempHtmlPath = outputPath.replace('.pdf', '-temp.html');
+    const absoluteTempHtmlPath = path.resolve(tempHtmlPath);
+    const absoluteOutputPath = path.resolve(outputPath);
+
+    // Create images directory next to temp HTML for local image references
+    const outputDir = path.dirname(absoluteOutputPath);
+    const imagesDir = path.join(outputDir, 'images');
+
+    // Copy screenshot images to images directory for HTML access
+    if (!fs.existsSync(imagesDir)) {
+      await fs.promises.mkdir(imagesDir, { recursive: true });
+    }
+
+    for (const section of content.sections) {
+      if (section.screenshot.imagePath && fs.existsSync(section.screenshot.imagePath)) {
+        const destPath = path.join(imagesDir, path.basename(section.screenshot.imagePath));
+        if (!fs.existsSync(destPath)) {
+          await fs.promises.copyFile(section.screenshot.imagePath, destPath);
+        }
+      }
+    }
+
+    // Generate the HTML file
+    await this.generateMinimalNeonHTML(content, absoluteTempHtmlPath);
+
+    logger.info('Puppeteer PDF 생성 시작...');
+
+    // Launch Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    try {
+      const page = await browser.newPage();
+
+      // Load HTML file with file:// protocol
+      await page.goto(`file://${absoluteTempHtmlPath}`, {
+        waitUntil: 'networkidle0',
+        timeout: 60000,
+      });
+
+      // Wait for fonts to load
+      await page.evaluateHandle('document.fonts.ready');
+
+      // Generate PDF
+      await page.pdf({
+        path: absoluteOutputPath,
+        format: 'A4',
+        margin: { top: '15mm', right: '15mm', bottom: '15mm', left: '15mm' },
+        printBackground: true,
+      });
+
+      logger.debug('Puppeteer PDF 렌더링 완료');
+    } finally {
+      await browser.close();
+
+      // Clean up temp HTML file
+      await fs.promises.unlink(absoluteTempHtmlPath).catch(() => {
+        /* ignore cleanup errors */
+      });
+
+      // Clean up images directory
+      await fs.promises.rm(imagesDir, { recursive: true, force: true }).catch(() => {
+        /* ignore cleanup errors */
+      });
+    }
+
+    // Add PDF metadata using pdf-lib
+    await this.addPDFMetadata(absoluteOutputPath, content.metadata);
+
+    logger.success(`PDF 생성 완료 (Puppeteer): ${absoluteOutputPath}`);
+  }
+
+  /**
+   * pdf-lib를 사용하여 PDF에 메타데이터 추가
+   */
+  private async addPDFMetadata(pdfPath: string, metadata: VideoMetadata): Promise<void> {
+    try {
+      const pdfBytes = await fs.promises.readFile(pdfPath);
+      const pdfDoc = await PDFLibDocument.load(pdfBytes);
+
+      pdfDoc.setTitle(metadata.title);
+      pdfDoc.setAuthor(metadata.channel);
+      pdfDoc.setSubject(`YouTube: ${metadata.id}`);
+      pdfDoc.setCreator('yt2pdf');
+      pdfDoc.setProducer('yt2pdf - YouTube to PDF Converter');
+      pdfDoc.setKeywords(['YouTube', 'transcript', 'subtitle', 'screenshot']);
+      pdfDoc.setCreationDate(new Date());
+
+      const modifiedPdfBytes = await pdfDoc.save();
+      await fs.promises.writeFile(pdfPath, modifiedPdfBytes);
+
+      logger.debug('PDF 메타데이터 추가 완료');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      logger.warn(`PDF 메타데이터 추가 실패: ${errorMessage}`);
+      // Don't throw - metadata is optional
+    }
   }
 
   /**
