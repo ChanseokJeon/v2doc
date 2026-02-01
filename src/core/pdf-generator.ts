@@ -3177,11 +3177,11 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
 
       doc
         .font(theme.fonts.body.name)
-        .fontSize(13)
+        .fontSize(15)
         .fillColor(MINIMAL_NEON_COLORS.gray100)
         .text(normalizeTextForPDF(summary.summary), {
           width: pageWidth,
-          lineGap: 15,
+          lineGap: 12,
         });
 
       // Key insights (if available)
@@ -3429,20 +3429,28 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
 
     doc.y += 20;
 
-    // Screenshot with rounded corners (simulated)
+    // Screenshot with actual aspect ratio
     try {
       const imgWidth = Math.min(pageWidth - 40, 400);
-      const imgHeight = (imgWidth * 9) / 16;
       const imgX = theme.margins.left + 20;
 
-      // Image background placeholder
-      doc.rect(imgX, doc.y, imgWidth, imgHeight).fill(MINIMAL_NEON_COLORS.bgElevated);
+      // Get actual image dimensions to preserve aspect ratio
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const imgInfo = (doc as any).openImage(section.screenshot.imagePath);
+      const actualRatio = imgInfo.height / imgInfo.width;
 
-      doc.image(section.screenshot.imagePath, imgX, doc.y, {
-        fit: [imgWidth, imgHeight],
+      // Cap aspect ratio to prevent overly tall images (max ~16:9)
+      const cappedRatio = Math.min(actualRatio, 0.65);
+      const imgHeight = imgWidth * cappedRatio;
+
+      const imageStartY = doc.y;
+      doc.image(section.screenshot.imagePath, imgX, imageStartY, {
+        width: imgWidth,
+        height: imgHeight,
       });
 
-      doc.y += imgHeight + 15;
+      // PDFKit advances doc.y automatically, just add spacing
+      doc.y = imageStartY + imgHeight + 15;
     } catch {
       doc
         .font(theme.fonts.body.name)
@@ -3456,7 +3464,7 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
     if (section.sectionSummary?.keyPoints && section.sectionSummary.keyPoints.length > 0) {
       // Check remaining page space before Key Points
       const remainingSpaceForKeyPoints = doc.page.height - doc.y - theme.margins.bottom - 60;
-      if (remainingSpaceForKeyPoints < 150) {
+      if (remainingSpaceForKeyPoints < 80) {
         doc.addPage();
         this.fillMinimalNeonBackground(doc);
         doc.y = theme.margins.top;
@@ -3498,9 +3506,9 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
     ) {
       doc.moveDown(0.5);
 
-      // Check remaining page space before Main Information
+      // Check remaining page space before Main Information (reduced threshold)
       const remainingSpaceForMainInfo = doc.page.height - doc.y - theme.margins.bottom - 60;
-      if (remainingSpaceForMainInfo < 120) {
+      if (remainingSpaceForMainInfo < 80) {
         doc.addPage();
         this.fillMinimalNeonBackground(doc);
         doc.y = theme.margins.top;
@@ -3565,7 +3573,7 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
 
       // Check remaining page space before Notable Quotes
       const remainingSpaceForQuotes = doc.page.height - doc.y - theme.margins.bottom - 60;
-      if (remainingSpaceForQuotes < 100) {
+      if (remainingSpaceForQuotes < 80) {
         doc.addPage();
         this.fillMinimalNeonBackground(doc);
         doc.y = theme.margins.top;
