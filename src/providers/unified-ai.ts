@@ -73,9 +73,15 @@ export class UnifiedContentProcessor {
   }
 
   /**
-   * 배치 생성 (토큰 한계 기준)
+   * 배치 생성 (토큰 한계 + 섹션 수 기준)
+   * - 출력 토큰 제한으로 인해 배치당 최대 섹션 수 제한 필요
+   * - 긴 translatedText가 포함되면 쉽게 토큰 제한 초과
    */
-  createBatches<T extends { rawText: string }>(sections: T[], maxTokens: number = 80000): T[][] {
+  createBatches<T extends { rawText: string }>(
+    sections: T[],
+    maxTokens: number = 80000,
+    maxSectionsPerBatch: number = 5 // 배치당 최대 섹션 수
+  ): T[][] {
     const batches: T[][] = [];
     let currentBatch: T[] = [];
     let currentTokens = 500; // 프롬프트 오버헤드
@@ -83,7 +89,11 @@ export class UnifiedContentProcessor {
     for (const section of sections) {
       const sectionTokens = this.estimateTokens(section.rawText);
 
-      if (currentTokens + sectionTokens > maxTokens && currentBatch.length > 0) {
+      // 토큰 제한 또는 섹션 수 제한 도달 시 새 배치
+      if (
+        (currentTokens + sectionTokens > maxTokens || currentBatch.length >= maxSectionsPerBatch) &&
+        currentBatch.length > 0
+      ) {
         batches.push(currentBatch);
         currentBatch = [];
         currentTokens = 500;
@@ -276,7 +286,9 @@ Output JSON:
             { role: 'user', content: sectionsText },
           ],
           temperature: 0.3,
-          max_completion_tokens: Math.min(16000, sections.length * 1400),
+          // 섹션당 ~4000토큰 필요 (translatedText가 길 수 있음)
+          // 배치당 최대 5섹션이므로 최대 20000토큰
+          max_completion_tokens: Math.min(20000, sections.length * 4000),
           response_format: { type: 'json_object' },
         });
 
@@ -289,7 +301,10 @@ Output JSON:
 
         for (const item of parsed.sections || []) {
           const original = sections[item.index];
-          if (!original) continue;
+          if (!original) {
+            logger.warn(`섹션 인덱스 ${item.index} 매핑 실패 (총 ${sections.length}개)`);
+            continue;
+          }
 
           resultMap.set(original.timestamp, {
             oneLiner: item.oneLiner || '',
@@ -349,9 +364,23 @@ Output JSON:
     if (objectMatch) raw = objectMatch[0];
 
     try {
-      return JSON.parse(raw);
-    } catch {
-      logger.warn('JSON 파싱 실패, 빈 결과 반환');
+      const parsed = JSON.parse(raw);
+      // 디버깅: 응답 구조 확인
+      if (!parsed.sections || !Array.isArray(parsed.sections)) {
+        logger.warn(`AI 응답에 sections 배열 없음. 키: ${Object.keys(parsed).join(', ')}`);
+        // sections가 다른 키에 있는지 확인
+        const possibleKeys = ['sections', 'data', 'results', 'items', 'content'];
+        for (const key of possibleKeys) {
+          if (Array.isArray(parsed[key])) {
+            logger.info(`대체 키 '${key}' 사용: ${parsed[key].length}개 항목`);
+            return { sections: parsed[key] };
+          }
+        }
+      }
+      return parsed;
+    } catch (e) {
+      logger.warn(`JSON 파싱 실패: ${(e as Error).message}`);
+      logger.debug(`원본 응답 (처음 500자): ${raw.substring(0, 500)}`);
       return { sections: [] };
     }
   }
@@ -390,7 +419,10 @@ Output JSON:
 
     // 배치 생성 및 처리
     const batches = this.createBatches(prepared);
-    logger.info(`${prepared.length}개 섹션을 ${batches.length}개 배치로 처리`);
+    logger.info(`${prepared.length}개 섹션을 ${batches.length}개 배치로 처리 (배치당 최대 5개)`);
+    if (batches.length > 1) {
+      logger.debug(`배치 구성: ${batches.map((b, i) => `[${i + 1}] ${b.length}개`).join(', ')}`);
+    }
 
     const allSections = new Map<number, EnhancedSectionContent>();
     let totalTokens = 0;
