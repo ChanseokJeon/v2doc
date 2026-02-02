@@ -92,6 +92,8 @@ export const DEV_MODE_SETTINGS = {
   useThumbnails: true, // 비디오 다운로드 대신 YouTube 썸네일 사용
   skipClassification: true, // 영상 분류 AI 생략
   skipChapterGeneration: true, // 챕터 자동 생성 AI 생략
+  skipTranslation: true, // 자막 번역 AI 생략
+  skipGlobalSummary: true, // 전체 요약 AI 생략
 } as const;
 
 export const ConfigSchema = z.object({

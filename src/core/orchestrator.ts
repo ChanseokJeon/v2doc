@@ -167,9 +167,8 @@ export class Orchestrator {
     if (this.config.dev?.enabled) {
       logger.warn('='.repeat(50));
       logger.warn('[DEV MODE] 빠른 테스트 모드');
-      logger.warn(`  썸네일: ${DEV_MODE_SETTINGS.useThumbnails ? 'YouTube (비디오 다운로드 생략)' : 'FFmpeg'}`);
-      logger.warn(`  챕터: ${DEV_MODE_SETTINGS.maxChapters}개, 스크린샷: ${DEV_MODE_SETTINGS.maxScreenshots}개`);
-      logger.warn(`  AI: 분류=${DEV_MODE_SETTINGS.skipClassification ? '생략' : '실행'}, 요약=${DEV_MODE_SETTINGS.aiSampleSections}개 섹션`);
+      logger.warn(`  썸네일: ${DEV_MODE_SETTINGS.useThumbnails ? 'YouTube' : 'FFmpeg'}, 번역: ${DEV_MODE_SETTINGS.skipTranslation ? '생략' : '실행'}`);
+      logger.warn(`  챕터: ${DEV_MODE_SETTINGS.maxChapters}개, AI 요약: ${DEV_MODE_SETTINGS.aiSampleSections}개 섹션`);
       logger.warn('='.repeat(50));
 
       // Production warning
@@ -306,12 +305,14 @@ export class Orchestrator {
     const subtitles = await subtitleExtractor.extract(videoId, audioPath);
     let processedSegments: SubtitleSegment[] = subtitles.segments;
 
-    // 번역 (필요한 경우)
+    // 번역 (필요한 경우, dev mode에서 생략)
+    const isDevMode = this.config.dev?.enabled;
     if (
       this.config.translation.enabled &&
       this.config.translation.autoTranslate &&
       this.ai &&
-      subtitles.segments.length > 0
+      subtitles.segments.length > 0 &&
+      !(isDevMode && DEV_MODE_SETTINGS.skipTranslation)
     ) {
       const defaultLang = this.config.translation.defaultLanguage;
       const subtitleLang = subtitles.language;
@@ -334,6 +335,8 @@ export class Orchestrator {
           logger.warn('번역 실패, 원본 자막 사용', e as Error);
         }
       }
+    } else if (isDevMode && DEV_MODE_SETTINGS.skipTranslation) {
+      logger.info('[DEV MODE] 자막 번역 생략');
     }
 
     return { subtitles, processedSegments };
@@ -417,6 +420,16 @@ export class Orchestrator {
   ): Promise<ContentSummary | undefined> {
     if (!this.config.summary.enabled || !this.ai || processedSegments.length === 0) {
       return undefined;
+    }
+
+    // Dev mode: 전체 요약 생략
+    if (this.config.dev?.enabled && DEV_MODE_SETTINGS.skipGlobalSummary) {
+      logger.info('[DEV MODE] 전체 요약 생략');
+      return {
+        summary: '[DEV MODE] 전체 요약 생략됨',
+        keyPoints: ['[DEV MODE] 섹션 요약 참조'],
+        language: this.config.summary.language || 'ko',
+      };
     }
 
     this.updateState({ currentStep: '요약 생성', progress: 36 });
