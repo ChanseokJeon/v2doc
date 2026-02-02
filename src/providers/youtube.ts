@@ -292,6 +292,55 @@ export class YouTubeProvider {
   }
 
   /**
+   * YouTube 썸네일 여러 장 다운로드 (dev mode 최적화용)
+   * 영상의 여러 지점 썸네일을 빠르게 가져옴 (비디오 다운로드 불필요)
+   */
+  async downloadThumbnails(
+    videoId: string,
+    outputDir: string,
+    count: number = 2
+  ): Promise<{ path: string; timestamp: number }[]> {
+    // YouTube 썸네일 URL 패턴들 (영상 내 여러 지점)
+    const thumbnailVariants = [
+      { url: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`, position: 0 },
+      { url: `https://i.ytimg.com/vi/${videoId}/1.jpg`, position: 0.25 },
+      { url: `https://i.ytimg.com/vi/${videoId}/2.jpg`, position: 0.5 },
+      { url: `https://i.ytimg.com/vi/${videoId}/3.jpg`, position: 0.75 },
+      { url: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`, position: 0 },
+    ];
+
+    const results: { path: string; timestamp: number }[] = [];
+    const selected = thumbnailVariants.slice(0, Math.min(count + 1, thumbnailVariants.length));
+
+    logger.info(`[DEV MODE] YouTube 썸네일 ${count}개 다운로드 중...`);
+
+    for (let i = 0; i < selected.length && results.length < count; i++) {
+      const { url, position } = selected[i];
+      const outputPath = path.join(outputDir, `thumbnail_${i.toString().padStart(4, '0')}.jpg`);
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) continue;
+
+        const buffer = Buffer.from(await response.arrayBuffer());
+        await fs.writeFile(outputPath, buffer);
+        results.push({ path: outputPath, timestamp: position });
+        logger.debug(`썸네일 저장: ${outputPath}`);
+      } catch {
+        // 실패 시 다음 썸네일 시도
+        continue;
+      }
+    }
+
+    if (results.length === 0) {
+      throw new Yt2PdfError(ErrorCode.VIDEO_DOWNLOAD_FAILED, '썸네일 다운로드 실패');
+    }
+
+    logger.info(`[DEV MODE] 썸네일 ${results.length}개 다운로드 완료`);
+    return results;
+  }
+
+  /**
    * VTT 파싱
    */
   private parseVTT(content: string): SubtitleSegment[] {

@@ -89,6 +89,9 @@ export const DEV_MODE_SETTINGS = {
   maxScreenshots: 2,
   videoQuality: '360p' as const,
   aiSampleSections: 1, // AI 기능 확인용 1개만
+  useThumbnails: true, // 비디오 다운로드 대신 YouTube 썸네일 사용
+  skipClassification: true, // 영상 분류 AI 생략
+  skipChapterGeneration: true, // 챕터 자동 생성 AI 생략
 } as const;
 
 export const ConfigSchema = z.object({

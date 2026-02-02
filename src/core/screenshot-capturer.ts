@@ -19,6 +19,7 @@ export interface ScreenshotCapturerOptions {
   // Dev mode options
   devQuality?: 'lowest' | '360p' | '480p';
   devMaxScreenshots?: number;
+  useThumbnails?: boolean; // YouTube 썸네일 사용 (비디오 다운로드 생략)
 }
 
 export class ScreenshotCapturer {
@@ -38,6 +39,7 @@ export class ScreenshotCapturer {
     this.onProgress = options.onProgress;
     this.devQuality = options.devQuality;
     this.devMaxScreenshots = options.devMaxScreenshots;
+    // useThumbnails is passed but not stored - orchestrator controls which method to call
   }
 
   /**
@@ -130,6 +132,39 @@ export class ScreenshotCapturer {
     }
 
     return screenshots;
+  }
+
+  /**
+   * YouTube 썸네일로 스크린샷 캡처 (비디오 다운로드 없이 빠르게)
+   * Dev mode 최적화용 - 비디오 다운로드 시간 절약
+   */
+  async captureFromThumbnails(
+    videoId: string,
+    duration: number,
+    count: number = 2
+  ): Promise<Screenshot[]> {
+    const workDir = this.tempDir || (await createTempDir('yt2pdf-thumbnail-'));
+
+    try {
+      const thumbnails = await this.youtube.downloadThumbnails(videoId, workDir, count);
+
+      const screenshots: Screenshot[] = thumbnails.map((t, i) => {
+        if (this.onProgress) {
+          this.onProgress(i + 1, thumbnails.length);
+        }
+        return {
+          timestamp: Math.floor(t.timestamp * duration), // timestamp is position (0-1)
+          imagePath: t.path,
+          width: 480, // YouTube thumbnail default
+          height: 360,
+        };
+      });
+
+      return screenshots;
+    } catch (error) {
+      logger.warn('썸네일 캡처 실패, FFmpeg 방식으로 폴백');
+      throw error;
+    }
   }
 
   /**

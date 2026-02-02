@@ -166,9 +166,10 @@ export class Orchestrator {
     // Dev mode logging and warning
     if (this.config.dev?.enabled) {
       logger.warn('='.repeat(50));
-      logger.warn('[DEV MODE] 개발 모드 활성화 - 빠른 테스트용');
+      logger.warn('[DEV MODE] 빠른 테스트 모드');
+      logger.warn(`  썸네일: ${DEV_MODE_SETTINGS.useThumbnails ? 'YouTube (비디오 다운로드 생략)' : 'FFmpeg'}`);
       logger.warn(`  챕터: ${DEV_MODE_SETTINGS.maxChapters}개, 스크린샷: ${DEV_MODE_SETTINGS.maxScreenshots}개`);
-      logger.warn(`  품질: ${DEV_MODE_SETTINGS.videoQuality}, AI: ${DEV_MODE_SETTINGS.aiSampleSections}개 섹션만`);
+      logger.warn(`  AI: 분류=${DEV_MODE_SETTINGS.skipClassification ? '생략' : '실행'}, 요약=${DEV_MODE_SETTINGS.aiSampleSections}개 섹션`);
       logger.warn('='.repeat(50));
 
       // Production warning
@@ -347,9 +348,10 @@ export class Orchestrator {
     initialChapters: Chapter[]
   ): Promise<Chapter[]> {
     let chapters = [...initialChapters];
+    const isDevMode = this.config.dev?.enabled;
 
-    // 영상 유형 분류
-    if (this.ai && processedSegments.length > 0) {
+    // 영상 유형 분류 (dev mode에서 생략)
+    if (this.ai && processedSegments.length > 0 && !(isDevMode && DEV_MODE_SETTINGS.skipClassification)) {
       this.updateState({ currentStep: '영상 유형 분류', progress: 34 });
 
       try {
@@ -369,14 +371,17 @@ export class Orchestrator {
       } catch (e) {
         logger.warn('영상 유형 분류 실패', e as Error);
       }
+    } else if (isDevMode && DEV_MODE_SETTINGS.skipClassification) {
+      logger.info('[DEV MODE] 영상 분류 생략');
     }
 
-    // 챕터 자동 생성
+    // 챕터 자동 생성 (dev mode에서 생략)
     if (
       chapters.length === 0 &&
       this.config.chapter.autoGenerate &&
       this.ai &&
-      processedSegments.length > 0
+      processedSegments.length > 0 &&
+      !(isDevMode && DEV_MODE_SETTINGS.skipChapterGeneration)
     ) {
       this.updateState({ currentStep: '챕터 자동 생성', progress: 35 });
       logger.info('AI 기반 챕터 자동 생성 중...');
@@ -392,6 +397,8 @@ export class Orchestrator {
       } catch (e) {
         logger.warn('챕터 자동 생성 실패', e as Error);
       }
+    } else if (isDevMode && DEV_MODE_SETTINGS.skipChapterGeneration && chapters.length === 0) {
+      logger.info('[DEV MODE] AI 챕터 생성 생략');
     }
 
     // 메타데이터에 챕터 추가
@@ -449,14 +456,18 @@ export class Orchestrator {
   }> {
     this.updateState({ currentStep: '스크린샷 캡처', progress: 40 });
 
+    const isDevMode = this.config.dev?.enabled;
+    const useThumbnails = isDevMode && DEV_MODE_SETTINGS.useThumbnails;
+
     const screenshotCapturer = new ScreenshotCapturer({
       ffmpeg: this.ffmpeg,
       youtube: this.youtube,
       config: this.config.screenshot,
       tempDir,
       // Pass dev mode options (hardcoded settings)
-      devQuality: this.config.dev?.enabled ? DEV_MODE_SETTINGS.videoQuality : undefined,
-      devMaxScreenshots: this.config.dev?.enabled ? DEV_MODE_SETTINGS.maxScreenshots : undefined,
+      devQuality: isDevMode ? DEV_MODE_SETTINGS.videoQuality : undefined,
+      devMaxScreenshots: isDevMode ? DEV_MODE_SETTINGS.maxScreenshots : undefined,
+      useThumbnails,
       onProgress: (current, total) => {
         const baseProgress = 40;
         const progressRange = 30;
@@ -468,7 +479,22 @@ export class Orchestrator {
     const useChapters = chapters.length > 0;
     let screenshots;
 
-    if (useChapters) {
+    // Dev mode: YouTube 썸네일 사용 (비디오 다운로드 생략)
+    if (useThumbnails) {
+      logger.info('[DEV MODE] YouTube 썸네일 사용 (비디오 다운로드 생략)');
+      try {
+        screenshots = await screenshotCapturer.captureFromThumbnails(
+          videoId,
+          metadata.duration,
+          DEV_MODE_SETTINGS.maxScreenshots
+        );
+      } catch {
+        logger.warn('[DEV MODE] 썸네일 실패, FFmpeg 방식으로 폴백');
+        screenshots = useChapters
+          ? await screenshotCapturer.captureForChapters(videoId, chapters, metadata.thumbnail)
+          : await screenshotCapturer.captureAll(videoId, metadata.duration, metadata.thumbnail);
+      }
+    } else if (useChapters) {
       logger.info(`챕터 기준 스크린샷 캡처: ${chapters.length}개 챕터`);
       screenshots = await screenshotCapturer.captureForChapters(
         videoId,
