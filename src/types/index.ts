@@ -154,6 +154,29 @@ export interface ContentSummary {
   language: string;
 }
 
+// ============================================================
+// Cover Page Metadata (Extended Summary)
+// ============================================================
+
+export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
+
+export interface CoverMetadata extends ContentSummary {
+  // Audience & Learning Context
+  targetAudience?: string; // e.g., "개발자, 테크 리드, 아키텍트"
+  difficulty?: DifficultyLevel; // beginner | intermediate | advanced
+  prerequisites?: string[]; // e.g., ["기본 JavaScript 지식", "React 경험"]
+
+  // Reading Context
+  estimatedReadTime?: number; // minutes (calculated from content length)
+
+  // Discovery & SEO
+  keywords?: string[]; // e.g., ["AI", "LLM", "프롬프트 엔지니어링"]
+
+  // Value Proposition
+  recommendedFor?: string[]; // e.g., ["AI 도입을 고려하는 팀"]
+  benefits?: string[]; // e.g., ["AI 활용 전략 이해", "실무 적용 방법 습득"]
+}
+
 export interface PDFContent {
   metadata: VideoMetadata;
   sections: PDFSection[];

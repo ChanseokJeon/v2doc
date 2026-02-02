@@ -205,7 +205,11 @@ describe('UnifiedContentProcessor', () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue(
         JSON.stringify({
-          result: { sections: {}, globalSummary: {}, totalTokensUsed: 0 },
+          result: {
+            sections: {},
+            globalSummary: { summary: '', keyPoints: [], language: 'ko' },
+            totalTokensUsed: 0,
+          },
           expiresAt: Date.now() - 1000, // Expired
         })
       );
@@ -223,7 +227,7 @@ describe('UnifiedContentProcessor', () => {
         JSON.stringify({
           result: {
             sections: { 0: { oneLiner: 'test' } },
-            globalSummary: { summary: 'test', keyPoints: [] },
+            globalSummary: { summary: 'test', keyPoints: [], language: 'ko' },
             totalTokensUsed: 100,
           },
           expiresAt: Date.now() + 100000,
@@ -253,7 +257,7 @@ describe('UnifiedContentProcessor', () => {
       const proc = processor as any;
       const result = {
         sections: new Map([[0, { oneLiner: 'test' }]]),
-        globalSummary: { summary: 'test', keyPoints: [] },
+        globalSummary: { summary: 'test', keyPoints: [], language: 'ko' },
         totalTokensUsed: 100,
         fromCache: false,
       };
@@ -272,7 +276,7 @@ describe('UnifiedContentProcessor', () => {
       const proc = processor as any;
       const result = {
         sections: new Map(),
-        globalSummary: { summary: '', keyPoints: [] },
+        globalSummary: { summary: '', keyPoints: [], language: 'ko' },
         totalTokensUsed: 0,
         fromCache: false,
       };
@@ -427,6 +431,8 @@ describe('UnifiedContentProcessor', () => {
                 content: JSON.stringify({
                   summary: 'Global summary',
                   keyPoints: ['Global KP1', 'Global KP2'],
+                  targetAudience: '개발자',
+                  difficulty: 'intermediate',
                 }),
               },
             },
@@ -440,6 +446,7 @@ describe('UnifiedContentProcessor', () => {
 
       expect(result.sections.size).toBe(1);
       expect(result.globalSummary.summary).toBe('Global summary');
+      expect(result.globalSummary.language).toBe('ko');
       expect(result.fromCache).toBe(false);
     });
 
@@ -449,7 +456,7 @@ describe('UnifiedContentProcessor', () => {
         JSON.stringify({
           result: {
             sections: { 0: { oneLiner: 'Cached' } },
-            globalSummary: { summary: 'Cached summary', keyPoints: [] },
+            globalSummary: { summary: 'Cached summary', keyPoints: [], language: 'ko' },
             totalTokensUsed: 100,
           },
           expiresAt: Date.now() + 100000,
@@ -484,7 +491,11 @@ describe('UnifiedContentProcessor', () => {
           choices: [
             {
               message: {
-                content: JSON.stringify({ summary: 'New summary', keyPoints: [] }),
+                content: JSON.stringify({
+                  summary: 'New summary',
+                  keyPoints: [],
+                  targetAudience: '개발자',
+                }),
               },
             },
           ],
@@ -514,6 +525,12 @@ describe('UnifiedContentProcessor', () => {
               content: JSON.stringify({
                 summary: 'Combined summary',
                 keyPoints: ['KP1', 'KP2'],
+                targetAudience: '개발자, 테크 리드',
+                difficulty: 'intermediate',
+                keywords: ['AI', 'LLM'],
+                prerequisites: ['JavaScript 기초'],
+                recommendedFor: ['AI 학습자'],
+                benefits: ['AI 활용법 습득'],
               }),
             },
           },
@@ -522,12 +539,19 @@ describe('UnifiedContentProcessor', () => {
 
       const proc = processor as any;
       const result = await proc.generateGlobalSummary(
-        [{ oneLiner: 'One', keyPoints: ['K1'] }, { oneLiner: 'Two', keyPoints: ['K2'] }],
+        [
+          { oneLiner: 'One', keyPoints: ['K1'], translatedText: 'Text one' },
+          { oneLiner: 'Two', keyPoints: ['K2'], translatedText: 'Text two' },
+        ],
         'ko'
       );
 
       expect(result.summary).toBe('Combined summary');
       expect(result.keyPoints).toHaveLength(2);
+      expect(result.language).toBe('ko');
+      expect(result.targetAudience).toBe('개발자, 테크 리드');
+      expect(result.difficulty).toBe('intermediate');
+      expect(result.estimatedReadTime).toBeGreaterThan(0);
     });
 
     it('should return empty result for empty sections', async () => {
@@ -536,16 +560,21 @@ describe('UnifiedContentProcessor', () => {
 
       expect(result.summary).toBe('');
       expect(result.keyPoints).toHaveLength(0);
+      expect(result.language).toBe('ko');
     });
 
     it('should return empty result when all oneLiners are empty', async () => {
       const proc = processor as any;
       const result = await proc.generateGlobalSummary(
-        [{ oneLiner: '', keyPoints: [] }, { oneLiner: '', keyPoints: [] }],
+        [
+          { oneLiner: '', keyPoints: [], translatedText: '' },
+          { oneLiner: '', keyPoints: [], translatedText: '' },
+        ],
         'ko'
       );
 
       expect(result.summary).toBe('');
+      expect(result.language).toBe('ko');
     });
 
     it('should handle API error gracefully', async () => {
@@ -553,12 +582,14 @@ describe('UnifiedContentProcessor', () => {
 
       const proc = processor as any;
       const result = await proc.generateGlobalSummary(
-        [{ oneLiner: 'Test', keyPoints: ['K1'] }],
+        [{ oneLiner: 'Test', keyPoints: ['K1'], translatedText: 'Test text' }],
         'ko'
       );
 
       expect(result.summary).toBe('');
       expect(result.keyPoints).toHaveLength(0);
+      expect(result.language).toBe('ko');
+      expect(result.estimatedReadTime).toBeGreaterThan(0);
     });
   });
 });

@@ -6,7 +6,7 @@ import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { SubtitleSegment } from '../types/index.js';
+import { SubtitleSegment, CoverMetadata, DifficultyLevel } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 export interface KeyPoint {
@@ -34,10 +34,7 @@ export interface EnhancedSectionContent {
 
 export interface UnifiedProcessResult {
   sections: Map<number, EnhancedSectionContent>;
-  globalSummary: {
-    summary: string;
-    keyPoints: string[];
-  };
+  globalSummary: CoverMetadata;
   totalTokensUsed: number;
   fromCache: boolean;
 }
@@ -463,15 +460,24 @@ Output JSON:
   private async generateGlobalSummary(
     sectionContents: EnhancedSectionContent[],
     targetLanguage: string
-  ): Promise<{ summary: string; keyPoints: string[] }> {
+  ): Promise<CoverMetadata> {
     const langName = this.getLanguageName(targetLanguage);
 
     const allOneLiners = sectionContents.map((s) => s.oneLiner).filter(Boolean);
     const allKeyPoints = sectionContents.flatMap((s) => s.keyPoints).filter(Boolean);
+    const allTranslatedTexts = sectionContents.map((s) => s.translatedText).filter(Boolean);
 
     if (allOneLiners.length === 0) {
-      return { summary: '', keyPoints: [] };
+      return {
+        summary: '',
+        keyPoints: [],
+        language: targetLanguage,
+      };
     }
+
+    // 총 단어 수 계산 (estimatedReadTime 산출용)
+    const totalWords = allTranslatedTexts.join(' ').split(/\s+/).length;
+    const estimatedReadTime = Math.ceil(totalWords / 200); // 분당 200단어 가정
 
     try {
       const response = await this.client.chat.completions.create({
@@ -479,8 +485,20 @@ Output JSON:
         messages: [
           {
             role: 'system',
-            content: `Create a comprehensive summary from section summaries. Output in ${langName}.
-Format: {"summary": "3-5 sentence summary", "keyPoints": ["SHORT_TITLE: detailed description", ...]}
+            content: `Create comprehensive summary. Output in ${langName}.
+
+Output JSON:
+{
+  "summary": "3-5 sentence summary",
+  "keyPoints": ["SHORT_TITLE: detailed description", ...],
+  "targetAudience": "쉼표로 구분된 대상 독자 (e.g., 개발자, 테크 리드, PM)",
+  "difficulty": "beginner|intermediate|advanced",
+  "keywords": ["키워드1", "키워드2", ...] (5-10개),
+  "prerequisites": ["사전지식1", ...] (0-3개, 없으면 빈 배열),
+  "recommendedFor": ["추천대상1", "추천대상2", ...] (2-4개),
+  "benefits": ["얻을 수 있는 것1", "얻을 수 있는 것2", ...] (3-5개)
+}
+
 Each keyPoint MUST follow the format: "SHORT_TITLE: description"
 - SHORT_TITLE should be 2-5 words, punchy and memorable (like a headline)
 - Examples: "10배 격차: AI를 100% 도입하면...", "코드 비용 절감: AI로 코드 작성 비용이..."`,
@@ -491,7 +509,7 @@ Each keyPoint MUST follow the format: "SHORT_TITLE: description"
           },
         ],
         temperature: 0.3,
-        max_completion_tokens: 1000,
+        max_completion_tokens: 2000,
         response_format: { type: 'json_object' },
       });
 
@@ -499,9 +517,23 @@ Each keyPoint MUST follow the format: "SHORT_TITLE: description"
       return {
         summary: parsed.summary || '',
         keyPoints: parsed.keyPoints || [],
+        language: targetLanguage,
+        targetAudience: parsed.targetAudience,
+        difficulty: (parsed.difficulty as DifficultyLevel) || undefined,
+        keywords: parsed.keywords || undefined,
+        prerequisites: parsed.prerequisites || undefined,
+        recommendedFor: parsed.recommendedFor || undefined,
+        benefits: parsed.benefits || undefined,
+        estimatedReadTime,
       };
-    } catch {
-      return { summary: '', keyPoints: [] };
+    } catch (e) {
+      logger.warn('전체 요약 생성 실패', e as Error);
+      return {
+        summary: '',
+        keyPoints: [],
+        language: targetLanguage,
+        estimatedReadTime,
+      };
     }
   }
 }

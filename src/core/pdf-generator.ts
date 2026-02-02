@@ -14,6 +14,7 @@ import {
   PDFSection,
   VideoMetadata,
   ContentSummary,
+  CoverMetadata,
   ExecutiveBrief,
 } from '../types/index.js';
 import { PDFConfig } from '../types/config.js';
@@ -2751,13 +2752,41 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
    */
   private renderCoverSummary(
     doc: PDFKit.PDFDocument,
-    summary: ContentSummary,
+    summary: ContentSummary | CoverMetadata,
     pageWidth: number
   ): void {
     const { theme } = this;
 
     doc.moveDown(1.5);
 
+    // Metadata badges (난이도 + 읽기 시간)
+    if ('difficulty' in summary || 'estimatedReadTime' in summary) {
+      const badges: string[] = [];
+
+      if ('difficulty' in summary && summary.difficulty) {
+        const labels = {
+          beginner: '🟢 입문',
+          intermediate: '🟡 중급',
+          advanced: '🔴 고급'
+        };
+        badges.push(labels[summary.difficulty]);
+      }
+
+      if ('estimatedReadTime' in summary && summary.estimatedReadTime) {
+        badges.push(`⏱️ ${summary.estimatedReadTime}분`);
+      }
+
+      if (badges.length > 0) {
+        doc
+          .font(theme.fonts.body.name)
+          .fontSize(10)
+          .fillColor(theme.colors.secondary)
+          .text(badges.join('  •  '), { align: 'left' });
+        doc.moveDown(0.5);
+      }
+    }
+
+    // Summary
     doc
       .font(theme.fonts.heading.name)
       .fontSize(theme.fonts.heading.size)
@@ -2772,6 +2801,7 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
       .fillColor(theme.colors.text)
       .text(normalizeTextForPDF(summary.summary), { align: 'left', width: pageWidth });
 
+    // Key Points
     if (summary.keyPoints && summary.keyPoints.length > 0) {
       doc.moveDown(1);
 
@@ -2788,6 +2818,83 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
       for (const point of summary.keyPoints) {
         doc.text(normalizeTextForPDF(`• ${point}`), { indent: 10, width: pageWidth - 10 });
       }
+    }
+
+    // Target Audience
+    if ('targetAudience' in summary && summary.targetAudience) {
+      doc.moveDown(1);
+
+      doc
+        .font(theme.fonts.heading.name)
+        .fontSize(12)
+        .fillColor(theme.colors.text)
+        .text('👥 대상 독자', { align: 'left' });
+
+      doc.moveDown(0.3);
+
+      doc
+        .font(theme.fonts.body.name)
+        .fontSize(theme.fonts.body.size)
+        .fillColor(theme.colors.text)
+        .text(normalizeTextForPDF(summary.targetAudience), { indent: 10, width: pageWidth - 10 });
+    }
+
+    // Recommended For
+    if ('recommendedFor' in summary && summary.recommendedFor?.length) {
+      doc.moveDown(1);
+
+      doc
+        .font(theme.fonts.heading.name)
+        .fontSize(12)
+        .fillColor(theme.colors.text)
+        .text('🎯 이런 분께 추천합니다', { align: 'left' });
+
+      doc.moveDown(0.3);
+
+      doc.font(theme.fonts.body.name).fontSize(theme.fonts.body.size).fillColor(theme.colors.text);
+
+      for (const item of summary.recommendedFor) {
+        doc.text(normalizeTextForPDF(`• ${item}`), { indent: 10, width: pageWidth - 10 });
+      }
+    }
+
+    // Benefits
+    if ('benefits' in summary && summary.benefits?.length) {
+      doc.moveDown(1);
+
+      doc
+        .font(theme.fonts.heading.name)
+        .fontSize(12)
+        .fillColor(theme.colors.text)
+        .text('✨ 이 영상을 보면', { align: 'left' });
+
+      doc.moveDown(0.3);
+
+      doc.font(theme.fonts.body.name).fontSize(theme.fonts.body.size).fillColor(theme.colors.text);
+
+      for (const benefit of summary.benefits) {
+        doc.text(normalizeTextForPDF(`• ${benefit}`), { indent: 10, width: pageWidth - 10 });
+      }
+    }
+
+    // Keywords
+    if ('keywords' in summary && summary.keywords?.length) {
+      doc.moveDown(1);
+
+      doc
+        .font(theme.fonts.heading.name)
+        .fontSize(12)
+        .fillColor(theme.colors.text)
+        .text('🏷️ 키워드', { align: 'left' });
+
+      doc.moveDown(0.3);
+
+      const keywordTags = summary.keywords.map(k => `#${k}`).join(' ');
+      doc
+        .font(theme.fonts.body.name)
+        .fontSize(theme.fonts.body.size)
+        .fillColor(theme.colors.link)
+        .text(normalizeTextForPDF(keywordTags), { indent: 10, width: pageWidth - 10 });
     }
   }
 
