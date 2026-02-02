@@ -35,12 +35,17 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@hono/node-server": "^1.19.9",
+    "@hono/zod-validator": "^0.7.6",
+    "bullmq": "^5.67.2",
     "chalk": "^5.3.0",
     "chroma-js": "^3.2.0",
     "cli-progress": "^3.12.0",
     "commander": "^11.1.0",
     "dotenv": "^16.3.1",
+    "hono": "^4.11.7",
     "inquirer": "^9.2.12",
+    "ioredis": "^5.9.2",
     "marked": "^11.1.0",
     "node-vibrant": "^4.0.4",
     "openai": "^4.24.1",
@@ -50,6 +55,7 @@
     "pdf-lib": "^1.17.1",
     "pdfkit": "^0.14.0",
     "puppeteer": "^24.36.1",
+    "uuid": "^13.0.0",
     "yaml": "^2.3.4",
     "zod": "^3.22.4"
   },
@@ -61,6 +67,7 @@
     "@types/node": "^20.10.6",
     "@types/pdfkit": "^0.13.3",
     "@types/puppeteer": "^5.4.7",
+    "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "eslint": "^8.56.0",
@@ -73,5 +80,10 @@
     "ts-jest": "^29.1.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-s3": "^3.980.0",
+    "@aws-sdk/client-sqs": "^3.980.0",
+    "@aws-sdk/s3-request-presigner": "^3.980.0"
   }
 }

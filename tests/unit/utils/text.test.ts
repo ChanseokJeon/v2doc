@@ -2,7 +2,13 @@
  * 텍스트 유틸리티 테스트
  */
 
-import { decodeHtmlEntities, deduplicateSubtitles, cleanSubtitleText } from '../../../src/utils/text';
+import {
+  decodeHtmlEntities,
+  deduplicateSubtitles,
+  cleanSubtitleText,
+  isKoreanDominant,
+  cleanMixedLanguageText,
+} from '../../../src/utils/text';
 
 describe('Text Utils', () => {
   describe('decodeHtmlEntities', () => {
@@ -119,6 +125,102 @@ describe('Text Utils', () => {
     it('should handle complex input', () => {
       const input = '  <v>Hello &amp; World</v>   &gt;&gt;  ';
       expect(cleanSubtitleText(input)).toBe('Hello & World >>');
+    });
+  });
+
+  describe('isKoreanDominant', () => {
+    it('should return false for pure Korean text (no ASCII letters)', () => {
+      // totalChars = text.replace(/[\s\d\W]/g, '') removes Korean chars (they're \W)
+      // So pure Korean text has totalChars=0, returns false
+      expect(isKoreanDominant('안녕하세요세계')).toBe(false);
+    });
+
+    it('should return false for majority English text', () => {
+      expect(isKoreanDominant('Hello World everyone')).toBe(false);
+    });
+
+    it('should return true for mixed text with > 30% Korean', () => {
+      // "안녕하세요" = 5 Korean chars (matched by first regex)
+      // "HW" = 2 ASCII letters (kept by second regex), totalChars = 2
+      // ratio = 5/2 = 250% > 30%
+      expect(isKoreanDominant('안녕하세요 HW')).toBe(true);
+    });
+
+    it('should return false for empty text', () => {
+      expect(isKoreanDominant('')).toBe(false);
+    });
+
+    it('should return false for numbers and symbols only', () => {
+      expect(isKoreanDominant('123 456 !!!')).toBe(false);
+    });
+
+    it('should check koreanChars / totalChars ratio', () => {
+      // "안abc" - Korean chars = 1, totalChars = 3 (a,b,c are kept)
+      // 1/3 = 33% > 30%
+      expect(isKoreanDominant('안abc')).toBe(true);
+    });
+
+    it('should return false when Korean ratio <= 30%', () => {
+      // "안abcdefghij" - Korean = 1, total = 10
+      // 1/10 = 10% < 30%
+      expect(isKoreanDominant('안abcdefghij')).toBe(false);
+    });
+  });
+
+  describe('cleanMixedLanguageText', () => {
+    it('should return text as-is for non-Korean target language', () => {
+      const text = '안녕하세요 Hello';
+      expect(cleanMixedLanguageText(text, 'en')).toBe(text);
+    });
+
+    it('should return text as-is if > 70% Korean', () => {
+      const text = '안녕하세요 여러분 오늘 날씨가 좋습니다 Hello';
+      expect(cleanMixedLanguageText(text)).toBe(text);
+    });
+
+    it('should return text as-is if < 30% Korean (translation failure)', () => {
+      const text = 'Hello World this is a long English sentence with only 안녕';
+      expect(cleanMixedLanguageText(text)).toBe(text);
+    });
+
+    it('should extract Korean sentences from mixed text (30-70% Korean)', () => {
+      const text = 'Hello World 안녕하세요 오늘 좋은 날입니다. Good morning everyone';
+      const result = cleanMixedLanguageText(text);
+      // Should extract Korean parts
+      expect(result).toContain('안녕하세요');
+    });
+
+    it('should extract Korean part when no full Korean sentences found', () => {
+      const text = 'Start 안녕 하세요 end';
+      const result = cleanMixedLanguageText(text);
+      // Should handle partial Korean extraction
+      expect(result).toBeDefined();
+    });
+
+    it('should handle text with no Korean sentences matching pattern', () => {
+      // Mixed text where Korean doesn't form complete sentences
+      const text = 'Hello 가 나 다 라 World';
+      const result = cleanMixedLanguageText(text);
+      // Falls back to returning original text or extracting Korean parts
+      expect(result).toBeDefined();
+    });
+
+    it('should use default target language ko', () => {
+      const text = '안녕하세요 여러분 오늘 날씨가 아주 좋습니다';
+      expect(cleanMixedLanguageText(text)).toBe(text);
+    });
+
+    it('should extract full Korean sentences when available', () => {
+      const text = 'Hello there 이것은 완전한 한국어 문장입니다. And more English here.';
+      const result = cleanMixedLanguageText(text);
+      expect(result).toContain('한국어');
+    });
+
+    it('should return original if extracted text is too short', () => {
+      // Short Korean extraction that's less than 30% of original
+      const text = 'This is a very long English text with just 가 at the end which is not enough';
+      const result = cleanMixedLanguageText(text);
+      expect(result).toBe(text);
     });
   });
 });

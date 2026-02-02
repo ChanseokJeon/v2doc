@@ -2,13 +2,13 @@
  * FFmpeg Wrapper
  */
 
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
 import { ErrorCode, Yt2PdfError, ImageQuality } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface VideoInfo {
   duration: number;
@@ -37,7 +37,7 @@ export class FFmpegWrapper {
    */
   static async checkInstallation(): Promise<boolean> {
     try {
-      await execAsync('ffmpeg -version');
+      await execFileAsync('ffmpeg', ['-version']);
       return true;
     } catch {
       return false;
@@ -68,11 +68,22 @@ export class FFmpegWrapper {
         ? `,drawtext=text='${escapedTime}':fontcolor=white:fontsize=24:box=1:boxcolor=black@0.6:boxborderw=8:x=20:y=h-50`
         : '';
 
-      await execAsync(
-        `${this.ffmpegPath} -ss ${timeStr} -i "${videoPath}" ` +
-          `-vframes 1 -vf "scale=${scale}:force_original_aspect_ratio=decrease,pad=${scale}:(ow-iw)/2:(oh-ih)/2${timestampFilter}" ` +
-          `-q:v 2 "${outputPath}" -y 2>/dev/null`
-      );
+      const vfFilter = `scale=${scale}:force_original_aspect_ratio=decrease,pad=${scale}:(ow-iw)/2:(oh-ih)/2${timestampFilter}`;
+
+      await execFileAsync(this.ffmpegPath, [
+        '-ss',
+        timeStr,
+        '-i',
+        videoPath,
+        '-vframes',
+        '1',
+        '-vf',
+        vfFilter,
+        '-q:v',
+        '2',
+        outputPath,
+        '-y',
+      ]);
     } catch (error) {
       const err = error as Error;
       throw new Yt2PdfError(ErrorCode.SCREENSHOT_FAILED, `스크린샷 캡처 실패: ${err.message}`, err);
@@ -122,10 +133,17 @@ export class FFmpegWrapper {
     try {
       logger.debug(`오디오 추출: ${videoPath} -> ${outputPath}`);
 
-      await execAsync(
-        `${this.ffmpegPath} -i "${videoPath}" -vn -acodec libmp3lame ` +
-          `-q:a 2 "${outputPath}" -y 2>/dev/null`
-      );
+      await execFileAsync(this.ffmpegPath, [
+        '-i',
+        videoPath,
+        '-vn',
+        '-acodec',
+        'libmp3lame',
+        '-q:a',
+        '2',
+        outputPath,
+        '-y',
+      ]);
     } catch (error) {
       const err = error as Error;
       throw new Yt2PdfError(
@@ -141,9 +159,15 @@ export class FFmpegWrapper {
    */
   async getVideoInfo(videoPath: string): Promise<VideoInfo> {
     try {
-      const { stdout } = await execAsync(
-        `${this.ffprobePath} -v quiet -print_format json -show_format -show_streams "${videoPath}"`
-      );
+      const { stdout } = await execFileAsync(this.ffprobePath, [
+        '-v',
+        'quiet',
+        '-print_format',
+        'json',
+        '-show_format',
+        '-show_streams',
+        videoPath,
+      ]);
 
       const data = JSON.parse(stdout);
       const videoStream = data.streams?.find(

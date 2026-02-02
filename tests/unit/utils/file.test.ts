@@ -10,6 +10,7 @@ import {
   formatTimestamp,
   sanitizeFilename,
   getDateString,
+  getTimestampString,
   applyFilenamePattern,
   createTempDir,
   ensureDir,
@@ -171,6 +172,20 @@ describe('File Utils', () => {
 
       // Cleanup
       await fs.rm(testFile);
+    });
+  });
+
+  describe('getTimestampString', () => {
+    it('should return timestamp in YYYYMMDD_HHMMSS format', () => {
+      const timestamp = getTimestampString();
+      expect(timestamp).toMatch(/^\d{8}_\d{6}$/);
+    });
+
+    it('should match current date', () => {
+      const timestamp = getTimestampString();
+      const now = new Date();
+      const year = now.getFullYear().toString();
+      expect(timestamp.startsWith(year)).toBe(true);
     });
   });
 });

@@ -2,7 +2,7 @@
  * YouTube Provider - yt-dlp 래퍼
  */
 
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -18,7 +18,7 @@ import {
 import { isValidYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 import { logger } from '../utils/logger.js';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export class YouTubeProvider {
   private ytdlpPath: string;
@@ -32,7 +32,7 @@ export class YouTubeProvider {
    */
   static async checkInstallation(): Promise<boolean> {
     try {
-      await execAsync('yt-dlp --version');
+      await execFileAsync('yt-dlp', ['--version']);
       return true;
     } catch {
       return false;
@@ -49,7 +49,7 @@ export class YouTubeProvider {
 
     try {
       logger.debug(`메타데이터 가져오기: ${url}`);
-      const { stdout } = await execAsync(`${this.ytdlpPath} --dump-json --no-playlist "${url}"`);
+      const { stdout } = await execFileAsync(this.ytdlpPath, ['--dump-json', '--no-playlist', url]);
       const data = JSON.parse(stdout);
 
       // 챕터 파싱
@@ -86,7 +86,7 @@ export class YouTubeProvider {
   async getPlaylistVideos(url: string): Promise<VideoMetadata[]> {
     try {
       logger.debug(`플레이리스트 정보 가져오기: ${url}`);
-      const { stdout } = await execAsync(`${this.ytdlpPath} --flat-playlist --dump-json "${url}"`);
+      const { stdout } = await execFileAsync(this.ytdlpPath, ['--flat-playlist', '--dump-json', url]);
 
       const videos = stdout
         .trim()
@@ -134,10 +134,18 @@ export class YouTubeProvider {
       const url = buildVideoUrl(videoId);
 
       // 자막 다운로드 시도
-      await execAsync(
-        `${this.ytdlpPath} --write-sub --write-auto-sub --sub-lang ${langCode} ` +
-          `--sub-format vtt --skip-download -o "${tempDir}/%(id)s" "${url}"`
-      );
+      await execFileAsync(this.ytdlpPath, [
+        '--write-sub',
+        '--write-auto-sub',
+        '--sub-lang',
+        langCode,
+        '--sub-format',
+        'vtt',
+        '--skip-download',
+        '-o',
+        `${tempDir}/%(id)s`,
+        url,
+      ]);
 
       // VTT 파일 찾기
       const files = await fs.readdir(tempDir);
@@ -170,9 +178,16 @@ export class YouTubeProvider {
       logger.debug(`오디오 다운로드: ${videoId}`);
       const url = buildVideoUrl(videoId);
 
-      await execAsync(
-        `${this.ytdlpPath} -x --audio-format mp3 --audio-quality 0 ` + `-o "${outputPath}" "${url}"`
-      );
+      await execFileAsync(this.ytdlpPath, [
+        '-x',
+        '--audio-format',
+        'mp3',
+        '--audio-quality',
+        '0',
+        '-o',
+        outputPath,
+        url,
+      ]);
 
       return outputPath;
     } catch (error) {
@@ -199,10 +214,15 @@ export class YouTubeProvider {
       logger.debug(`영상 다운로드: ${videoId}`);
       const url = buildVideoUrl(videoId);
 
-      await execAsync(
-        `${this.ytdlpPath} -f "${format}" --merge-output-format mp4 ` +
-          `-o "${outputPath}" "${url}"`
-      );
+      await execFileAsync(this.ytdlpPath, [
+        '-f',
+        format,
+        '--merge-output-format',
+        'mp4',
+        '-o',
+        outputPath,
+        url,
+      ]);
 
       return outputPath;
     } catch (error) {
@@ -251,7 +271,7 @@ export class YouTubeProvider {
 
       try {
         // ffmpeg로 JPEG 변환
-        await execAsync(`ffmpeg -y -i "${tempPath}" -q:v 2 "${outputPath}" 2>/dev/null`);
+        await execFileAsync('ffmpeg', ['-y', '-i', tempPath, '-q:v', '2', outputPath]);
         await fs.unlink(tempPath).catch(() => {});
       } catch {
         // ffmpeg 변환 실패 시 원본 사용
