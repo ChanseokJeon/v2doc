@@ -1,5 +1,7 @@
 /**
  * 스크린샷 캡처러
+ * - Storyboard 방식 (기본): 빠름, 영상 다운로드 불필요, 320x180 품질
+ * - FFmpeg 방식: 느림, 고품질 (480p~1080p)
  */
 
 import * as path from 'path';
@@ -7,6 +9,7 @@ import { Screenshot, ImageQuality, Chapter } from '../types/index.js';
 import { ScreenshotConfig } from '../types/config.js';
 import { FFmpegWrapper } from '../providers/ffmpeg.js';
 import { YouTubeProvider } from '../providers/youtube.js';
+import { StoryboardCapturer } from './storyboard-capturer.js';
 import { createTempDir } from '../utils/file.js';
 import { logger } from '../utils/logger.js';
 
@@ -169,6 +172,8 @@ export class ScreenshotCapturer {
 
   /**
    * 챕터 기준 스크린샷 캡처
+   * - Storyboard 방식 우선 (빠름, 영상 다운로드 불필요)
+   * - 실패 시 FFmpeg 폴백
    * @param videoId - YouTube 비디오 ID
    * @param chapters - 챕터 목록
    * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
@@ -182,18 +187,67 @@ export class ScreenshotCapturer {
       return [];
     }
 
+    // Storyboard 방식 시도 (config.method가 'ffmpeg'가 아닌 경우)
+    const method = (this.config as ScreenshotConfig & { method?: string }).method || 'storyboard';
+    if (method !== 'ffmpeg') {
+      try {
+        return await this.captureForChaptersWithStoryboard(videoId, chapters);
+      } catch (error) {
+        if (method === 'storyboard') {
+          // storyboard 전용 모드면 에러 throw
+          throw error;
+        }
+        // auto 모드면 FFmpeg로 폴백
+        logger.warn('Storyboard 캡처 실패, FFmpeg로 폴백:', error as Error);
+      }
+    }
+
+    // FFmpeg 방식
+    return await this.captureForChaptersWithFFmpeg(videoId, chapters, thumbnailUrl);
+  }
+
+  /**
+   * Storyboard 방식으로 챕터 기준 스크린샷 캡처
+   */
+  private async captureForChaptersWithStoryboard(
+    videoId: string,
+    chapters: Chapter[]
+  ): Promise<Screenshot[]> {
+    const workDir = this.tempDir || (await createTempDir('yt2pdf-storyboard-'));
+
+    const storyboardCapturer = new StoryboardCapturer({
+      tempDir: workDir,
+      preferredFormat: 'sb0', // 최고 품질 (320x180)
+      onProgress: this.onProgress,
+    });
+
+    logger.info(`[Storyboard] 챕터 기준 스크린샷 캡처 시작: ${chapters.length}개`);
+    const screenshots = await storyboardCapturer.captureFromStoryboard(videoId, chapters);
+    logger.success(`[Storyboard] 챕터 기준 스크린샷 캡처 완료: ${screenshots.length}개`);
+
+    return screenshots;
+  }
+
+  /**
+   * FFmpeg 방식으로 챕터 기준 스크린샷 캡처 (고품질)
+   */
+  private async captureForChaptersWithFFmpeg(
+    videoId: string,
+    chapters: Chapter[],
+    thumbnailUrl?: string
+  ): Promise<Screenshot[]> {
     const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
     const screenshots: Screenshot[] = [];
 
     try {
       // 영상 다운로드
-      logger.info('영상 다운로드 중...');
+      logger.info('[FFmpeg] 영상 다운로드 중...');
       const qualityFormat = this.getDownloadFormat(this.config.quality);
       const videoPath = await this.youtube.downloadVideo(videoId, workDir, qualityFormat);
 
       const qualitySize = this.getQualitySize(this.config.quality);
 
-      logger.info(`챕터 기준 스크린샷 캡처 시작: ${chapters.length}개`);
+      logger.info(`[FFmpeg] 챕터 기준 스크린샷 캡처 시작: ${chapters.length}개`);
 
       for (let i = 0; i < chapters.length; i++) {
         const chapter = chapters[i];
@@ -226,7 +280,7 @@ export class ScreenshotCapturer {
         });
       }
 
-      logger.success(`챕터 기준 스크린샷 캡처 완료: ${chapters.length}개`);
+      logger.success(`[FFmpeg] 챕터 기준 스크린샷 캡처 완료: ${chapters.length}개`);
       return screenshots;
     } catch (error) {
       throw error;
