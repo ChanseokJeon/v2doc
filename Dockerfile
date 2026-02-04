@@ -42,11 +42,12 @@ RUN npm install --omit=dev && \
 FROM node:20-alpine AS runtime
 
 # Install system dependencies (minimal)
+# Note: font-noto-cjk is larger but available in Alpine repos
 RUN apk add --no-cache \
     # FFmpeg for screenshot capture
     ffmpeg \
-    # Korean font (Baekmuk ~11MB, smaller than Noto-CJK)
-    font-baekmuk \
+    # Korean font (from community repo)
+    font-noto-cjk \
     # Python for yt-dlp
     python3 \
     py3-pip \
