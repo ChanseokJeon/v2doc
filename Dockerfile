@@ -8,8 +8,8 @@ FROM node:20-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # FFmpeg for screenshot capture
     ffmpeg \
-    # Fonts for PDF (Korean support - base package only)
-    fonts-noto-cjk \
+    # Fonts for PDF (Korean support - Nanum is 33MB vs Noto-CJK 300MB)
+    fonts-nanum \
     # Python for yt-dlp
     python3 \
     python3-pip \
