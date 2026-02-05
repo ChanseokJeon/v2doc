@@ -85,9 +85,10 @@ describe('LocalQueueProvider', () => {
     });
 
     it('should throw error when NACKing non-existent message', async () => {
-      await expect(
-        queue.nack('nack-queue', 'invalid-receipt-handle')
-      ).rejects.toThrow('not found in in-flight messages');
+      // nack() throws synchronously when message not found
+      await expect(async () => {
+        await queue.nack('nack-queue', 'invalid-receipt-handle');
+      }).rejects.toThrow('not found in in-flight messages');
     });
   });
 

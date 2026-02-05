@@ -55,11 +55,25 @@ export class StoryboardCapturer {
         { maxBuffer: 10 * 1024 * 1024 }
       );
 
-      const info = JSON.parse(stdout);
+      interface StoryboardFormat {
+        format_id: string;
+        width: number;
+        height: number;
+        rows: number;
+        columns: number;
+        fps: number;
+        fragments: Array<{ url: string; duration: number }>;
+      }
+      interface VideoInfo {
+        formats?: StoryboardFormat[];
+        duration?: number;
+      }
+
+      const info = JSON.parse(stdout) as VideoInfo;
       const formats = info.formats || [];
 
       // 선호하는 포맷 찾기 (sb0 > sb1 > sb2 > sb3)
-      const sbFormats = formats.filter((f: { format_id: string }) => f.format_id.startsWith('sb'));
+      const sbFormats = formats.filter((f) => f.format_id.startsWith('sb'));
 
       if (sbFormats.length === 0) {
         logger.warn('Storyboard 포맷을 찾을 수 없음');
@@ -67,14 +81,10 @@ export class StoryboardCapturer {
       }
 
       // 선호 포맷 또는 가장 고품질 선택
-      let selectedFormat = sbFormats.find(
-        (f: { format_id: string }) => f.format_id === this.preferredFormat
-      );
+      let selectedFormat = sbFormats.find((f) => f.format_id === this.preferredFormat);
       if (!selectedFormat) {
         // sb0 > sb1 > sb2 > sb3 순서로 선택
-        selectedFormat = sbFormats.sort((a: { format_id: string }, b: { format_id: string }) =>
-          a.format_id.localeCompare(b.format_id)
-        )[0];
+        selectedFormat = sbFormats.sort((a, b) => a.format_id.localeCompare(b.format_id))[0];
       }
 
       return {
@@ -175,8 +185,8 @@ export class StoryboardCapturer {
 
       logger.success(`Storyboard 캡처 완료: ${screenshots.length}개`);
       return screenshots;
-    } catch (error) {
-      throw error;
+    } finally {
+      // Cleanup handled by caller
     }
   }
 

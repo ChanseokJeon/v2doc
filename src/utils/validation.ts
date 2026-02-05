@@ -158,6 +158,7 @@ export function validateOutputPath(outputPath: string | undefined): ValidationRe
   }
 
   // 기본적인 경로 유효성 검사
+  // eslint-disable-next-line no-control-regex
   const invalidChars = /[<>:"|?*\x00-\x1f]/;
   if (invalidChars.test(outputPath)) {
     return {

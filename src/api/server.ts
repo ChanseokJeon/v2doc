@@ -3,6 +3,7 @@ import { app } from './app';
 
 const port = parseInt(process.env.PORT || '3000', 10);
 
+// eslint-disable-next-line no-console
 console.log(`Starting yt2pdf API server on port ${port}...`);
 
 const server = serve({
@@ -10,7 +11,9 @@ const server = serve({
   port,
 });
 
+// eslint-disable-next-line no-console
 console.log(`Server running at http://localhost:${port}`);
+// eslint-disable-next-line no-console
 console.log(`Health check: http://localhost:${port}/api/v1/health`);
 
 // Graceful shutdown handlers
@@ -18,11 +21,13 @@ let isShuttingDown = false;
 
 const shutdown = (signal: string) => {
   if (isShuttingDown) {
+    // eslint-disable-next-line no-console
     console.log('Shutdown already in progress...');
     return;
   }
 
   isShuttingDown = true;
+  // eslint-disable-next-line no-console
   console.log(`Received ${signal}, shutting down gracefully...`);
 
   try {
@@ -33,6 +38,7 @@ const shutdown = (signal: string) => {
 
     server.close(() => {
       clearTimeout(forceShutdownTimer);
+      // eslint-disable-next-line no-console
       console.log('Server closed successfully');
       process.exit(0);
     });

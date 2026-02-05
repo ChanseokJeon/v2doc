@@ -169,10 +169,16 @@ export class FFmpegWrapper {
         videoPath,
       ]);
 
-      const data = JSON.parse(stdout);
-      const videoStream = data.streams?.find(
-        (s: { codec_type: string }) => s.codec_type === 'video'
-      );
+      const data = JSON.parse(stdout) as {
+        format?: { duration?: string };
+        streams?: Array<{
+          codec_type?: string;
+          width?: number;
+          height?: number;
+          r_frame_rate?: string;
+        }>;
+      };
+      const videoStream = data.streams?.find((s) => s.codec_type === 'video');
 
       return {
         duration: parseFloat(data.format?.duration || '0'),
@@ -180,7 +186,7 @@ export class FFmpegWrapper {
         height: videoStream?.height || 0,
         fps: this.parseFps(videoStream?.r_frame_rate),
       };
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       throw new Yt2PdfError(
         ErrorCode.VIDEO_DOWNLOAD_FAILED,

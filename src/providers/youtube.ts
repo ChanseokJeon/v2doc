@@ -64,7 +64,20 @@ export class YouTubeProvider {
         '--no-playlist',
         url,
       ]);
-      const data = JSON.parse(stdout);
+      const data = JSON.parse(stdout) as {
+        id: string;
+        title?: string;
+        description?: string;
+        duration?: number;
+        thumbnail?: string;
+        uploader?: string;
+        channel?: string;
+        upload_date?: string;
+        view_count?: number;
+        subtitles?: Record<string, unknown[]>;
+        automatic_captions?: Record<string, unknown[]>;
+        chapters?: Array<{ title?: string; start_time?: number; end_time?: number }>;
+      };
 
       // 챕터 파싱
       const chapters = this.parseChapters(data.chapters, data.duration);
@@ -81,7 +94,7 @@ export class YouTubeProvider {
         availableCaptions: this.parseCaptions(data.subtitles, data.automatic_captions),
         chapters: chapters.length > 0 ? chapters : undefined,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       if (err.message.includes('Video unavailable') || err.message.includes('Private video')) {
         throw new Yt2PdfError(ErrorCode.VIDEO_PRIVATE, '비공개 또는 삭제된 영상입니다.');
@@ -111,7 +124,7 @@ export class YouTubeProvider {
         .trim()
         .split('\n')
         .filter((line) => line.trim())
-        .map((line) => JSON.parse(line));
+        .map((line) => JSON.parse(line) as { id: string });
 
       if (videos.length === 0) {
         throw new Yt2PdfError(ErrorCode.PLAYLIST_EMPTY, '플레이리스트가 비어 있습니다.');
@@ -124,13 +137,13 @@ export class YouTubeProvider {
           const videoUrl = buildVideoUrl(video.id);
           const metadata = await this.getMetadata(videoUrl);
           metadataList.push(metadata);
-        } catch (e) {
+        } catch (e: unknown) {
           logger.warn(`영상 ${video.id} 메타데이터 가져오기 실패`);
         }
       }
 
       return metadataList;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof Yt2PdfError) throw error;
       const err = error as Error;
       throw new Yt2PdfError(

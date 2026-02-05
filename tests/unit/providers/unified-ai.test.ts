@@ -268,7 +268,7 @@ describe('UnifiedContentProcessor', () => {
       expect(mockWriteFileSync).toHaveBeenCalled();
     });
 
-    it('should handle write cache error gracefully', async () => {
+    it('should handle write cache error gracefully', () => {
       mockMkdirSync.mockImplementation(() => {
         throw new Error('Write error');
       });
@@ -281,8 +281,8 @@ describe('UnifiedContentProcessor', () => {
         fromCache: false,
       };
 
-      // Should not throw
-      await expect(proc.writeCache('test-key', result)).resolves.toBeUndefined();
+      // Should not throw - writeCache is now synchronous
+      expect(() => proc.writeCache('test-key', result)).not.toThrow();
     });
   });
 

@@ -11,7 +11,9 @@ import { Theme } from './pdf-generator.js';
 
 // 간단한 로거 (테스트 호환성을 위해 logger 의존성 제거)
 const log = {
+  // eslint-disable-next-line no-console
   info: (msg: string) => process.env.NODE_ENV !== 'test' && console.log(`[theme-builder] ${msg}`),
+  // eslint-disable-next-line no-console
   warn: (msg: string) => process.env.NODE_ENV !== 'test' && console.warn(`[theme-builder] ${msg}`),
 };
 
@@ -131,11 +133,22 @@ export async function extractFromImage(imagePath: string): Promise<ColorPalette>
 }
 
 export async function extractFromUrl(url: string, timeout: number): Promise<ColorPalette> {
+  interface PuppeteerModule {
+    default: {
+      launch: (options: { headless: boolean; args: string[] }) => Promise<{
+        newPage: () => Promise<{
+          goto: (url: string, options: { waitUntil: string; timeout: number }) => Promise<void>;
+          evaluate: <T>(fn: () => T) => Promise<T>;
+        }>;
+        close: () => Promise<void>;
+      }>;
+    };
+  }
+
   // Dynamic import puppeteer (optional dependency)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let puppeteerModule: any;
+  let puppeteerModule: PuppeteerModule;
   try {
-    puppeteerModule = await import('puppeteer');
+    puppeteerModule = (await import('puppeteer')) as unknown as PuppeteerModule;
   } catch {
     throw new Error('Puppeteer is not installed. Install it with: npm install puppeteer');
   }

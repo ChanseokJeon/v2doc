@@ -18,7 +18,9 @@ export function configCommand(): Command {
     .action(async () => {
       try {
         const currentConfig = await configManager.load();
+        // eslint-disable-next-line no-console
         console.log(chalk.bold('\n현재 설정:\n'));
+        // eslint-disable-next-line no-console
         console.log(yaml.stringify(currentConfig));
       } catch (error) {
         console.error(chalk.red('설정 로드 실패:', (error as Error).message));
@@ -39,6 +41,7 @@ export function configCommand(): Command {
         // 이미 존재하는지 확인
         try {
           await fs.access(configPath);
+          // eslint-disable-next-line no-console
           console.log(chalk.yellow(`설정 파일이 이미 존재합니다: ${configPath}`));
           return;
         } catch {
@@ -46,6 +49,7 @@ export function configCommand(): Command {
         }
 
         await configManager.createConfigFile(configPath);
+        // eslint-disable-next-line no-console
         console.log(chalk.green(`✓ 설정 파일 생성됨: ${configPath}`));
       } catch (error) {
         console.error(chalk.red('설정 파일 생성 실패:', (error as Error).message));
@@ -57,8 +61,11 @@ export function configCommand(): Command {
     .command('path')
     .description('설정 파일 경로 표시')
     .action(() => {
+      // eslint-disable-next-line no-console
       console.log(chalk.bold('\n설정 파일 경로:\n'));
+      // eslint-disable-next-line no-console
       console.log(`  프로젝트: ${ConfigManager.getProjectConfigPath()}`);
+      // eslint-disable-next-line no-console
       console.log(`  전역: ${ConfigManager.getGlobalConfigPath()}`);
     });
 

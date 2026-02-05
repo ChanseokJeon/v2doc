@@ -42,6 +42,7 @@ function normalizeTextForPDF(text: string): string {
   let normalized = text.normalize('NFC');
 
   // 2. 제어 문자 제거 (탭, 줄바꿈은 유지)
+  // eslint-disable-next-line no-control-regex
   normalized = normalized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
 
   // 3. 유니코드 대체 문자(Replacement Character) 제거
@@ -129,7 +130,7 @@ async function downloadImageToBuffer(url: string): Promise<Buffer | null> {
       if (response.statusCode === 301 || response.statusCode === 302) {
         const redirectUrl = response.headers.location;
         if (redirectUrl) {
-          downloadImageToBuffer(redirectUrl).then(resolve);
+          void downloadImageToBuffer(redirectUrl).then(resolve);
           return;
         }
       }
@@ -477,8 +478,12 @@ export class PDFGenerator {
         let currentPage = 1; // 표지는 1페이지
 
         // PDF 아웃라인(북마크) 추가
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const outline = (doc as any).outline;
+        interface PDFDocWithOutline {
+          outline?: {
+            addItem: (title: string) => void;
+          };
+        }
+        const outline = (doc as unknown as PDFDocWithOutline).outline;
 
         // 본문 페이지 렌더링 (유효 섹션만)
         for (let i = 0; i < validSections.length; i++) {
@@ -509,16 +514,19 @@ export class PDFGenerator {
 
         doc.end();
 
-        writeStream.on('finish', async () => {
-          try {
-            await this.removeEmptyPages(outputPath);
-            logger.success(`PDF 생성 완료: ${outputPath}`);
-            resolve();
-          } catch (e) {
-            // Post-processing failure shouldn't fail the whole generation
-            logger.warn(`빈 페이지 제거 실패: ${e}`);
-            resolve();
-          }
+        writeStream.on('finish', () => {
+          void (async () => {
+            try {
+              await this.removeEmptyPages(outputPath);
+              logger.success(`PDF 생성 완료: ${outputPath}`);
+              resolve();
+            } catch (e: unknown) {
+              // Post-processing failure shouldn't fail the whole generation
+              const errMsg = e instanceof Error ? e.message : String(e);
+              logger.warn(`빈 페이지 제거 실패: ${errMsg}`);
+              resolve();
+            }
+          })();
         });
 
         writeStream.on('error', reject);
@@ -2131,11 +2139,31 @@ ${detailSectionsHtml}
 
     logger.info('Puppeteer PDF 생성 시작...');
 
+    interface PuppeteerModule {
+      default: {
+        launch: (options: { headless: boolean; args: string[] }) => Promise<{
+          newPage: () => Promise<{
+            goto: (
+              url: string,
+              options: { waitUntil: string; timeout: number }
+            ) => Promise<unknown>;
+            evaluateHandle: (expr: string) => Promise<unknown>;
+            pdf: (options: {
+              path: string;
+              format: string;
+              margin: { top: string; right: string; bottom: string; left: string };
+              printBackground: boolean;
+            }) => Promise<Buffer>;
+          }>;
+          close: () => Promise<void>;
+        }>;
+      };
+    }
+
     // Dynamically import puppeteer (optional dependency)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let puppeteerModule: any;
+    let puppeteerModule: PuppeteerModule;
     try {
-      puppeteerModule = await import('puppeteer');
+      puppeteerModule = (await import('puppeteer')) as unknown as PuppeteerModule;
     } catch {
       throw new Error('Puppeteer is not installed. Install it with: npm install puppeteer');
     }
@@ -3776,8 +3804,10 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
       const imgX = theme.margins.left + 20;
 
       // Get actual image dimensions to preserve aspect ratio
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const imgInfo = (doc as any).openImage(section.screenshot.imagePath);
+      interface PDFDocWithImages {
+        openImage: (path: string) => { width: number; height: number };
+      }
+      const imgInfo = (doc as unknown as PDFDocWithImages).openImage(section.screenshot.imagePath);
       const actualRatio = imgInfo.height / imgInfo.width;
 
       // Cap aspect ratio to prevent overly tall images (max ~16:9)
@@ -4050,11 +4080,12 @@ ${brief.actionItems.map((item) => `    <div class="action-item"><input type="che
 
       if (contentsRef) {
         // 실제 콘텐츠 스트림 크기 확인
-        const resolved = node.context.lookup(contentsRef);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const resolvedAny = resolved as any;
-        if (resolvedAny && resolvedAny.contents) {
-          contentSize = resolvedAny.contents.length;
+        interface ResolvedContent {
+          contents?: { length: number };
+        }
+        const resolved = node.context.lookup(contentsRef) as ResolvedContent;
+        if (resolved && resolved.contents) {
+          contentSize = resolved.contents.length;
         }
       }
 

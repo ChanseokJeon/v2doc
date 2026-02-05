@@ -47,7 +47,8 @@ jobs.post('/sync', zValidator('json', CreateJobRequestSchema), async (c) => {
     // Load and configure (deep clone to avoid singleton mutation)
     const configManager = ConfigManager.getInstance();
     const baseConfig = await configManager.load();
-    const config = JSON.parse(JSON.stringify(baseConfig));
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const config = JSON.parse(JSON.stringify(baseConfig)) as typeof baseConfig;
 
     config.output.format = options.format;
     config.screenshot.interval = options.screenshotInterval;
@@ -261,7 +262,7 @@ jobs.get('/:jobId', async (c) => {
 /**
  * DELETE /jobs/:jobId - Cancel a job
  */
-jobs.delete('/:jobId', async (c) => {
+jobs.delete('/:jobId', (c) => {
   const jobId = c.req.param('jobId');
   const store = getJobStore();
 
@@ -283,11 +284,11 @@ jobs.delete('/:jobId', async (c) => {
 /**
  * GET /jobs - List user's jobs
  */
-jobs.get('/', async (c) => {
+jobs.get('/', (c) => {
   const store = getJobStore();
   const userId = c.req.header('X-User-Id') || 'anonymous';
 
-  const statusQuery = c.req.query('status') as string | undefined;
+  const statusQuery = c.req.query('status');
   const status = statusQuery ? (statusQuery as JobStatus) : undefined;
   const limit = parseInt(c.req.query('limit') || '20', 10);
   const offset = parseInt(c.req.query('offset') || '0', 10);

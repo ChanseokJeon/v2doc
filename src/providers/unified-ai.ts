@@ -6,7 +6,7 @@ import OpenAI from 'openai';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { SubtitleSegment, CoverMetadata, DifficultyLevel } from '../types/index.js';
+import { SubtitleSegment, CoverMetadata } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 
 export interface KeyPoint {
@@ -140,12 +140,19 @@ export class UnifiedContentProcessor {
   /**
    * 캐시에서 읽기
    */
-  private async readCache(key: string): Promise<UnifiedProcessResult | null> {
+  private readCache(key: string): UnifiedProcessResult | null {
     try {
       const filePath = path.join(this.cacheDir, `${key}.json`);
       if (!fs.existsSync(filePath)) return null;
 
-      const content = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      const content = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as {
+        result: {
+          sections: Record<string, EnhancedSectionContent>;
+          globalSummary: CoverMetadata;
+          totalTokensUsed: number;
+        };
+        expiresAt: number;
+      };
 
       // TTL 확인 (30일)
       if (Date.now() > content.expiresAt) {
@@ -154,14 +161,16 @@ export class UnifiedContentProcessor {
       }
 
       // Map 복원
-      content.result.sections = new Map(
-        Object.entries(content.result.sections).map(([k, v]) => [
-          Number(k),
-          v as EnhancedSectionContent,
-        ])
+      const sections = new Map(
+        Object.entries(content.result.sections).map(([k, v]) => [Number(k), v])
       );
 
-      return { ...content.result, fromCache: true };
+      return {
+        sections,
+        globalSummary: content.result.globalSummary,
+        totalTokensUsed: content.result.totalTokensUsed,
+        fromCache: true,
+      };
     } catch {
       return null;
     }
@@ -170,7 +179,7 @@ export class UnifiedContentProcessor {
   /**
    * 캐시에 저장
    */
-  private async writeCache(key: string, result: UnifiedProcessResult): Promise<void> {
+  private writeCache(key: string, result: UnifiedProcessResult): void {
     try {
       fs.mkdirSync(this.cacheDir, { recursive: true });
       const filePath = path.join(this.cacheDir, `${key}.json`);
@@ -186,7 +195,7 @@ export class UnifiedContentProcessor {
       };
 
       fs.writeFileSync(filePath, JSON.stringify(serializable, null, 2));
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('캐시 저장 실패', e as Error);
     }
   }
@@ -324,7 +333,7 @@ Output JSON:
         }
 
         return { sections: resultMap, tokensUsed };
-      } catch (e) {
+      } catch (e: unknown) {
         retries++;
         if (retries >= maxRetries) throw e;
         await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, retries)));
@@ -355,21 +364,39 @@ Output JSON:
     if (objectMatch) raw = objectMatch[0];
 
     try {
-      const parsed = JSON.parse(raw);
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
       // 디버깅: 응답 구조 확인
       if (!parsed.sections || !Array.isArray(parsed.sections)) {
         logger.warn(`AI 응답에 sections 배열 없음. 키: ${Object.keys(parsed).join(', ')}`);
         // sections가 다른 키에 있는지 확인
         const possibleKeys = ['sections', 'data', 'results', 'items', 'content'];
         for (const key of possibleKeys) {
-          if (Array.isArray(parsed[key])) {
-            logger.info(`대체 키 '${key}' 사용: ${parsed[key].length}개 항목`);
-            return { sections: parsed[key] };
+          const value = parsed[key];
+          if (Array.isArray(value)) {
+            logger.info(`대체 키 '${key}' 사용: ${value.length}개 항목`);
+            return {
+              sections: value as Array<{
+                index: number;
+                oneLiner: string;
+                keyPoints: string[];
+                mainInformation: { paragraphs: string[]; bullets: string[] };
+                notableQuotes: Array<{ text: string; speaker?: string }>;
+              }>,
+            };
           }
         }
       }
-      return parsed;
-    } catch (e) {
+      return {
+        sections:
+          (parsed.sections as Array<{
+            index: number;
+            oneLiner: string;
+            keyPoints: string[];
+            mainInformation: { paragraphs: string[]; bullets: string[] };
+            notableQuotes: Array<{ text: string; speaker?: string }>;
+          }>) || [],
+      };
+    } catch (e: unknown) {
       logger.warn(`JSON 파싱 실패: ${(e as Error).message}`);
       logger.debug(`원본 응답 (처음 500자): ${raw.substring(0, 500)}`);
       return { sections: [] };
@@ -401,7 +428,7 @@ Output JSON:
 
     // 캐시 확인
     if (enableCache) {
-      const cached = await this.readCache(cacheKey);
+      const cached = this.readCache(cacheKey);
       if (cached) {
         logger.info(`캐시 히트: ${videoId}`);
         return cached;
@@ -441,7 +468,7 @@ Output JSON:
 
     // 캐시 저장
     if (enableCache) {
-      await this.writeCache(cacheKey, finalResult);
+      this.writeCache(cacheKey, finalResult);
     }
 
     logger.info(`AI 처리 완료: ${totalTokens} 토큰 사용`);
@@ -509,20 +536,34 @@ Each keyPoint MUST follow the format: "SHORT_TITLE: description"
         response_format: { type: 'json_object' },
       });
 
-      const parsed = JSON.parse(response.choices[0]?.message?.content || '{}');
+      const parsed = JSON.parse(response.choices[0]?.message?.content || '{}') as {
+        summary?: string;
+        keyPoints?: string[];
+        targetAudience?: string;
+        difficulty?: string;
+        keywords?: string[];
+        prerequisites?: string[];
+        recommendedFor?: string[];
+        benefits?: string[];
+      };
       return {
         summary: parsed.summary || '',
         keyPoints: parsed.keyPoints || [],
         language: targetLanguage,
         targetAudience: parsed.targetAudience,
-        difficulty: (parsed.difficulty as DifficultyLevel) || undefined,
+        difficulty:
+          parsed.difficulty === 'beginner' ||
+          parsed.difficulty === 'intermediate' ||
+          parsed.difficulty === 'advanced'
+            ? parsed.difficulty
+            : undefined,
         keywords: parsed.keywords || undefined,
         prerequisites: parsed.prerequisites || undefined,
         recommendedFor: parsed.recommendedFor || undefined,
         benefits: parsed.benefits || undefined,
         estimatedReadTime,
       };
-    } catch (e) {
+    } catch (e: unknown) {
       logger.warn('전체 요약 생성 실패', e as Error);
       return {
         summary: '',

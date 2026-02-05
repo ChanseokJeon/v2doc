@@ -53,9 +53,11 @@ analyze.post('/', zValidator('json', AnalyzeRequestSchema), async (c) => {
     };
 
     return c.json(response);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    // eslint-disable-next-line no-console
     console.error('Analyze error:', error);
-    return c.json({ error: error.message || 'Failed to analyze video' }, 400);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to analyze video';
+    return c.json({ error: errorMessage }, 400);
   }
 });
 

@@ -39,7 +39,7 @@ export class LocalStorageProvider implements IStorageProvider {
       // Handle stream
       const chunks: Buffer[] = [];
       for await (const chunk of data as Readable) {
-        chunks.push(Buffer.from(chunk));
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as ArrayBufferLike));
       }
       await fs.writeFile(filePath, Buffer.concat(chunks));
     }
@@ -70,7 +70,10 @@ export class LocalStorageProvider implements IStorageProvider {
     try {
       const metaPath = filePath + '.meta.json';
       const metaContent = await fs.readFile(metaPath, 'utf-8');
-      const meta = JSON.parse(metaContent);
+      const meta = JSON.parse(metaContent) as {
+        contentType?: string;
+        metadata?: Record<string, string>;
+      };
       contentType = meta.contentType || contentType;
       metadata = meta.metadata;
     } catch {
@@ -80,10 +83,10 @@ export class LocalStorageProvider implements IStorageProvider {
     return { data, contentType, metadata };
   }
 
-  async getSignedUrl(bucket: string, key: string, _options: SignedUrlOptions): Promise<string> {
+  getSignedUrl(bucket: string, key: string, _options: SignedUrlOptions): Promise<string> {
     // For local, just return file path
     const filePath = this.getFilePath(bucket, key);
-    return `file://${filePath}`;
+    return Promise.resolve(`file://${filePath}`);
   }
 
   async delete(bucket: string, key: string): Promise<void> {
@@ -91,8 +94,10 @@ export class LocalStorageProvider implements IStorageProvider {
     try {
       await fs.unlink(filePath);
       await fs.unlink(filePath + '.meta.json').catch(() => {});
-    } catch (error: any) {
-      if (error.code !== 'ENOENT') throw error;
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error && error.code !== 'ENOENT') {
+        throw error;
+      }
     }
   }
 

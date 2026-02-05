@@ -58,65 +58,58 @@ export class ScreenshotCapturer {
   ): AsyncGenerator<Screenshot> {
     const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
 
-    try {
-      // 영상 다운로드
-      logger.info('영상 다운로드 중...');
-      const qualityFormat = this.getDownloadFormat(this.config.quality);
-      const videoPath = await this.youtube.downloadVideo(videoId, workDir, qualityFormat);
+    // 영상 다운로드
+    logger.info('영상 다운로드 중...');
+    const qualityFormat = this.getDownloadFormat(this.config.quality);
+    const videoPath = await this.youtube.downloadVideo(videoId, workDir, qualityFormat);
 
-      // 타임스탬프 생성
-      let timestamps = this.ffmpeg.generateTimestamps(duration, this.config.interval);
+    // 타임스탬프 생성
+    let timestamps = this.ffmpeg.generateTimestamps(duration, this.config.interval);
 
-      // Apply dev mode screenshot limiting (for non-chapter videos)
-      if (this.devMaxScreenshots && timestamps.length > this.devMaxScreenshots) {
-        const originalCount = timestamps.length;
-        // Evenly sample across the video
-        const step = Math.ceil(timestamps.length / this.devMaxScreenshots);
-        timestamps = timestamps.filter((_, i) => i % step === 0).slice(0, this.devMaxScreenshots);
-        logger.warn(
-          `[DEV MODE] 스크린샷 제한: ${originalCount}개 → ${timestamps.length}개로 샘플링`
-        );
-      }
+    // Apply dev mode screenshot limiting (for non-chapter videos)
+    if (this.devMaxScreenshots && timestamps.length > this.devMaxScreenshots) {
+      const originalCount = timestamps.length;
+      // Evenly sample across the video
+      const step = Math.ceil(timestamps.length / this.devMaxScreenshots);
+      timestamps = timestamps.filter((_, i) => i % step === 0).slice(0, this.devMaxScreenshots);
+      logger.warn(`[DEV MODE] 스크린샷 제한: ${originalCount}개 → ${timestamps.length}개로 샘플링`);
+    }
 
-      const qualitySize = this.getQualitySize(this.config.quality);
+    const qualitySize = this.getQualitySize(this.config.quality);
 
-      logger.info(`스크린샷 캡처 시작: ${timestamps.length}개`);
+    logger.info(`스크린샷 캡처 시작: ${timestamps.length}개`);
 
-      for (let i = 0; i < timestamps.length; i++) {
-        const timestamp = timestamps[i];
-        const outputPath = path.join(workDir, `screenshot_${i.toString().padStart(4, '0')}.jpg`);
+    for (let i = 0; i < timestamps.length; i++) {
+      const timestamp = timestamps[i];
+      const outputPath = path.join(workDir, `screenshot_${i.toString().padStart(4, '0')}.jpg`);
 
-        // 첫 번째 프레임(0:00)은 썸네일 사용
-        if (i === 0 && timestamp === 0 && thumbnailUrl) {
-          try {
-            await this.youtube.downloadThumbnail(thumbnailUrl, outputPath);
-            logger.debug('첫 프레임에 썸네일 사용');
-          } catch {
-            // 썸네일 다운로드 실패 시 일반 캡처
-            await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
-          }
-        } else {
+      // 첫 번째 프레임(0:00)은 썸네일 사용
+      if (i === 0 && timestamp === 0 && thumbnailUrl) {
+        try {
+          await this.youtube.downloadThumbnail(thumbnailUrl, outputPath);
+          logger.debug('첫 프레임에 썸네일 사용');
+        } catch {
+          // 썸네일 다운로드 실패 시 일반 캡처
           await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
         }
-
-        // 진행률 콜백 호출
-        if (this.onProgress) {
-          this.onProgress(i + 1, timestamps.length);
-        }
-
-        yield {
-          timestamp,
-          imagePath: outputPath,
-          width: qualitySize.width,
-          height: qualitySize.height,
-        };
+      } else {
+        await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
       }
 
-      logger.success(`스크린샷 캡처 완료: ${timestamps.length}개`);
-    } catch (error) {
-      // 작업 디렉토리 정리는 호출자가 처리
-      throw error;
+      // 진행률 콜백 호출
+      if (this.onProgress) {
+        this.onProgress(i + 1, timestamps.length);
+      }
+
+      yield {
+        timestamp,
+        imagePath: outputPath,
+        width: qualitySize.width,
+        height: qualitySize.height,
+      };
     }
+
+    logger.success(`스크린샷 캡처 완료: ${timestamps.length}개`);
   }
 
   /**
@@ -241,52 +234,48 @@ export class ScreenshotCapturer {
     const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
     const screenshots: Screenshot[] = [];
 
-    try {
-      // 영상 다운로드
-      logger.info('[FFmpeg] 영상 다운로드 중...');
-      const qualityFormat = this.getDownloadFormat(this.config.quality);
-      const videoPath = await this.youtube.downloadVideo(videoId, workDir, qualityFormat);
+    // 영상 다운로드
+    logger.info('[FFmpeg] 영상 다운로드 중...');
+    const qualityFormat = this.getDownloadFormat(this.config.quality);
+    const videoPath = await this.youtube.downloadVideo(videoId, workDir, qualityFormat);
 
-      const qualitySize = this.getQualitySize(this.config.quality);
+    const qualitySize = this.getQualitySize(this.config.quality);
 
-      logger.info(`[FFmpeg] 챕터 기준 스크린샷 캡처 시작: ${chapters.length}개`);
+    logger.info(`[FFmpeg] 챕터 기준 스크린샷 캡처 시작: ${chapters.length}개`);
 
-      for (let i = 0; i < chapters.length; i++) {
-        const chapter = chapters[i];
-        const timestamp = chapter.startTime;
-        const outputPath = path.join(workDir, `screenshot_${i.toString().padStart(4, '0')}.jpg`);
+    for (let i = 0; i < chapters.length; i++) {
+      const chapter = chapters[i];
+      const timestamp = chapter.startTime;
+      const outputPath = path.join(workDir, `screenshot_${i.toString().padStart(4, '0')}.jpg`);
 
-        // 첫 번째 챕터(0:00)는 썸네일 사용
-        if (i === 0 && timestamp === 0 && thumbnailUrl) {
-          try {
-            await this.youtube.downloadThumbnail(thumbnailUrl, outputPath);
-            logger.debug('첫 챕터에 썸네일 사용');
-          } catch {
-            // 썸네일 다운로드 실패 시 일반 캡처
-            await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
-          }
-        } else {
+      // 첫 번째 챕터(0:00)는 썸네일 사용
+      if (i === 0 && timestamp === 0 && thumbnailUrl) {
+        try {
+          await this.youtube.downloadThumbnail(thumbnailUrl, outputPath);
+          logger.debug('첫 챕터에 썸네일 사용');
+        } catch {
+          // 썸네일 다운로드 실패 시 일반 캡처
           await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
         }
-
-        // 진행률 콜백 호출
-        if (this.onProgress) {
-          this.onProgress(i + 1, chapters.length);
-        }
-
-        screenshots.push({
-          timestamp,
-          imagePath: outputPath,
-          width: qualitySize.width,
-          height: qualitySize.height,
-        });
+      } else {
+        await this.ffmpeg.captureFrame(videoPath, timestamp, outputPath, this.config.quality);
       }
 
-      logger.success(`[FFmpeg] 챕터 기준 스크린샷 캡처 완료: ${chapters.length}개`);
-      return screenshots;
-    } catch (error) {
-      throw error;
+      // 진행률 콜백 호출
+      if (this.onProgress) {
+        this.onProgress(i + 1, chapters.length);
+      }
+
+      screenshots.push({
+        timestamp,
+        imagePath: outputPath,
+        width: qualitySize.width,
+        height: qualitySize.height,
+      });
     }
+
+    logger.success(`[FFmpeg] 챕터 기준 스크린샷 캡처 완료: ${chapters.length}개`);
+    return screenshots;
   }
 
   /**

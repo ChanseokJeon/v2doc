@@ -29,16 +29,20 @@ export class Logger {
   }
 
   error(message: string, error?: Error): void {
+    // eslint-disable-next-line no-console
     console.error(chalk.red(`✖ ${message}`));
     if (error && this.shouldLog('debug')) {
+      // eslint-disable-next-line no-console
       console.error(chalk.gray(error.stack || error.message));
     }
   }
 
   warn(message: string, error?: Error): void {
     if (this.shouldLog('warn')) {
+      // eslint-disable-next-line no-console
       console.warn(chalk.yellow(`⚠ ${message}`));
       if (error && this.shouldLog('debug')) {
+        // eslint-disable-next-line no-console
         console.warn(chalk.gray(error.stack || error.message));
       }
     }
@@ -46,20 +50,24 @@ export class Logger {
 
   info(message: string): void {
     if (this.shouldLog('info')) {
+      // eslint-disable-next-line no-console
       console.log(chalk.blue(`ℹ ${message}`));
     }
   }
 
   debug(message: string, data?: object): void {
     if (this.shouldLog('debug')) {
+      // eslint-disable-next-line no-console
       console.log(chalk.gray(`● ${message}`));
       if (data) {
+        // eslint-disable-next-line no-console
         console.log(chalk.gray(JSON.stringify(data, null, 2)));
       }
     }
   }
 
   success(message: string): void {
+    // eslint-disable-next-line no-console
     console.log(chalk.green(`✓ ${message}`));
   }
 

@@ -36,10 +36,15 @@ interface ConvertCommandOptions {
 export async function convertCommand(url: string | undefined, options: ConvertCommandOptions) {
   // URL 필수 확인
   if (!url) {
+    // eslint-disable-next-line no-console
     console.log(chalk.yellow('사용법: yt2pdf <YouTube-URL> [options]'));
+    // eslint-disable-next-line no-console
     console.log(chalk.gray('\n예시:'));
+    // eslint-disable-next-line no-console
     console.log(chalk.gray('  yt2pdf https://youtube.com/watch?v=xxxxx'));
+    // eslint-disable-next-line no-console
     console.log(chalk.gray('  yt2pdf https://youtube.com/watch?v=xxxxx -o ./docs -f md'));
+    // eslint-disable-next-line no-console
     console.log(chalk.gray('\n옵션 확인: yt2pdf --help'));
     return;
   }
@@ -150,10 +155,13 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
       const results = await orchestrator.processPlaylist({ url });
       spinner.stop();
 
+      // eslint-disable-next-line no-console
       console.log(chalk.green(`\n✓ ${results.length}개 영상 변환 완료!\n`));
 
       for (const result of results) {
+        // eslint-disable-next-line no-console
         console.log(chalk.gray(`  • ${result.metadata.title}`));
+        // eslint-disable-next-line no-console
         console.log(chalk.gray(`    → ${result.outputPath}`));
       }
     } else {
@@ -163,22 +171,38 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
       const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
       const devPrefix = config.dev?.enabled ? '[DEV] ' : '';
+      // eslint-disable-next-line no-console
       console.log(chalk.green(`\n${devPrefix}✓ 변환 완료!\n`));
+      // eslint-disable-next-line no-console
       console.log(chalk.dim('─'.repeat(50)));
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold.blue('제목')}     ${result.metadata.title}`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold.blue('채널')}     ${result.metadata.channel}`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold.blue('영상 길이')} ${formatTimestamp(result.metadata.duration)}`);
+      // eslint-disable-next-line no-console
       console.log(chalk.dim('─'.repeat(50)));
       const format = result.outputPath.split('.').pop()?.toUpperCase() || 'PDF';
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('포맷')}     ${format}`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('파일')}     ${chalk.underline(result.outputPath)}`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('섹션')}     ${result.stats.pages}개`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('페이지')}   ${result.stats.pages}개`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('용량')}     ${formatBytes(result.stats.fileSize)}`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('스크린샷')} ${result.stats.screenshotCount}개`);
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('소요시간')} ${elapsedTime}초`);
+      // eslint-disable-next-line no-console
       console.log(chalk.dim('─'.repeat(50)));
+      // eslint-disable-next-line no-console
       console.log(`  ${chalk.cyan.underline(`https://youtube.com/watch?v=${result.metadata.id}`)}`);
+      // eslint-disable-next-line no-console
       console.log();
     }
   } catch (error) {

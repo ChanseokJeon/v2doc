@@ -583,7 +583,7 @@ ${subtitleSample.slice(0, 500)}
       // JSON 파싱 시도
       const jsonMatch = content.match(/\{[^}]+\}/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
+        const parsed = JSON.parse(jsonMatch[0]) as { type?: string; confidence?: unknown };
         const validTypes: VideoType[] = [
           'conference_talk',
           'tutorial',
@@ -593,7 +593,10 @@ ${subtitleSample.slice(0, 500)}
           'discussion',
           'unknown',
         ];
-        const type = validTypes.includes(parsed.type) ? parsed.type : 'unknown';
+        const type: VideoType =
+          typeof parsed.type === 'string' && validTypes.includes(parsed.type as VideoType)
+            ? (parsed.type as VideoType)
+            : 'unknown';
         const confidence =
           typeof parsed.confidence === 'number' ? Math.min(1, Math.max(0, parsed.confidence)) : 0.5;
 
@@ -731,10 +734,13 @@ ${blocksText}
         return [];
       }
 
-      const parsed = JSON.parse(jsonMatch[0]) as Array<{ title: string; startTime: number }>;
+      const parsed = JSON.parse(jsonMatch[0]) as Array<{ title?: string; startTime?: number }>;
       const lastSegmentEnd = segments[segments.length - 1].end;
       const chapters = this.parseChaptersFromResponse(
-        parsed,
+        parsed.filter(
+          (item): item is { title: string; startTime: number } =>
+            typeof item.title === 'string' && typeof item.startTime === 'number'
+        ),
         lastSegmentEnd,
         minChapterLength,
         maxChapters
@@ -742,7 +748,7 @@ ${blocksText}
 
       logger.debug(`토픽 기반 챕터 생성 완료: ${chapters.length}개`);
       return chapters;
-    } catch (error) {
+    } catch (error: unknown) {
       logger.warn('토픽 기반 챕터 생성 실패', error as Error);
       return [];
     }

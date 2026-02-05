@@ -19,8 +19,11 @@ export function cacheCommand(): Command {
         await cacheManager.init();
         const stats = await cacheManager.getStats();
 
+        // eslint-disable-next-line no-console
         console.log(chalk.bold('\n캐시 상태:\n'));
+        // eslint-disable-next-line no-console
         console.log(`  항목 수: ${stats.entries}개`);
+        // eslint-disable-next-line no-console
         console.log(`  총 용량: ${formatBytes(stats.size)}`);
       } catch (error) {
         console.error(chalk.red('캐시 상태 조회 실패:', (error as Error).message));
@@ -34,6 +37,7 @@ export function cacheCommand(): Command {
     .action(async () => {
       try {
         await cacheManager.clear();
+        // eslint-disable-next-line no-console
         console.log(chalk.green('✓ 캐시가 삭제되었습니다.'));
       } catch (error) {
         console.error(chalk.red('캐시 삭제 실패:', (error as Error).message));
@@ -47,6 +51,7 @@ export function cacheCommand(): Command {
     .action(async () => {
       try {
         const removed = await cacheManager.cleanup();
+        // eslint-disable-next-line no-console
         console.log(chalk.green(`✓ ${removed}개의 만료된 캐시가 정리되었습니다.`));
       } catch (error) {
         console.error(chalk.red('캐시 정리 실패:', (error as Error).message));

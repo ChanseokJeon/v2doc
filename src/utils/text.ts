@@ -28,10 +28,10 @@ export function decodeHtmlEntities(text: string): string {
   }
 
   // Numeric entities (decimal)
-  result = result.replace(/&#(\d+);/g, (_, num) => String.fromCharCode(parseInt(num, 10)));
+  result = result.replace(/&#(\d+);/g, (_, num: string) => String.fromCharCode(parseInt(num, 10)));
 
   // Numeric entities (hex)
-  result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+  result = result.replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) =>
     String.fromCharCode(parseInt(hex, 16))
   );
 

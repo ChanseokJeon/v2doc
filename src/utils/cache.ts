@@ -56,7 +56,7 @@ export class CacheManager {
     try {
       const filePath = this.getFilePath(key);
       const content = await fs.readFile(filePath, 'utf-8');
-      const entry: CacheEntry<T> = JSON.parse(content);
+      const entry = JSON.parse(content) as CacheEntry<T>;
 
       // 만료 확인
       if (Date.now() > entry.expiresAt) {

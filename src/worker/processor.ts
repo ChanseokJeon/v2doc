@@ -46,7 +46,9 @@ export class JobProcessor {
    */
   async start(): Promise<void> {
     this.isRunning = true;
+    // eslint-disable-next-line no-console
     console.log(`[Worker] Starting with config:`, this.config);
+    // eslint-disable-next-line no-console
     console.log(`[Worker] Polling for jobs...`);
 
     while (this.isRunning) {
@@ -81,15 +83,18 @@ export class JobProcessor {
    * Stop the worker
    */
   async stop(): Promise<void> {
+    // eslint-disable-next-line no-console
     console.log('[Worker] Stopping...');
     this.isRunning = false;
 
     // Wait for active jobs to complete
     while (this.activeJobs > 0) {
+      // eslint-disable-next-line no-console
       console.log(`[Worker] Waiting for ${this.activeJobs} active jobs...`);
       await this.sleep(1000);
     }
 
+    // eslint-disable-next-line no-console
     console.log('[Worker] Stopped');
   }
 
@@ -102,6 +107,7 @@ export class JobProcessor {
     receiptHandle?: string;
   }): Promise<void> {
     const { jobId } = message.body;
+    // eslint-disable-next-line no-console
     console.log(`[Worker] Processing job: ${jobId}`);
 
     let job: Job | null = null;
@@ -110,6 +116,7 @@ export class JobProcessor {
       // 1. Load job from store
       job = this.jobStore.findById(jobId);
       if (!job) {
+        // eslint-disable-next-line no-console
         console.warn(`[Worker] Job not found: ${jobId}`);
         await this.ackMessage(message);
         return;
@@ -117,6 +124,7 @@ export class JobProcessor {
 
       // 2. Check if already cancelled
       if (job.status === 'cancelled') {
+        // eslint-disable-next-line no-console
         console.log(`[Worker] Job was cancelled: ${jobId}`);
         await this.ackMessage(message);
         return;
@@ -159,8 +167,10 @@ export class JobProcessor {
         this.sendWebhook(job.id, 'completed');
       }
 
+      // eslint-disable-next-line no-console
       console.log(`[Worker] Job completed: ${jobId}`);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error(`[Worker] Job failed: ${jobId}`, error);
 
       if (job) {
@@ -180,6 +190,7 @@ export class JobProcessor {
             status: 'queued',
             retryCount: job.retryCount + 1,
           });
+          // eslint-disable-next-line no-console
           console.log(`[Worker] Job queued for retry: ${jobId} (attempt ${job.retryCount + 1})`);
         } else {
           // Move to DLQ and mark as failed
@@ -192,6 +203,7 @@ export class JobProcessor {
             status: 'failed',
             error: jobError,
           });
+          // eslint-disable-next-line no-console
           console.log(`[Worker] Job failed permanently: ${jobId}`);
 
           if (job.webhook) {
@@ -324,6 +336,7 @@ export class JobProcessor {
 
   private sendWebhook(jobId: string, event: 'completed' | 'failed'): void {
     // TODO: Implement webhook delivery with HMAC signature
+    // eslint-disable-next-line no-console
     console.log(`[Worker] Webhook not implemented: ${event} for job ${jobId}`);
   }
 

@@ -16,27 +16,33 @@ export function setupCommand(): Command {
 
   // yt2pdf setup
   setup.option('-c, --check', '설치 상태만 확인').action(async (options: { check?: boolean }) => {
+    // eslint-disable-next-line no-console
     console.log(chalk.bold('\n🔧 yt2pdf 의존성 확인\n'));
 
     // ffmpeg 확인
     const ffmpegInstalled = await FFmpegWrapper.checkInstallation();
     if (ffmpegInstalled) {
+      // eslint-disable-next-line no-console
       console.log(chalk.green('  ✓ ffmpeg 설치됨'));
     } else {
+      // eslint-disable-next-line no-console
       console.log(chalk.red('  ✖ ffmpeg 미설치'));
     }
 
     // yt-dlp 확인
     const ytdlpInstalled = await YouTubeProvider.checkInstallation();
     if (ytdlpInstalled) {
+      // eslint-disable-next-line no-console
       console.log(chalk.green('  ✓ yt-dlp 설치됨'));
     } else {
+      // eslint-disable-next-line no-console
       console.log(chalk.red('  ✖ yt-dlp 미설치'));
     }
 
     // 확인만 하는 경우
     if (options.check) {
       if (!ffmpegInstalled || !ytdlpInstalled) {
+        // eslint-disable-next-line no-console
         console.log(chalk.yellow('\n누락된 의존성을 설치하려면: yt2pdf setup'));
       }
       return;
@@ -44,6 +50,7 @@ export function setupCommand(): Command {
 
     // 설치 진행
     if (!ffmpegInstalled || !ytdlpInstalled) {
+      // eslint-disable-next-line no-console
       console.log(chalk.bold('\n📦 누락된 의존성 설치 중...\n'));
 
       const platform = process.platform;
@@ -56,8 +63,10 @@ export function setupCommand(): Command {
         await installYtDlp(platform);
       }
 
+      // eslint-disable-next-line no-console
       console.log(chalk.green('\n✓ 모든 의존성 설치 완료!'));
     } else {
+      // eslint-disable-next-line no-console
       console.log(chalk.green('\n✓ 모든 의존성이 이미 설치되어 있습니다.'));
     }
   });
@@ -66,6 +75,7 @@ export function setupCommand(): Command {
 }
 
 async function installFFmpeg(platform: string): Promise<void> {
+  // eslint-disable-next-line no-console
   console.log(chalk.blue('  ffmpeg 설치 중...'));
 
   try {
@@ -77,21 +87,27 @@ async function installFFmpeg(platform: string): Promise<void> {
         await execAsync('which apt-get');
         await execAsync('sudo apt-get update && sudo apt-get install -y ffmpeg');
       } catch {
+        // eslint-disable-next-line no-console
         console.log(chalk.yellow('    apt를 사용할 수 없습니다. 수동으로 ffmpeg를 설치해주세요.'));
         return;
       }
     } else {
+      // eslint-disable-next-line no-console
       console.log(chalk.yellow('    자동 설치가 지원되지 않는 플랫폼입니다.'));
+      // eslint-disable-next-line no-console
       console.log(chalk.gray('    https://ffmpeg.org/download.html 에서 다운로드하세요.'));
       return;
     }
+    // eslint-disable-next-line no-console
     console.log(chalk.green('  ✓ ffmpeg 설치 완료'));
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(chalk.red(`  ✖ ffmpeg 설치 실패: ${(error as Error).message}`));
   }
 }
 
 async function installYtDlp(platform: string): Promise<void> {
+  // eslint-disable-next-line no-console
   console.log(chalk.blue('  yt-dlp 설치 중...'));
 
   try {
@@ -105,8 +121,10 @@ async function installYtDlp(platform: string): Promise<void> {
         await execAsync('pip install yt-dlp');
       }
     }
+    // eslint-disable-next-line no-console
     console.log(chalk.green('  ✓ yt-dlp 설치 완료'));
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.log(chalk.red(`  ✖ yt-dlp 설치 실패: ${(error as Error).message}`));
   }
 }

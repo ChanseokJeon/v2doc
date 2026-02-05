@@ -91,12 +91,13 @@ export class LocalQueueProvider implements IQueueProvider {
     return messages;
   }
 
-  async ack(_queueName: string, receiptHandle: string): Promise<void> {
+  ack(_queueName: string, receiptHandle: string): Promise<void> {
     // Remove from in-flight tracking
     this.inFlight.delete(receiptHandle);
+    return Promise.resolve();
   }
 
-  async nack(queueName: string, receiptHandle: string, delaySeconds?: number): Promise<void> {
+  nack(queueName: string, receiptHandle: string, delaySeconds?: number): Promise<void> {
     const queue = this.getQueue(queueName);
 
     // Retrieve the original message from in-flight tracking
@@ -124,9 +125,11 @@ export class LocalQueueProvider implements IQueueProvider {
     } else {
       queue.push(message);
     }
+
+    return Promise.resolve();
   }
 
-  async moveToDLQ(queueName: string, message: QueueMessage): Promise<void> {
+  moveToDLQ(queueName: string, message: QueueMessage): Promise<void> {
     const dlq = this.getDLQ(queueName);
     dlq.push({
       ...message,
@@ -136,6 +139,7 @@ export class LocalQueueProvider implements IQueueProvider {
         failedAt: new Date().toISOString(),
       },
     });
+    return Promise.resolve();
   }
 
   // Test helpers

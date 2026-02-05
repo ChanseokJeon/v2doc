@@ -1,6 +1,7 @@
 import { JobProcessor } from './processor';
 
 async function main() {
+  // eslint-disable-next-line no-console
   console.log('Starting yt2pdf Worker...');
 
   const worker = new JobProcessor({
@@ -13,6 +14,7 @@ async function main() {
 
   // Graceful shutdown handlers
   const shutdown = async (signal: string) => {
+    // eslint-disable-next-line no-console
     console.log(`Received ${signal}, shutting down gracefully...`);
     await worker.stop();
     process.exit(0);
