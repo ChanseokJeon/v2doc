@@ -73,7 +73,9 @@ export class ScreenshotCapturer {
         // Evenly sample across the video
         const step = Math.ceil(timestamps.length / this.devMaxScreenshots);
         timestamps = timestamps.filter((_, i) => i % step === 0).slice(0, this.devMaxScreenshots);
-        logger.warn(`[DEV MODE] 스크린샷 제한: ${originalCount}개 → ${timestamps.length}개로 샘플링`);
+        logger.warn(
+          `[DEV MODE] 스크린샷 제한: ${originalCount}개 → ${timestamps.length}개로 샘플링`
+        );
       }
 
       const qualitySize = this.getQualitySize(this.config.quality);

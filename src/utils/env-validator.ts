@@ -44,9 +44,7 @@ const PROVIDER_REQUIREMENTS: Record<CloudProviderType, ProviderRequirements> = {
  * @param cloudProvider - Cloud provider type (local, aws, gcp)
  * @returns Validation result with errors and warnings
  */
-export function validateEnvironment(
-  cloudProvider?: CloudProviderType
-): EnvValidationResult {
+export function validateEnvironment(cloudProvider?: CloudProviderType): EnvValidationResult {
   const provider = cloudProvider || (process.env.CLOUD_PROVIDER as CloudProviderType) || 'local';
   const requirements = PROVIDER_REQUIREMENTS[provider];
 
@@ -97,17 +95,17 @@ function validateAWS(errors: string[], warnings: string[]): void {
   if (!hasAccessKeyId && !hasSecretAccessKey) {
     warnings.push(
       'No AWS credentials found (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY). ' +
-      'Assuming IAM role or instance profile authentication.'
+        'Assuming IAM role or instance profile authentication.'
     );
   } else if (hasAccessKeyId && !hasSecretAccessKey) {
     errors.push(
       'AWS_ACCESS_KEY_ID is set but AWS_SECRET_ACCESS_KEY is missing. ' +
-      'Both credentials must be provided together.'
+        'Both credentials must be provided together.'
     );
   } else if (!hasAccessKeyId && hasSecretAccessKey) {
     errors.push(
       'AWS_SECRET_ACCESS_KEY is set but AWS_ACCESS_KEY_ID is missing. ' +
-      'Both credentials must be provided together.'
+        'Both credentials must be provided together.'
     );
   }
 
@@ -115,7 +113,7 @@ function validateAWS(errors: string[], warnings: string[]): void {
   if (!hasRegion) {
     warnings.push(
       'AWS_REGION not set, defaulting to us-east-1. ' +
-      'Set AWS_REGION to specify a different region.'
+        'Set AWS_REGION to specify a different region.'
     );
   }
 }
@@ -124,7 +122,8 @@ function validateAWS(errors: string[], warnings: string[]): void {
  * Validate GCP-specific environment variables
  */
 function validateGCP(_errors: string[], warnings: string[]): void {
-  const hasApplicationCredentials = (process.env.GOOGLE_APPLICATION_CREDENTIALS || '').trim() !== '';
+  const hasApplicationCredentials =
+    (process.env.GOOGLE_APPLICATION_CREDENTIALS || '').trim() !== '';
   const hasCloudProject = (process.env.GOOGLE_CLOUD_PROJECT || '').trim() !== '';
   const hasGcloudProject = (process.env.GCLOUD_PROJECT || '').trim() !== '';
 
@@ -132,8 +131,8 @@ function validateGCP(_errors: string[], warnings: string[]): void {
   if (!hasApplicationCredentials) {
     warnings.push(
       'GOOGLE_APPLICATION_CREDENTIALS not set. ' +
-      'Attempting to use Application Default Credentials (ADC). ' +
-      'Ensure you have run "gcloud auth application-default login" or are running on GCP.'
+        'Attempting to use Application Default Credentials (ADC). ' +
+        'Ensure you have run "gcloud auth application-default login" or are running on GCP.'
     );
   }
 
@@ -141,8 +140,8 @@ function validateGCP(_errors: string[], warnings: string[]): void {
   if (!hasCloudProject && !hasGcloudProject) {
     warnings.push(
       'GOOGLE_CLOUD_PROJECT or GCLOUD_PROJECT not set. ' +
-      'The GCP client will attempt to auto-detect the project. ' +
-      'Set GOOGLE_CLOUD_PROJECT to explicitly specify the project.'
+        'The GCP client will attempt to auto-detect the project. ' +
+        'Set GOOGLE_CLOUD_PROJECT to explicitly specify the project.'
     );
   }
 }
@@ -152,9 +151,7 @@ function validateGCP(_errors: string[], warnings: string[]): void {
  * @param cloudProvider - Cloud provider type
  * @throws Error if validation fails
  */
-export function validateAndLogEnvironment(
-  cloudProvider?: CloudProviderType
-): void {
+export function validateAndLogEnvironment(cloudProvider?: CloudProviderType): void {
   const result = validateEnvironment(cloudProvider);
   const provider = cloudProvider || (process.env.CLOUD_PROVIDER as CloudProviderType) || 'local';
 
@@ -171,7 +168,7 @@ export function validateAndLogEnvironment(
   if (!result.valid) {
     const errorMessage = [
       `\n❌ Environment validation failed for '${provider}' provider:`,
-      ...result.errors.map(err => `   - ${err}`),
+      ...result.errors.map((err) => `   - ${err}`),
       '',
     ].join('\n');
     throw new Error(errorMessage);

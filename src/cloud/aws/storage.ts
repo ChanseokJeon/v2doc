@@ -48,7 +48,7 @@ export class S3StorageProvider implements IStorageProvider {
       // Convert stream to buffer
       const chunks: Buffer[] = [];
       for await (const chunk of data as Readable) {
-        chunks.push(Buffer.from(chunk));
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as ArrayBufferLike));
       }
       body = Buffer.concat(chunks);
     }
@@ -81,7 +81,7 @@ export class S3StorageProvider implements IStorageProvider {
     // Convert stream to buffer
     const chunks: Buffer[] = [];
     for await (const chunk of response.Body as Readable) {
-      chunks.push(Buffer.from(chunk));
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as ArrayBufferLike));
     }
 
     return {
@@ -91,11 +91,7 @@ export class S3StorageProvider implements IStorageProvider {
     };
   }
 
-  async getSignedUrl(
-    bucket: string,
-    key: string,
-    options: SignedUrlOptions
-  ): Promise<string> {
+  async getSignedUrl(bucket: string, key: string, options: SignedUrlOptions): Promise<string> {
     const command =
       options.action === 'write'
         ? new PutObjectCommand({

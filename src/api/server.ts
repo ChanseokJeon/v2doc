@@ -16,7 +16,7 @@ console.log(`Health check: http://localhost:${port}/api/v1/health`);
 // Graceful shutdown handlers
 let isShuttingDown = false;
 
-const shutdown = async (signal: string) => {
+const shutdown = (signal: string) => {
   if (isShuttingDown) {
     console.log('Shutdown already in progress...');
     return;

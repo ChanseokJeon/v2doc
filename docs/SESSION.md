@@ -8,10 +8,10 @@
 
 | 항목 | 값 |
 |------|-----|
-| **날짜** | 2026-02-04 |
-| **세션 ID** | session-006 |
-| **완료한 작업** | Cloud Run + GCS 배포 설계 및 구현 |
-| **다음 작업** | 빌드 테스트 및 배포 |
+| **날짜** | 2026-02-06 |
+| **세션 ID** | session-007 |
+| **완료한 작업** | Token 최적화 + yt-dlp Proxy 지원 + Cloud Run 배포 (IP Blocking 실패) |
+| **다음 작업** | Residential Proxy 설정 + ESLint 정리 |
 
 ---
 
@@ -44,78 +44,76 @@ docs/
 
 ---
 
-## 최근 완료한 작업: Web Service API + 클라우드 추상화
+## 최근 완료한 작업: Token 최적화 + yt-dlp Proxy + Cloud Run 배포
 
 ### 커밋 정보
-- **커밋**: `5bb2e82` (2026-02-02)
-- **변경**: 58개 파일, +15,016줄
-- **테스트**: 596개 테스트, 94%+ 커버리지
+- **최근 커밋**: `8626d4b` (2026-02-05)
+- **변경**: 패키지 관리 업데이트 (package.json, package-lock.json)
+- **상태**: Working tree clean (모든 변경 커밋됨)
 
 ### 구현 내용
 
-#### 1. REST API (Hono 프레임워크)
-| Endpoint | 설명 |
-|----------|------|
-| `POST /api/v1/jobs` | Job 생성 (URL → 큐 등록) |
-| `GET /api/v1/jobs/:id` | Job 상태 + 다운로드 URL |
-| `DELETE /api/v1/jobs/:id` | Job 취소 |
-| `GET /api/v1/jobs` | 사용자 Job 목록 |
-| `POST /api/v1/analyze` | 영상 분석 (비용/시간 추정) |
-| `GET /api/v1/health` | 헬스체크 (deep/shallow) |
+#### 1. Token 최적화 (session-007)
+- **변경**: `translatedText` 필드 제거
+- **효과**: API 응답 크기 감소, token 사용량 최적화
+- **현황**: 패키지 업데이트 완료
 
-#### 2. 클라우드 프로바이더 추상화
-| Provider | Storage | Queue |
-|----------|---------|-------|
-| AWS | S3 | SQS |
-| GCP | Cloud Storage | Pub/Sub |
-| Local | 파일시스템 | 메모리 큐 |
+#### 2. yt-dlp Proxy 지원 추가
+- **목적**: YouTube IP blocking 우회
+- **구현**: `--proxy` 옵션 지원 (Basic/SOCKS5)
+- **테스트**: Cloud Run 배포 시도 → YouTube IP blocking으로 실패
+- **결론**: Proxy 설정만으로는 불충분, residential proxy 필요
 
-#### 3. 보안 수정
-- Command Injection → `execFileAsync` 배열 인자
-- Path Traversal → `path.resolve` 검증
-- NACK 버그 → in-flight 메시지 추적
-- Singleton 경쟁 → Promise 기반 락
-- 타이머 메모리 누수 → `clearTimeout` 적용
+#### 3. Cloud Run 배포 실패 분석
+- **증상**: Cloud Run에서 YouTube 액세스 불가 (429 Too Many Requests)
+- **원인**: YouTube의 클라우드 IP 차단
+- **해결책**: Residential proxy (다음 세션) 또는 on-premise 배포 검토
 
-#### 4. 파일 구조
-```
-src/
-├── api/           # REST API 서버
-│   ├── server.ts  # 진입점 (graceful shutdown)
-│   ├── app.ts     # 미들웨어 설정
-│   ├── routes/    # jobs, analyze, health
-│   ├── models/    # Job 모델 + Zod 스키마
-│   └── store/     # In-memory JobStore
-├── cloud/         # 클라우드 추상화
-│   ├── interfaces.ts
-│   ├── factory.ts
-│   ├── aws/       # S3 + SQS
-│   ├── gcp/       # Storage + Pub/Sub
-│   └── local/     # 개발용
-└── worker/        # 백그라운드 워커
-    ├── processor.ts
-    └── run.ts
-```
+#### 4. 기존 시스템 안정성
+- **REST API**: Hono 프레임워크 (Job 관리, 상태 추적)
+- **클라우드 추상화**: AWS/GCP/Local 지원
+- **보안 수정**: 완료 (Injection, Path Traversal, NACK 버그 등)
+- **테스트**: 596개 테스트, 94%+ 커버리지
 
 ---
 
-## 다음 작업
+## 다음 작업 (session-008)
 
-### 프로덕션 배포 준비
+### 긴급: YouTube IP Blocking 해결
+1. **Residential Proxy 설정**
+   - Proxy provider 평가 (Bright Data, Oxylabs, Smart Proxy 등)
+   - yt-dlp proxy 설정 통합
+   - 비용 분석 및 선택
+
+2. **배포 전략 재검토**
+   - Cloud Run (proxy 솔루션 후)
+   - On-premise 배포 (dedicated server)
+   - Hybrid 접근법
+
+### 코드 정리
+1. **ESLint 규칙 정리**
+   - 현재 ESLint 정책 검토
+   - 일관되지 않은 규칙 정정
+   - 빌드 경고 해결
+
+### 프로덕션 배포 준비 (이후)
 1. **JobStore 영속화**: In-memory → Redis 또는 SQLite
 2. **인증/인가**: API Key 또는 OAuth 추가
 3. **Rate Limiting**: 요청 제한
-4. **Dockerfile**: 컨테이너화
-5. **CI/CD**: GitHub Actions 배포 파이프라인
-
-### 추가 개선 고려사항
-- 인용구 품질 개선
-- 카테고리 태그 시각화
-- 긴 영상 처리 최적화
+4. **CI/CD**: GitHub Actions 배포 파이프라인
 
 ---
 
 ## 이전 세션 기록
+
+### session-006 (2026-02-04): Cloud Run + GCS 배포
+- Cloud Run + GCS 배포 설계 및 구현
+- 빌드 및 기본 배포 테스트
+
+### session-005 (2026-02-02): Web Service API + 클라우드 추상화
+- REST API (Hono 프레임워크) 구현
+- AWS/GCP/Local 클라우드 프로바이더 추상화
+- 596개 테스트, 94%+ 커버리지
 
 ### session-004 (2026-01-30): PDF 품질 개선
 - PDF 중복 콘텐츠 문제 해결
@@ -187,6 +185,8 @@ export CLOUD_PROVIDER=local
 
 | 날짜 | 변경 내용 |
 |------|----------|
+| 2026-02-06 | Token 최적화 + yt-dlp Proxy 지원 + Cloud Run 배포 (IP Blocking 실패) |
+| 2026-02-04 | Cloud Run + GCS 배포 설계 및 구현 |
 | 2026-02-02 | Web Service API + 클라우드 프로바이더 추상화 |
 | 2026-01-30 | PDF 품질 개선 + AI 프롬프트 재설계 |
 | 2025-01-29 | PDF 품질 개선 (폰트, 자막, 번역) |
@@ -197,4 +197,4 @@ export CLOUD_PROVIDER=local
 
 ---
 
-*마지막 업데이트: 2026-02-02*
+*마지막 업데이트: 2026-02-06*

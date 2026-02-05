@@ -59,9 +59,7 @@ export class StoryboardCapturer {
       const formats = info.formats || [];
 
       // 선호하는 포맷 찾기 (sb0 > sb1 > sb2 > sb3)
-      const sbFormats = formats.filter((f: { format_id: string }) =>
-        f.format_id.startsWith('sb')
-      );
+      const sbFormats = formats.filter((f: { format_id: string }) => f.format_id.startsWith('sb'));
 
       if (sbFormats.length === 0) {
         logger.warn('Storyboard 포맷을 찾을 수 없음');
@@ -98,10 +96,7 @@ export class StoryboardCapturer {
   /**
    * Storyboard 이미지 다운로드 및 프레임 분할
    */
-  async captureFromStoryboard(
-    videoId: string,
-    chapters?: Chapter[]
-  ): Promise<Screenshot[]> {
+  async captureFromStoryboard(videoId: string, chapters?: Chapter[]): Promise<Screenshot[]> {
     const metadata = await this.getStoryboardMetadata(videoId);
     if (!metadata) {
       throw new Error('Storyboard를 사용할 수 없음');
@@ -111,7 +106,9 @@ export class StoryboardCapturer {
     const screenshots: Screenshot[] = [];
 
     try {
-      logger.info(`Storyboard 캡처 시작 (${metadata.formatId}: ${metadata.frameWidth}x${metadata.frameHeight})`);
+      logger.info(
+        `Storyboard 캡처 시작 (${metadata.formatId}: ${metadata.frameWidth}x${metadata.frameHeight})`
+      );
 
       const framesPerSheet = metadata.rows * metadata.columns;
       const secondsPerFrame = 1 / metadata.fps;
@@ -143,7 +140,10 @@ export class StoryboardCapturer {
             const row = Math.floor(frameIndexInSheet / metadata.columns);
             const col = frameIndexInSheet % metadata.columns;
 
-            const framePath = path.join(workDir, `frame_${targetTime.toFixed(0).padStart(5, '0')}.jpg`);
+            const framePath = path.join(
+              workDir,
+              `frame_${targetTime.toFixed(0).padStart(5, '0')}.jpg`
+            );
 
             // FFmpeg로 프레임 추출
             await this.extractFrame(

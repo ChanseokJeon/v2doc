@@ -1,3 +1,14 @@
+> ⚠️ **DEPRECATED**: 이 문서는 2025-01-26 기준으로 작성되어 현재 구현과 다릅니다.
+> 현재 Web Service API 아키텍처는 [WEB-API-ARCHITECTURE.md](./WEB-API-ARCHITECTURE.md)를 참조하세요.
+>
+> 주요 변경사항:
+> - Express → Hono 프레임워크
+> - Web API 레이어 추가 (src/api/)
+> - Cloud 추상화 레이어 추가 (src/cloud/)
+> - Worker 시스템 추가 (src/worker/)
+
+---
+
 # yt2pdf 아키텍처 상세 설계
 
 ## 1. 시스템 개요

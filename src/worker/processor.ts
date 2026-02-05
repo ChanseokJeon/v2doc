@@ -17,7 +17,7 @@ export interface WorkerConfig {
 const DEFAULT_CONFIG: WorkerConfig = {
   maxConcurrentJobs: 3,
   visibilityTimeout: 600, // 10 minutes
-  pollingInterval: 5000,  // 5 seconds
+  pollingInterval: 5000, // 5 seconds
   tempDir: '/tmp/yt2pdf',
   outputBucket: process.env.OUTPUT_BUCKET || 'yt2pdf-results',
 };
@@ -54,19 +54,16 @@ export class JobProcessor {
         // Only poll if we have capacity
         if (this.activeJobs < this.config.maxConcurrentJobs) {
           const provider = await this.getProvider();
-          const messages = await provider.queue.receive<{ jobId: string }>(
-            'yt2pdf-jobs',
-            {
-              maxMessages: this.config.maxConcurrentJobs - this.activeJobs,
-              visibilityTimeoutSeconds: this.config.visibilityTimeout,
-              waitTimeSeconds: 20, // Long polling
-            }
-          );
+          const messages = await provider.queue.receive<{ jobId: string }>('yt2pdf-jobs', {
+            maxMessages: this.config.maxConcurrentJobs - this.activeJobs,
+            visibilityTimeoutSeconds: this.config.visibilityTimeout,
+            waitTimeSeconds: 20, // Long polling
+          });
 
           // Process messages concurrently
           for (const msg of messages) {
             this.activeJobs++;
-            this.processMessage(msg).finally(() => {
+            void this.processMessage(msg).finally(() => {
               this.activeJobs--;
             });
           }
@@ -111,7 +108,7 @@ export class JobProcessor {
 
     try {
       // 1. Load job from store
-      job = await this.jobStore.findById(jobId);
+      job = this.jobStore.findById(jobId);
       if (!job) {
         console.warn(`[Worker] Job not found: ${jobId}`);
         await this.ackMessage(message);
@@ -126,7 +123,7 @@ export class JobProcessor {
       }
 
       // 3. Update status to processing
-      await this.jobStore.update(jobId, {
+      this.jobStore.update(jobId, {
         status: 'processing',
         startedAt: new Date(),
       });
@@ -137,15 +134,12 @@ export class JobProcessor {
       // 5. Upload result to cloud storage
       const provider = await this.getProvider();
       const outputKey = `results/${job.userId}/${job.id}/output.${job.options.format}`;
-      await provider.storage.upload(
-        this.config.outputBucket,
-        outputKey,
-        result.buffer,
-        { contentType: this.getContentType(job.options.format) }
-      );
+      await provider.storage.upload(this.config.outputBucket, outputKey, result.buffer, {
+        contentType: this.getContentType(job.options.format),
+      });
 
       // 6. Update job as completed
-      await this.jobStore.update(jobId, {
+      this.jobStore.update(jobId, {
         status: 'completed',
         completedAt: new Date(),
         result: {
@@ -162,11 +156,10 @@ export class JobProcessor {
 
       // 8. Send webhook if configured
       if (job.webhook) {
-        await this.sendWebhook(job.id, 'completed');
+        this.sendWebhook(job.id, 'completed');
       }
 
       console.log(`[Worker] Job completed: ${jobId}`);
-
     } catch (error) {
       console.error(`[Worker] Job failed: ${jobId}`, error);
 
@@ -183,7 +176,7 @@ export class JobProcessor {
           // NACK with exponential backoff
           const delaySeconds = Math.pow(2, job.retryCount) * 60;
           await this.nackMessage(message, delaySeconds);
-          await this.jobStore.update(jobId, {
+          this.jobStore.update(jobId, {
             status: 'queued',
             retryCount: job.retryCount + 1,
           });
@@ -195,14 +188,14 @@ export class JobProcessor {
             ...message,
             enqueuedAt: new Date(),
           });
-          await this.jobStore.update(jobId, {
+          this.jobStore.update(jobId, {
             status: 'failed',
             error: jobError,
           });
           console.log(`[Worker] Job failed permanently: ${jobId}`);
 
           if (job.webhook) {
-            await this.sendWebhook(job.id, 'failed');
+            this.sendWebhook(job.id, 'failed');
           }
         }
       }
@@ -240,14 +233,14 @@ export class JobProcessor {
       const orchestrator = new Orchestrator({ config });
 
       // Progress callback
-      orchestrator.onProgress(async (state) => {
+      orchestrator.onProgress((state) => {
         const progress: JobProgress = {
           percent: state.progress,
           currentStep: state.currentStep,
           stepsCompleted: [],
           stepsRemaining: [],
         };
-        await this.jobStore.updateProgress(job.id, progress);
+        this.jobStore.updateProgress(job.id, progress);
       });
 
       // Run conversion
@@ -259,7 +252,7 @@ export class JobProcessor {
 
       // Update video metadata
       if (result.metadata) {
-        await this.jobStore.update(job.id, {
+        this.jobStore.update(job.id, {
           videoMetadata: {
             title: result.metadata.title,
             channel: result.metadata.channel,
@@ -315,8 +308,7 @@ export class JobProcessor {
       'VIDEO_DOWNLOAD_FAILED',
     ];
     return retryablePatterns.some(
-      (pattern) =>
-        error.message.includes(pattern) || error.name.includes(pattern)
+      (pattern) => error.message.includes(pattern) || error.name.includes(pattern)
     );
   }
 
@@ -330,7 +322,7 @@ export class JobProcessor {
     return types[format] || 'application/octet-stream';
   }
 
-  private async sendWebhook(jobId: string, event: 'completed' | 'failed'): Promise<void> {
+  private sendWebhook(jobId: string, event: 'completed' | 'failed'): void {
     // TODO: Implement webhook delivery with HMAC signature
     console.log(`[Worker] Webhook not implemented: ${event} for job ${jobId}`);
   }

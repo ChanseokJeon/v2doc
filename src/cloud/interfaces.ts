@@ -33,11 +33,7 @@ export interface IStorageProvider {
 
   download(bucket: string, key: string): Promise<StorageDownloadResult>;
 
-  getSignedUrl(
-    bucket: string,
-    key: string,
-    options: SignedUrlOptions
-  ): Promise<string>;
+  getSignedUrl(bucket: string, key: string, options: SignedUrlOptions): Promise<string>;
 
   delete(bucket: string, key: string): Promise<void>;
 
@@ -68,24 +64,13 @@ export interface QueueReceiveOptions {
 }
 
 export interface IQueueProvider {
-  enqueue<T>(
-    queueName: string,
-    message: T,
-    options?: QueueEnqueueOptions
-  ): Promise<string>;
+  enqueue<T>(queueName: string, message: T, options?: QueueEnqueueOptions): Promise<string>;
 
-  receive<T>(
-    queueName: string,
-    options?: QueueReceiveOptions
-  ): Promise<QueueMessage<T>[]>;
+  receive<T>(queueName: string, options?: QueueReceiveOptions): Promise<QueueMessage<T>[]>;
 
   ack(queueName: string, receiptHandle: string): Promise<void>;
 
-  nack(
-    queueName: string,
-    receiptHandle: string,
-    delaySeconds?: number
-  ): Promise<void>;
+  nack(queueName: string, receiptHandle: string, delaySeconds?: number): Promise<void>;
 
   moveToDLQ(queueName: string, message: QueueMessage): Promise<void>;
 }

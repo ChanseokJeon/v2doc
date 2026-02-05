@@ -47,11 +47,14 @@ export class LocalStorageProvider implements IStorageProvider {
     // Save metadata if provided
     if (options?.metadata || options?.contentType) {
       const metaPath = filePath + '.meta.json';
-      await fs.writeFile(metaPath, JSON.stringify({
-        contentType: options?.contentType,
-        metadata: options?.metadata,
-        cacheControl: options?.cacheControl,
-      }));
+      await fs.writeFile(
+        metaPath,
+        JSON.stringify({
+          contentType: options?.contentType,
+          metadata: options?.metadata,
+          cacheControl: options?.cacheControl,
+        })
+      );
     }
 
     return `file://${filePath}`;
@@ -77,11 +80,7 @@ export class LocalStorageProvider implements IStorageProvider {
     return { data, contentType, metadata };
   }
 
-  async getSignedUrl(
-    bucket: string,
-    key: string,
-    _options: SignedUrlOptions
-  ): Promise<string> {
+  async getSignedUrl(bucket: string, key: string, _options: SignedUrlOptions): Promise<string> {
     // For local, just return file path
     const filePath = this.getFilePath(bucket, key);
     return `file://${filePath}`;

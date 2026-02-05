@@ -167,13 +167,22 @@ export class Orchestrator {
     if (this.config.dev?.enabled) {
       logger.warn('='.repeat(50));
       logger.warn('[DEV MODE] 빠른 테스트 모드');
-      logger.warn(`  썸네일: ${DEV_MODE_SETTINGS.useThumbnails ? 'YouTube' : 'FFmpeg'}, 번역: ${DEV_MODE_SETTINGS.skipTranslation ? '생략' : '실행'}`);
-      logger.warn(`  챕터: ${DEV_MODE_SETTINGS.maxChapters}개, AI 요약: ${DEV_MODE_SETTINGS.aiSampleSections}개 섹션`);
+      logger.warn(
+        `  썸네일: ${DEV_MODE_SETTINGS.useThumbnails ? 'YouTube' : 'FFmpeg'}, 번역: ${DEV_MODE_SETTINGS.skipTranslation ? '생략' : '실행'}`
+      );
+      logger.warn(
+        `  챕터: ${DEV_MODE_SETTINGS.maxChapters}개, AI 요약: ${DEV_MODE_SETTINGS.aiSampleSections}개 섹션`
+      );
       logger.warn('='.repeat(50));
 
       // Production warning
       const outputPath = options.output || this.config.output.directory;
-      if (outputPath && !outputPath.includes('temp') && !outputPath.includes('dev') && !outputPath.includes('tmp')) {
+      if (
+        outputPath &&
+        !outputPath.includes('temp') &&
+        !outputPath.includes('dev') &&
+        !outputPath.includes('tmp')
+      ) {
         logger.warn('');
         logger.warn('!!! 경고: --dev 모드로 프로덕션 경로에 출력 중 !!!');
         logger.warn(`    출력 경로: ${outputPath}`);
@@ -190,7 +199,9 @@ export class Orchestrator {
       let initialChapters = fetchedChapters;
       if (this.config.dev?.enabled && fetchedChapters.length > DEV_MODE_SETTINGS.maxChapters) {
         initialChapters = fetchedChapters.slice(0, DEV_MODE_SETTINGS.maxChapters);
-        logger.warn(`[DEV MODE] 챕터: ${fetchedChapters.length}개 → ${DEV_MODE_SETTINGS.maxChapters}개`);
+        logger.warn(
+          `[DEV MODE] 챕터: ${fetchedChapters.length}개 → ${DEV_MODE_SETTINGS.maxChapters}개`
+        );
       }
 
       // 2. 자막 추출 및 번역
@@ -354,7 +365,11 @@ export class Orchestrator {
     const isDevMode = this.config.dev?.enabled;
 
     // 영상 유형 분류 (dev mode에서 생략)
-    if (this.ai && processedSegments.length > 0 && !(isDevMode && DEV_MODE_SETTINGS.skipClassification)) {
+    if (
+      this.ai &&
+      processedSegments.length > 0 &&
+      !(isDevMode && DEV_MODE_SETTINGS.skipClassification)
+    ) {
       this.updateState({ currentStep: '영상 유형 분류', progress: 34 });
 
       try {
@@ -597,7 +612,9 @@ export class Orchestrator {
         : [];
 
       if (shouldSample) {
-        logger.info(`[DEV MODE] AI: ${content.sections.length}개 → ${DEV_MODE_SETTINGS.aiSampleSections}개만 처리`);
+        logger.info(
+          `[DEV MODE] AI: ${content.sections.length}개 → ${DEV_MODE_SETTINGS.aiSampleSections}개만 처리`
+        );
       }
 
       this.updateState({ currentStep: `통합 AI 처리 (번역 + ${sectionType} 요약)`, progress: 77 });

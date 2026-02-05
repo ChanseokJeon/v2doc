@@ -1,14 +1,9 @@
-import {
-  ICloudProvider,
-  CloudProviderType,
-} from './interfaces';
+import { ICloudProvider, CloudProviderType } from './interfaces';
 import { LocalStorageProvider } from './local/storage';
 import { LocalQueueProvider } from './local/queue';
 import { validateAndLogEnvironment } from '../utils/env-validator.js';
 
-export async function createCloudProvider(
-  type?: CloudProviderType
-): Promise<ICloudProvider> {
+export async function createCloudProvider(type?: CloudProviderType): Promise<ICloudProvider> {
   const providerType = type || (process.env.CLOUD_PROVIDER as CloudProviderType) || 'local';
 
   // Validate environment variables before creating provider
@@ -57,7 +52,7 @@ export async function getCloudProvider(): Promise<ICloudProvider> {
   }
 
   if (!providerPromise) {
-    providerPromise = createCloudProvider().then(provider => {
+    providerPromise = createCloudProvider().then((provider) => {
       defaultProvider = provider;
       return provider;
     });

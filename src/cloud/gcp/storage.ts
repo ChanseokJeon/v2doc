@@ -12,12 +12,15 @@ interface GCSBucket {
 }
 
 interface GCSFile {
-  save(data: Buffer, options?: {
-    contentType?: string;
-    metadata?: { metadata?: Record<string, string> };
-    cacheControl?: string;
-    public?: boolean;
-  }): Promise<void>;
+  save(
+    data: Buffer,
+    options?: {
+      contentType?: string;
+      metadata?: { metadata?: Record<string, string> };
+      cacheControl?: string;
+      public?: boolean;
+    }
+  ): Promise<void>;
   createWriteStream(options?: {
     contentType?: string;
     metadata?: { metadata?: Record<string, string> };
@@ -26,10 +29,14 @@ interface GCSFile {
     resumable?: boolean;
   }): NodeJS.WritableStream;
   download(): Promise<[Buffer]>;
-  getMetadata(): Promise<[{
-    contentType?: string;
-    metadata?: Record<string, string>;
-  }]>;
+  getMetadata(): Promise<
+    [
+      {
+        contentType?: string;
+        metadata?: Record<string, string>;
+      },
+    ]
+  >;
   getSignedUrl(options: {
     version: 'v4';
     action: 'read' | 'write';
@@ -101,9 +108,7 @@ export class GcsStorageProvider implements IStorageProvider {
         });
 
         const readable = data as Readable;
-        readable.pipe(writeStream)
-          .on('finish', resolve)
-          .on('error', reject);
+        readable.pipe(writeStream).on('finish', resolve).on('error', reject);
       });
     }
 
@@ -124,11 +129,7 @@ export class GcsStorageProvider implements IStorageProvider {
     };
   }
 
-  async getSignedUrl(
-    bucket: string,
-    key: string,
-    options: SignedUrlOptions
-  ): Promise<string> {
+  async getSignedUrl(bucket: string, key: string, options: SignedUrlOptions): Promise<string> {
     const storage = await this.getStorage();
     const gcsFile = storage.bucket(bucket).file(key);
 

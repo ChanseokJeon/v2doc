@@ -18,11 +18,7 @@ export type {
   AnalyzeResponse,
 } from './models/job';
 
-export {
-  CreateJobRequestSchema,
-  JobOptionsSchema,
-  AnalyzeRequestSchema,
-} from './models/job';
+export { CreateJobRequestSchema, JobOptionsSchema, AnalyzeRequestSchema } from './models/job';
 
 // Store
 export { JobStore, getJobStore, resetJobStore } from './store';

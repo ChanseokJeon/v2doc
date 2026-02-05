@@ -26,11 +26,7 @@ export class LocalQueueProvider implements IQueueProvider {
     return this.dlqQueues.get(dlqName)!;
   }
 
-  async enqueue<T>(
-    queueName: string,
-    message: T,
-    options?: QueueEnqueueOptions
-  ): Promise<string> {
+  enqueue<T>(queueName: string, message: T, options?: QueueEnqueueOptions): Promise<string> {
     const queue = this.getQueue(queueName);
     const id = `local-msg-${++this.messageId}`;
 
@@ -60,13 +56,10 @@ export class LocalQueueProvider implements IQueueProvider {
       }
     }
 
-    return id;
+    return Promise.resolve(id);
   }
 
-  async receive<T>(
-    queueName: string,
-    options?: QueueReceiveOptions
-  ): Promise<QueueMessage<T>[]> {
+  async receive<T>(queueName: string, options?: QueueReceiveOptions): Promise<QueueMessage<T>[]> {
     const queue = this.getQueue(queueName);
     const maxMessages = options?.maxMessages || 10;
     const waitTime = options?.waitTimeSeconds || 0;
@@ -91,7 +84,7 @@ export class LocalQueueProvider implements IQueueProvider {
     const messages = queue.splice(0, maxMessages) as QueueMessage<T>[];
 
     // Track in-flight messages for potential NACK
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       this.inFlight.set(msg.receiptHandle!, msg);
     });
 
@@ -103,17 +96,15 @@ export class LocalQueueProvider implements IQueueProvider {
     this.inFlight.delete(receiptHandle);
   }
 
-  async nack(
-    queueName: string,
-    receiptHandle: string,
-    delaySeconds?: number
-  ): Promise<void> {
+  async nack(queueName: string, receiptHandle: string, delaySeconds?: number): Promise<void> {
     const queue = this.getQueue(queueName);
 
     // Retrieve the original message from in-flight tracking
     const originalMessage = this.inFlight.get(receiptHandle);
     if (!originalMessage) {
-      throw new Error(`Message with receiptHandle ${receiptHandle} not found in in-flight messages`);
+      throw new Error(
+        `Message with receiptHandle ${receiptHandle} not found in in-flight messages`
+      );
     }
 
     // Remove from in-flight tracking

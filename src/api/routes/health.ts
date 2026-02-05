@@ -92,15 +92,11 @@ health.get('/', async (c) => {
   dependencies.storage = storageHealth;
   dependencies.queue = queueHealth;
 
-  const healthyCount = Object.values(dependencies).filter(s => s === 'healthy').length;
+  const healthyCount = Object.values(dependencies).filter((s) => s === 'healthy').length;
   const totalCount = Object.keys(dependencies).length;
 
   const status: HealthStatus = {
-    status: healthyCount === totalCount
-      ? 'healthy'
-      : healthyCount === 0
-        ? 'unhealthy'
-        : 'degraded',
+    status: healthyCount === totalCount ? 'healthy' : healthyCount === 0 ? 'unhealthy' : 'degraded',
     version: process.env.npm_package_version || '1.0.0',
     timestamp: new Date().toISOString(),
     dependencies,
@@ -123,17 +119,20 @@ health.get('/ready', async (c) => {
   const ready = storageHealth === 'healthy' && queueHealth === 'healthy';
   const statusCode = ready ? 200 : 503;
 
-  return c.json({
-    ready,
-    storage: storageHealth,
-    queue: queueHealth,
-  }, statusCode);
+  return c.json(
+    {
+      ready,
+      storage: storageHealth,
+      queue: queueHealth,
+    },
+    statusCode
+  );
 });
 
 /**
  * GET /health/live - Liveness probe
  */
-health.get('/live', async (c) => {
+health.get('/live', (c) => {
   // For K8s/Cloud Run liveness probe
   return c.json({ live: true });
 });

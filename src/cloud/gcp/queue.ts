@@ -17,16 +17,16 @@ interface PubSubMessage {
 }
 
 interface PubSubSubscription {
-  pull(options?: { maxMessages?: number; autoPaginate?: boolean }): Promise<[[PubSubMessage[], unknown]]>;
+  pull(options?: {
+    maxMessages?: number;
+    autoPaginate?: boolean;
+  }): Promise<[[PubSubMessage[], unknown]]>;
   acknowledge(ackIds: string[]): Promise<void>;
   modifyAckDeadline(ackId: string, deadline: number): Promise<void>;
 }
 
 interface PubSubTopic {
-  publishMessage(options: {
-    data: Buffer;
-    attributes?: Record<string, string>;
-  }): Promise<string>;
+  publishMessage(options: { data: Buffer; attributes?: Record<string, string> }): Promise<string>;
   subscription(name: string): PubSubSubscription;
 }
 
@@ -73,11 +73,7 @@ export class PubSubQueueProvider implements IQueueProvider {
     return this.pubsub;
   }
 
-  async enqueue<T>(
-    queueName: string,
-    message: T,
-    options?: QueueEnqueueOptions
-  ): Promise<string> {
+  async enqueue<T>(queueName: string, message: T, options?: QueueEnqueueOptions): Promise<string> {
     const pubsub = await this.getPubSub();
     const topic = pubsub.topic(queueName);
 
@@ -113,10 +109,7 @@ export class PubSubQueueProvider implements IQueueProvider {
     return messageId;
   }
 
-  async receive<T>(
-    queueName: string,
-    options?: QueueReceiveOptions
-  ): Promise<QueueMessage<T>[]> {
+  async receive<T>(queueName: string, options?: QueueReceiveOptions): Promise<QueueMessage<T>[]> {
     const pubsub = await this.getPubSub();
     const topic = pubsub.topic(queueName);
     // Subscription name convention: same as topic name
@@ -147,9 +140,7 @@ export class PubSubQueueProvider implements IQueueProvider {
       }
 
       // Extract retry count from attributes if present
-      const retryCount = msg.attributes?.retryCount
-        ? parseInt(msg.attributes.retryCount, 10)
-        : 0;
+      const retryCount = msg.attributes?.retryCount ? parseInt(msg.attributes.retryCount, 10) : 0;
 
       return {
         id: msg.id,
@@ -170,11 +161,7 @@ export class PubSubQueueProvider implements IQueueProvider {
     await subscription.acknowledge([receiptHandle]);
   }
 
-  async nack(
-    queueName: string,
-    receiptHandle: string,
-    delaySeconds?: number
-  ): Promise<void> {
+  async nack(queueName: string, receiptHandle: string, delaySeconds?: number): Promise<void> {
     const pubsub = await this.getPubSub();
     const topic = pubsub.topic(queueName);
     const subscription = topic.subscription(queueName);

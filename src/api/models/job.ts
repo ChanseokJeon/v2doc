@@ -1,13 +1,7 @@
 import { z } from 'zod';
 
 // Job Status
-export type JobStatus =
-  | 'created'
-  | 'queued'
-  | 'processing'
-  | 'completed'
-  | 'failed'
-  | 'cancelled';
+export type JobStatus = 'created' | 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 // Job Options Schema
 export const JobOptionsSchema = z.object({
@@ -103,19 +97,25 @@ export interface Job {
 
 // Create Job Request Schema
 export const CreateJobRequestSchema = z.object({
-  url: z.string().url().refine(
-    (url) => {
-      // Validate YouTube URL
-      const youtubeRegex = /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)/;
-      return youtubeRegex.test(url);
-    },
-    { message: 'Invalid YouTube URL' }
-  ),
+  url: z
+    .string()
+    .url()
+    .refine(
+      (url) => {
+        // Validate YouTube URL
+        const youtubeRegex =
+          /^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)/;
+        return youtubeRegex.test(url);
+      },
+      { message: 'Invalid YouTube URL' }
+    ),
   options: JobOptionsSchema.optional(),
-  webhook: z.object({
-    url: z.string().url(),
-    secret: z.string().min(16),
-  }).optional(),
+  webhook: z
+    .object({
+      url: z.string().url(),
+      secret: z.string().min(16),
+    })
+    .optional(),
 });
 
 export type CreateJobRequest = z.infer<typeof CreateJobRequestSchema>;

@@ -67,11 +67,7 @@ export class SqsQueueProvider implements IQueueProvider {
     return queueUrl;
   }
 
-  async enqueue<T>(
-    queueName: string,
-    message: T,
-    options?: QueueEnqueueOptions
-  ): Promise<string> {
+  async enqueue<T>(queueName: string, message: T, options?: QueueEnqueueOptions): Promise<string> {
     const queueUrl = await this.getQueueUrl(queueName);
 
     // Map priority to message attributes
@@ -90,18 +86,14 @@ export class SqsQueueProvider implements IQueueProvider {
       DelaySeconds: options?.delaySeconds,
       MessageDeduplicationId: options?.deduplicationId,
       MessageGroupId: options?.groupId,
-      MessageAttributes:
-        Object.keys(messageAttributes).length > 0 ? messageAttributes : undefined,
+      MessageAttributes: Object.keys(messageAttributes).length > 0 ? messageAttributes : undefined,
     });
 
     const response = await this.client.send(command);
     return response.MessageId!;
   }
 
-  async receive<T>(
-    queueName: string,
-    options?: QueueReceiveOptions
-  ): Promise<QueueMessage<T>[]> {
+  async receive<T>(queueName: string, options?: QueueReceiveOptions): Promise<QueueMessage<T>[]> {
     const queueUrl = await this.getQueueUrl(queueName);
 
     const command = new ReceiveMessageCommand({
@@ -162,11 +154,7 @@ export class SqsQueueProvider implements IQueueProvider {
     await this.client.send(command);
   }
 
-  async nack(
-    queueName: string,
-    receiptHandle: string,
-    delaySeconds?: number
-  ): Promise<void> {
+  async nack(queueName: string, receiptHandle: string, delaySeconds?: number): Promise<void> {
     const queueUrl = await this.getQueueUrl(queueName);
 
     // Change visibility timeout to make message visible again

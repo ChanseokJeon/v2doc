@@ -58,7 +58,12 @@ export class YouTubeProvider {
 
     try {
       logger.debug(`메타데이터 가져오기: ${url}`);
-      const { stdout } = await execFileAsync(this.ytdlpPath, [...this.getBaseArgs(), '--dump-json', '--no-playlist', url]);
+      const { stdout } = await execFileAsync(this.ytdlpPath, [
+        ...this.getBaseArgs(),
+        '--dump-json',
+        '--no-playlist',
+        url,
+      ]);
       const data = JSON.parse(stdout);
 
       // 챕터 파싱
@@ -95,7 +100,12 @@ export class YouTubeProvider {
   async getPlaylistVideos(url: string): Promise<VideoMetadata[]> {
     try {
       logger.debug(`플레이리스트 정보 가져오기: ${url}`);
-      const { stdout } = await execFileAsync(this.ytdlpPath, [...this.getBaseArgs(), '--flat-playlist', '--dump-json', url]);
+      const { stdout } = await execFileAsync(this.ytdlpPath, [
+        ...this.getBaseArgs(),
+        '--flat-playlist',
+        '--dump-json',
+        url,
+      ]);
 
       const videos = stdout
         .trim()

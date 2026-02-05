@@ -9,7 +9,7 @@ export class JobStore {
   private jobs: Map<string, Job> = new Map();
   private userJobs: Map<string, Set<string>> = new Map();
 
-  async create(job: Job): Promise<void> {
+  create(job: Job): void {
     this.jobs.set(job.id, job);
 
     // Index by user
@@ -19,25 +19,28 @@ export class JobStore {
     this.userJobs.get(job.userId)!.add(job.id);
   }
 
-  async findById(id: string): Promise<Job | null> {
+  findById(id: string): Job | null {
     return this.jobs.get(id) || null;
   }
 
-  async findByUserId(userId: string, options?: {
-    status?: JobStatus;
-    limit?: number;
-    offset?: number;
-  }): Promise<Job[]> {
+  findByUserId(
+    userId: string,
+    options?: {
+      status?: JobStatus;
+      limit?: number;
+      offset?: number;
+    }
+  ): Job[] {
     const jobIds = this.userJobs.get(userId);
     if (!jobIds) return [];
 
     let jobs = Array.from(jobIds)
-      .map(id => this.jobs.get(id)!)
-      .filter(job => job !== undefined);
+      .map((id) => this.jobs.get(id)!)
+      .filter((job) => job !== undefined);
 
     // Filter by status
     if (options?.status) {
-      jobs = jobs.filter(job => job.status === options.status);
+      jobs = jobs.filter((job) => job.status === options.status);
     }
 
     // Sort by createdAt descending
@@ -49,7 +52,7 @@ export class JobStore {
     return jobs.slice(offset, offset + limit);
   }
 
-  async update(id: string, updates: Partial<Job>): Promise<Job | null> {
+  update(id: string, updates: Partial<Job>): Job | null {
     const job = this.jobs.get(id);
     if (!job) return null;
 
@@ -58,15 +61,15 @@ export class JobStore {
     return updatedJob;
   }
 
-  async updateStatus(id: string, status: JobStatus): Promise<Job | null> {
+  updateStatus(id: string, status: JobStatus): Job | null {
     return this.update(id, { status });
   }
 
-  async updateProgress(id: string, progress: JobProgress): Promise<Job | null> {
+  updateProgress(id: string, progress: JobProgress): Job | null {
     return this.update(id, { progress });
   }
 
-  async delete(id: string): Promise<boolean> {
+  delete(id: string): boolean {
     const job = this.jobs.get(id);
     if (!job) return false;
 
@@ -75,13 +78,12 @@ export class JobStore {
     return true;
   }
 
-  async countByUserId(userId: string): Promise<number> {
+  countByUserId(userId: string): number {
     return this.userJobs.get(userId)?.size || 0;
   }
 
-  async countByStatus(status: JobStatus): Promise<number> {
-    return Array.from(this.jobs.values())
-      .filter(job => job.status === status).length;
+  countByStatus(status: JobStatus): number {
+    return Array.from(this.jobs.values()).filter((job) => job.status === status).length;
   }
 
   // Test helpers
