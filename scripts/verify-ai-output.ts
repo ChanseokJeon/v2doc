@@ -18,7 +18,7 @@ interface EnhancedSection {
   oneLiner: string;
   keyPoints: string[];
   mainInformation: MainInformation;
-  translatedText: string;
+  translatedText?: string;
   notableQuotes: Array<{ text: string; speaker?: string }>;
 }
 
@@ -70,9 +70,11 @@ function analyzeSection(timestamp: string, section: EnhancedSection): void {
   });
 
   // 4. translatedText (preview)
-  console.log(`\n📖 번역문 미리보기:`);
-  console.log(`   "${section.translatedText.substring(0, 150)}..."`);
-  console.log(`   (전체 ${section.translatedText.length}자)`);
+  if (section.translatedText) {
+    console.log(`\n📖 번역문 미리보기:`);
+    console.log(`   "${section.translatedText.substring(0, 150)}..."`);
+    console.log(`   (전체 ${section.translatedText.length}자)`);
+  }
 
   // 5. Quotes
   if (section.notableQuotes && section.notableQuotes.length > 0) {
@@ -94,7 +96,7 @@ function analyzeSection(timestamp: string, section: EnhancedSection): void {
   }
 
   // Check: Paragraph vs Translation overlap
-  const transWords = new Set(section.translatedText.split(/\s+/).filter(w => w.length > 2));
+  const transWords = new Set((section.translatedText || '').split(/\s+/).filter(w => w.length > 2));
   section.mainInformation.paragraphs.forEach((para, i) => {
     const paraWords = para.split(/\s+/).filter(w => w.length > 2);
     const overlap = paraWords.filter(w => transWords.has(w)).length;

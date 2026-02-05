@@ -126,7 +126,7 @@ export interface NotableQuote {
  * 향상된 섹션 콘텐츠 (AI 추출 결과)
  */
 export interface EnhancedSectionContent {
-  translatedText: string;
+  translatedText?: string;
   keyPoints: string[];
   mainInformation: MainInformation;
   notableQuotes: NotableQuote[];

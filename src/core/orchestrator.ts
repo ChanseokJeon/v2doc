@@ -620,16 +620,6 @@ export class Orchestrator {
       for (const section of sectionsToProcess) {
         const enhanced = unifiedResult.sections.get(section.timestamp);
         if (enhanced) {
-          if (enhanced.translatedText && subtitles.language !== summaryLang) {
-            section.subtitles = [
-              {
-                start: section.timestamp,
-                end: section.timestamp + 60,
-                text: enhanced.translatedText,
-              },
-            ];
-          }
-
           section.sectionSummary = {
             summary: enhanced.oneLiner,
             keyPoints: enhanced.keyPoints,

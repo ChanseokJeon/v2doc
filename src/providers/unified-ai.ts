@@ -29,7 +29,7 @@ export interface EnhancedSectionContent {
   keyPoints: string[];
   notableQuotes: NotableQuote[];
   mainInformation: MainInformation;
-  translatedText: string;
+  translatedText?: string;
 }
 
 export interface UnifiedProcessResult {
@@ -72,7 +72,6 @@ export class UnifiedContentProcessor {
   /**
    * 배치 생성 (토큰 한계 + 섹션 수 기준)
    * - 출력 토큰 제한으로 인해 배치당 최대 섹션 수 제한 필요
-   * - 긴 translatedText가 포함되면 쉽게 토큰 제한 초과
    */
   createBatches<T extends { rawText: string }>(
     sections: T[],
@@ -207,13 +206,12 @@ export class UnifiedContentProcessor {
 For EACH section, extract:
 1. oneLiner: 1-sentence summary (max 50 chars)
 2. keyPoints: ${maxKeyPoints} key points (max 20 words each)
-3. translatedText: Clean translation of speaker's words
-4. mainInformation:
+3. mainInformation:
    - paragraphs: 3 analytical paragraphs (not translation summary)
    - bullets: 6 facts with tags [METRIC/TOOL/TECHNIQUE/DEFINITION/INSIGHT]
 ${
   includeQuotes
-    ? `5. notableQuotes: 3 quotes about CORE CONTENT only
+    ? `4. notableQuotes: 3 quotes about CORE CONTENT only
    ❌ NEVER extract: speaker intro ("저는 마지막 연사"), meta-talk ("이 발표에서는", "제가 할 수 있는 최선은"), transitions ("다음으로"), audience mentions ("여러분")
    ✓ MUST contain: specific numbers/data, key claims, methodology, definitions`
     : ''
@@ -226,7 +224,6 @@ Output JSON:
       "index": 0,
       "oneLiner": "...",
       "keyPoints": ["...", "...", "..."],
-      "translatedText": "...",
       "mainInformation": {
         "paragraphs": ["...", "...", "..."],
         "bullets": ["[METRIC] ...", "[TOOL] ...", "[TECHNIQUE] ...", "[DEFINITION] ...", "[INSIGHT] ...", "[INSIGHT] ..."]
@@ -283,9 +280,9 @@ Output JSON:
             { role: 'user', content: sectionsText },
           ],
           temperature: 0.3,
-          // 섹션당 ~4000토큰 필요 (translatedText가 길 수 있음)
-          // 배치당 최대 5섹션이므로 최대 20000토큰
-          max_completion_tokens: Math.min(20000, sections.length * 4000),
+          // 섹션당 ~3000토큰 필요 (translatedText 제거로 감소)
+          // 배치당 최대 5섹션이므로 최대 15000토큰
+          max_completion_tokens: Math.min(15000, sections.length * 3000),
           response_format: { type: 'json_object' },
         });
 
@@ -311,7 +308,6 @@ Output JSON:
               paragraphs: item.mainInformation?.paragraphs || [],
               bullets: item.mainInformation?.bullets || [],
             },
-            translatedText: item.translatedText || original.rawText,
           });
         }
 
@@ -322,7 +318,6 @@ Output JSON:
               oneLiner: '',
               keyPoints: [],
               mainInformation: { paragraphs: [], bullets: [] },
-              translatedText: section.rawText,
               notableQuotes: [],
             });
           }
@@ -348,7 +343,6 @@ Output JSON:
       oneLiner: string;
       keyPoints: string[];
       mainInformation: { paragraphs: string[]; bullets: string[] };
-      translatedText: string;
       notableQuotes: Array<{ text: string; speaker?: string }>;
     }>;
   } {
@@ -465,7 +459,9 @@ Output JSON:
 
     const allOneLiners = sectionContents.map((s) => s.oneLiner).filter(Boolean);
     const allKeyPoints = sectionContents.flatMap((s) => s.keyPoints).filter(Boolean);
-    const allTranslatedTexts = sectionContents.map((s) => s.translatedText).filter(Boolean);
+    const allParagraphs = sectionContents
+      .flatMap((s) => s.mainInformation?.paragraphs || [])
+      .filter(Boolean);
 
     if (allOneLiners.length === 0) {
       return {
@@ -476,7 +472,7 @@ Output JSON:
     }
 
     // 총 단어 수 계산 (estimatedReadTime 산출용)
-    const totalWords = allTranslatedTexts.join(' ').split(/\s+/).length;
+    const totalWords = allParagraphs.join(' ').split(/\s+/).length;
     const estimatedReadTime = Math.ceil(totalWords / 200); // 분당 200단어 가정
 
     try {

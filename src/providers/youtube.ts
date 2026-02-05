@@ -22,9 +22,18 @@ const execFileAsync = promisify(execFile);
 
 export class YouTubeProvider {
   private ytdlpPath: string;
+  private proxyUrl?: string;
 
   constructor(ytdlpPath?: string) {
     this.ytdlpPath = ytdlpPath || process.env.YT_DLP_PATH || 'yt-dlp';
+    this.proxyUrl = process.env.YT_DLP_PROXY;
+  }
+
+  /**
+   * 프록시 설정이 있으면 기본 인자 반환
+   */
+  private getBaseArgs(): string[] {
+    return this.proxyUrl ? ['--proxy', this.proxyUrl] : [];
   }
 
   /**
@@ -49,7 +58,7 @@ export class YouTubeProvider {
 
     try {
       logger.debug(`메타데이터 가져오기: ${url}`);
-      const { stdout } = await execFileAsync(this.ytdlpPath, ['--dump-json', '--no-playlist', url]);
+      const { stdout } = await execFileAsync(this.ytdlpPath, [...this.getBaseArgs(), '--dump-json', '--no-playlist', url]);
       const data = JSON.parse(stdout);
 
       // 챕터 파싱
@@ -86,7 +95,7 @@ export class YouTubeProvider {
   async getPlaylistVideos(url: string): Promise<VideoMetadata[]> {
     try {
       logger.debug(`플레이리스트 정보 가져오기: ${url}`);
-      const { stdout } = await execFileAsync(this.ytdlpPath, ['--flat-playlist', '--dump-json', url]);
+      const { stdout } = await execFileAsync(this.ytdlpPath, [...this.getBaseArgs(), '--flat-playlist', '--dump-json', url]);
 
       const videos = stdout
         .trim()
@@ -135,6 +144,7 @@ export class YouTubeProvider {
 
       // 자막 다운로드 시도
       await execFileAsync(this.ytdlpPath, [
+        ...this.getBaseArgs(),
         '--write-sub',
         '--write-auto-sub',
         '--sub-lang',
@@ -179,6 +189,7 @@ export class YouTubeProvider {
       const url = buildVideoUrl(videoId);
 
       await execFileAsync(this.ytdlpPath, [
+        ...this.getBaseArgs(),
         '-x',
         '--audio-format',
         'mp3',
@@ -215,6 +226,7 @@ export class YouTubeProvider {
       const url = buildVideoUrl(videoId);
 
       await execFileAsync(this.ytdlpPath, [
+        ...this.getBaseArgs(),
         '-f',
         format,
         '--merge-output-format',

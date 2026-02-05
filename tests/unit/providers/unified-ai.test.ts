@@ -320,7 +320,6 @@ describe('UnifiedContentProcessor', () => {
                     index: 0,
                     oneLiner: 'Test summary',
                     keyPoints: ['Point 1', 'Point 2'],
-                    translatedText: 'Translated text',
                     mainInformation: { paragraphs: ['P1'], bullets: ['B1'] },
                     notableQuotes: [{ text: 'Quote', speaker: 'Speaker' }],
                   },
@@ -361,7 +360,8 @@ describe('UnifiedContentProcessor', () => {
       );
 
       expect(result.sections.size).toBe(1);
-      expect(result.sections.get(0).translatedText).toBe('Test content');
+      expect(result.sections.get(0).oneLiner).toBe('');
+      expect(result.sections.get(0).keyPoints).toEqual([]);
     });
 
     it('should retry on API failure', async () => {
@@ -415,7 +415,7 @@ describe('UnifiedContentProcessor', () => {
               message: {
                 content: JSON.stringify({
                   sections: [
-                    { index: 0, oneLiner: 'Summary 1', keyPoints: ['KP1'], translatedText: 'T1' },
+                    { index: 0, oneLiner: 'Summary 1', keyPoints: ['KP1'] },
                   ],
                 }),
               },
@@ -540,8 +540,8 @@ describe('UnifiedContentProcessor', () => {
       const proc = processor as any;
       const result = await proc.generateGlobalSummary(
         [
-          { oneLiner: 'One', keyPoints: ['K1'], translatedText: 'Text one' },
-          { oneLiner: 'Two', keyPoints: ['K2'], translatedText: 'Text two' },
+          { oneLiner: 'One', keyPoints: ['K1'] },
+          { oneLiner: 'Two', keyPoints: ['K2'] },
         ],
         'ko'
       );
@@ -567,8 +567,8 @@ describe('UnifiedContentProcessor', () => {
       const proc = processor as any;
       const result = await proc.generateGlobalSummary(
         [
-          { oneLiner: '', keyPoints: [], translatedText: '' },
-          { oneLiner: '', keyPoints: [], translatedText: '' },
+          { oneLiner: '', keyPoints: [] },
+          { oneLiner: '', keyPoints: [] },
         ],
         'ko'
       );
@@ -582,7 +582,7 @@ describe('UnifiedContentProcessor', () => {
 
       const proc = processor as any;
       const result = await proc.generateGlobalSummary(
-        [{ oneLiner: 'Test', keyPoints: ['K1'], translatedText: 'Test text' }],
+        [{ oneLiner: 'Test', keyPoints: ['K1'] }],
         'ko'
       );
 
