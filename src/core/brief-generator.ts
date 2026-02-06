@@ -1,0 +1,484 @@
+/**
+ * Executive Brief Generator
+ *
+ * Generates executive briefs in PDF, Markdown, and HTML formats
+ */
+
+import PDFDocument from 'pdfkit';
+import * as fs from 'fs';
+import { ExecutiveBrief, VideoType } from '../types/index.js';
+import { PDFConfig } from '../types/config.js';
+import { formatTimestamp, buildTimestampUrl } from '../utils/index.js';
+import { logger } from '../utils/logger.js';
+import { normalizeTextForPDF } from '../utils/text-normalizer.js';
+import { getKoreanFontPaths, validateKoreanFont } from '../utils/image.js';
+import { Theme, loadTheme } from './pdf/themes.js';
+
+const { regular: KOREAN_FONT_REGULAR, bold: KOREAN_FONT_BOLD } = getKoreanFontPaths();
+
+const VIDEO_TYPE_LABELS: Record<VideoType, string> = {
+  conference_talk: '컨퍼런스 발표',
+  tutorial: '튜토리얼',
+  interview: '인터뷰',
+  lecture: '강의',
+  demo: '제품 데모',
+  discussion: '토론',
+  unknown: '기타',
+};
+
+/**
+ * BriefGenerator class
+ * Handles all brief-related PDF, Markdown, and HTML generation
+ */
+export default class BriefGenerator {
+  private theme: Theme;
+
+  constructor(config: PDFConfig) {
+    this.theme = loadTheme(config.layout);
+  }
+
+  /**
+   * Register Korean fonts for PDF generation
+   */
+  private registerFonts(doc: PDFKit.PDFDocument): void {
+    if (validateKoreanFont()) {
+      doc.registerFont('NotoSansKR-Regular', KOREAN_FONT_REGULAR);
+      doc.registerFont('NotoSansKR-Bold', KOREAN_FONT_BOLD);
+      logger.debug('한글 폰트 로드 완료');
+    } else {
+      logger.warn('한글 폰트를 찾을 수 없습니다. 기본 폰트를 사용합니다.');
+      this.theme.fonts.title.name = 'Helvetica-Bold';
+      this.theme.fonts.heading.name = 'Helvetica-Bold';
+      this.theme.fonts.body.name = 'Helvetica';
+      this.theme.fonts.timestamp.name = 'Helvetica';
+    }
+  }
+
+  /**
+   * Executive Brief PDF 생성
+   */
+  async generateBriefPDF(brief: ExecutiveBrief, outputPath: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        logger.info('Executive Brief PDF 생성 시작...');
+
+        const doc = new PDFDocument({
+          size: 'A4',
+          margins: this.theme.margins,
+          info: {
+            Title: `Executive Brief: ${brief.title}`,
+            Author: brief.metadata.channel,
+            Subject: `YouTube: ${brief.metadata.videoId}`,
+            Creator: 'yt2pdf',
+            Producer: 'yt2pdf - YouTube to PDF Converter',
+          },
+        });
+
+        // Register Korean fonts (or fallback)
+        this.registerFonts(doc);
+
+        const writeStream = fs.createWriteStream(outputPath);
+        doc.pipe(writeStream);
+
+        const pageWidth = doc.page.width - this.theme.margins.left - this.theme.margins.right;
+
+        // Render header (title + metadata)
+        this.renderBriefHeader(doc, brief, pageWidth);
+
+        // Render main content (summary, takeaways, chapters, action items, footer)
+        this.renderBriefContent(doc, brief, pageWidth);
+
+        doc.end();
+
+        writeStream.on('finish', () => {
+          logger.success(`Executive Brief PDF 생성 완료: ${outputPath}`);
+          resolve();
+        });
+
+        writeStream.on('error', reject);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Executive Brief Markdown 생성
+   */
+  async generateBriefMarkdown(brief: ExecutiveBrief, outputPath: string): Promise<void> {
+    let md = `# 📹 ${brief.title}\n\n`;
+    md += `> **채널:** ${brief.metadata.channel} | **길이:** ${formatTimestamp(brief.metadata.duration)} | **유형:** ${VIDEO_TYPE_LABELS[brief.metadata.videoType] || brief.metadata.videoType}\n\n`;
+    md += `---\n\n`;
+
+    // 핵심 요약
+    md += `## 📝 핵심 요약\n\n`;
+    md += `${brief.summary}\n\n`;
+
+    // Key Takeaways
+    if (brief.keyTakeaways.length > 0) {
+      md += `## 💡 Key Takeaways\n\n`;
+      for (const point of brief.keyTakeaways) {
+        md += `- ${point}\n`;
+      }
+      md += `\n`;
+    }
+
+    // 챕터별 요약
+    if (brief.chapterSummaries.length > 0) {
+      md += `## 📑 챕터별 요약\n\n`;
+      md += `| 시간 | 챕터 | 요약 |\n`;
+      md += `|------|------|------|\n`;
+      for (const chapter of brief.chapterSummaries) {
+        const ts = formatTimestamp(chapter.startTime);
+        const link = buildTimestampUrl(brief.metadata.videoId, chapter.startTime);
+        md += `| [${ts}](${link}) | ${chapter.title} | ${chapter.summary} |\n`;
+      }
+      md += `\n`;
+    }
+
+    // Action Items
+    if (brief.actionItems && brief.actionItems.length > 0) {
+      md += `## 🎯 Action Items\n\n`;
+      for (const item of brief.actionItems) {
+        md += `- [ ] ${item}\n`;
+      }
+      md += `\n`;
+    }
+
+    // 푸터
+    md += `---\n\n`;
+    md += `📎 **원본:** [YouTube에서 보기](https://youtube.com/watch?v=${brief.metadata.videoId})\n\n`;
+    md += `*Generated by [yt2pdf](https://github.com/user/yt2pdf) | 영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.*\n`;
+
+    await fs.promises.writeFile(outputPath, md, 'utf-8');
+    logger.success(`Executive Brief Markdown 생성 완료: ${outputPath}`);
+  }
+
+  /**
+   * Executive Brief HTML 생성
+   */
+  async generateBriefHTML(brief: ExecutiveBrief, outputPath: string): Promise<void> {
+    const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Executive Brief: ${brief.title}</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #1f2937;
+      --secondary: #6b7280;
+      --border: #e5e7eb;
+      --link: #2563eb;
+      --card-bg: #f9fafb;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111827;
+        --text: #f3f4f6;
+        --secondary: #9ca3af;
+        --border: #374151;
+        --link: #60a5fa;
+        --card-bg: #1f2937;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    h1 { font-size: 1.5em; margin-bottom: 10px; line-height: 1.3; }
+    h2 { font-size: 1.1em; margin: 25px 0 10px; color: var(--text); }
+    .meta { color: var(--secondary); font-size: 0.9em; margin-bottom: 20px; }
+    .meta a { color: var(--link); text-decoration: none; }
+    .meta a:hover { text-decoration: underline; }
+    hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin: 15px 0;
+    }
+    .summary-text { font-size: 1em; line-height: 1.8; }
+    ul { padding-left: 20px; }
+    li { margin: 8px 0; }
+    .chapter-table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+    .chapter-table th, .chapter-table td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+    .chapter-table th { background: var(--card-bg); font-weight: 600; }
+    .chapter-table td a { color: var(--link); text-decoration: none; font-family: monospace; }
+    .chapter-table td a:hover { text-decoration: underline; }
+    .action-item { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; }
+    .action-item input { margin-top: 4px; }
+    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--secondary); font-size: 0.8em; }
+    .footer a { color: var(--link); text-decoration: none; }
+    @media print {
+      body { max-width: 100%; padding: 20px; }
+      .card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📹 ${brief.title}</h1>
+    <p class="meta">
+      <strong>채널:</strong> <a href="https://youtube.com/@${encodeURIComponent(brief.metadata.channel)}" target="_blank">${brief.metadata.channel}</a> |
+      <strong>길이:</strong> ${formatTimestamp(brief.metadata.duration)} |
+      <strong>유형:</strong> ${VIDEO_TYPE_LABELS[brief.metadata.videoType] || brief.metadata.videoType}
+    </p>
+  </header>
+
+  <hr>
+
+  <section class="card">
+    <h2>📝 핵심 요약</h2>
+    <p class="summary-text">${brief.summary}</p>
+  </section>
+
+${
+  brief.keyTakeaways.length > 0
+    ? `
+  <section>
+    <h2>💡 Key Takeaways</h2>
+    <ul>
+${brief.keyTakeaways.map((point) => `      <li>${point}</li>`).join('\n')}
+    </ul>
+  </section>
+`
+    : ''
+}
+
+${
+  brief.chapterSummaries.length > 0
+    ? `
+  <section>
+    <h2>📑 챕터별 요약</h2>
+    <table class="chapter-table">
+      <thead>
+        <tr><th>시간</th><th>챕터</th><th>요약</th></tr>
+      </thead>
+      <tbody>
+${brief.chapterSummaries
+  .map(
+    (ch) => `        <tr>
+          <td><a href="${buildTimestampUrl(brief.metadata.videoId, ch.startTime)}" target="_blank">${formatTimestamp(ch.startTime)}</a></td>
+          <td>${ch.title}</td>
+          <td>${ch.summary}</td>
+        </tr>`
+  )
+  .join('\n')}
+      </tbody>
+    </table>
+  </section>
+`
+    : ''
+}
+
+${
+  brief.actionItems && brief.actionItems.length > 0
+    ? `
+  <section class="card">
+    <h2>🎯 Action Items</h2>
+${brief.actionItems.map((item) => `    <div class="action-item"><input type="checkbox"><span>${item}</span></div>`).join('\n')}
+  </section>
+`
+    : ''
+}
+
+  <footer class="footer">
+    <p>📎 <a href="https://youtube.com/watch?v=${brief.metadata.videoId}" target="_blank">YouTube에서 보기</a></p>
+    <p>Generated by <a href="https://github.com/user/yt2pdf">yt2pdf</a> | 영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.</p>
+  </footer>
+</body>
+</html>`;
+
+    await fs.promises.writeFile(outputPath, html, 'utf-8');
+    logger.success(`Executive Brief HTML 생성 완료: ${outputPath}`);
+  }
+
+  /**
+   * Draw horizontal separator line for Brief PDF
+   */
+  private drawBriefSeparator(doc: PDFKit.PDFDocument): void {
+    const { theme } = this;
+    doc
+      .strokeColor(theme.colors.secondary)
+      .lineWidth(0.5)
+      .moveTo(theme.margins.left, doc.y)
+      .lineTo(doc.page.width - theme.margins.right, doc.y)
+      .stroke();
+  }
+
+  /**
+   * Render Brief PDF header (title and metadata)
+   */
+  private renderBriefHeader(
+    doc: PDFKit.PDFDocument,
+    brief: ExecutiveBrief,
+    pageWidth: number
+  ): void {
+    const { theme } = this;
+
+    // Title
+    doc
+      .font(theme.fonts.title.name)
+      .fontSize(20)
+      .fillColor(theme.colors.text)
+      .text(normalizeTextForPDF(`📹 ${brief.title}`), { width: pageWidth, align: 'left' });
+
+    doc.moveDown(0.3);
+
+    // Metadata
+    doc
+      .font(theme.fonts.body.name)
+      .fontSize(10)
+      .fillColor(theme.colors.secondary)
+      .text(
+        normalizeTextForPDF(
+          `채널: ${brief.metadata.channel} | 길이: ${formatTimestamp(brief.metadata.duration)} | 유형: ${VIDEO_TYPE_LABELS[brief.metadata.videoType] || brief.metadata.videoType}`
+        ),
+        { width: pageWidth }
+      );
+
+    doc.moveDown(1);
+    this.drawBriefSeparator(doc);
+    doc.moveDown(0.8);
+  }
+
+  /**
+   * Render Brief PDF content (summary, takeaways, chapters, action items)
+   */
+  private renderBriefContent(
+    doc: PDFKit.PDFDocument,
+    brief: ExecutiveBrief,
+    pageWidth: number
+  ): void {
+    const { theme } = this;
+
+    // Summary
+    doc
+      .font(theme.fonts.heading.name)
+      .fontSize(12)
+      .fillColor(theme.colors.text)
+      .text('📝 핵심 요약');
+
+    doc.moveDown(0.3);
+
+    doc
+      .font(theme.fonts.body.name)
+      .fontSize(10)
+      .fillColor(theme.colors.text)
+      .text(normalizeTextForPDF(brief.summary), { width: pageWidth, lineGap: 2 });
+
+    doc.moveDown(0.8);
+    this.drawBriefSeparator(doc);
+    doc.moveDown(0.8);
+
+    // Key Takeaways
+    if (brief.keyTakeaways.length > 0) {
+      doc
+        .font(theme.fonts.heading.name)
+        .fontSize(12)
+        .fillColor(theme.colors.text)
+        .text('💡 Key Takeaways');
+
+      doc.moveDown(0.3);
+
+      doc.font(theme.fonts.body.name).fontSize(10).fillColor(theme.colors.text);
+      for (const point of brief.keyTakeaways) {
+        doc.text(normalizeTextForPDF(`• ${point}`), {
+          width: pageWidth - 15,
+          indent: 10,
+          lineGap: 2,
+        });
+      }
+
+      doc.moveDown(0.8);
+      this.drawBriefSeparator(doc);
+      doc.moveDown(0.8);
+    }
+
+    // Chapter Summaries
+    if (brief.chapterSummaries.length > 0) {
+      doc
+        .font(theme.fonts.heading.name)
+        .fontSize(12)
+        .fillColor(theme.colors.text)
+        .text('📑 챕터별 요약');
+
+      doc.moveDown(0.3);
+
+      for (const chapter of brief.chapterSummaries) {
+        const ts = formatTimestamp(chapter.startTime);
+        doc
+          .font(theme.fonts.timestamp.name)
+          .fontSize(9)
+          .fillColor(theme.colors.link)
+          .text(`[${ts}] `, { continued: true });
+
+        doc
+          .font(theme.fonts.body.name)
+          .fontSize(10)
+          .fillColor(theme.colors.text)
+          .text(normalizeTextForPDF(chapter.title), { continued: chapter.summary ? true : false });
+
+        if (chapter.summary) {
+          doc.fillColor(theme.colors.secondary).text(normalizeTextForPDF(` - ${chapter.summary}`));
+        }
+      }
+
+      doc.moveDown(0.8);
+    }
+
+    // Action Items
+    if (brief.actionItems && brief.actionItems.length > 0) {
+      this.drawBriefSeparator(doc);
+      doc.moveDown(0.8);
+
+      doc
+        .font(theme.fonts.heading.name)
+        .fontSize(12)
+        .fillColor(theme.colors.text)
+        .text('🎯 Action Items');
+
+      doc.moveDown(0.3);
+
+      doc.font(theme.fonts.body.name).fontSize(10).fillColor(theme.colors.text);
+      for (const item of brief.actionItems) {
+        doc.text(normalizeTextForPDF(`□ ${item}`), {
+          width: pageWidth - 15,
+          indent: 10,
+          lineGap: 2,
+        });
+      }
+    }
+
+    // Footer
+    doc.moveDown(2);
+    doc
+      .fontSize(8)
+      .fillColor(theme.colors.secondary)
+      .text(`원본: https://youtube.com/watch?v=${brief.metadata.videoId}`, {
+        align: 'center',
+        link: `https://youtube.com/watch?v=${brief.metadata.videoId}`,
+      });
+
+    doc.moveDown(0.3);
+    doc
+      .fontSize(7)
+      .fillColor('#9ca3af')
+      .text(
+        normalizeTextForPDF(
+          'Generated by yt2pdf | 영상 정보 및 자막의 저작권은 원 제작자에게 있습니다.'
+        ),
+        { align: 'center' }
+      );
+  }
+}

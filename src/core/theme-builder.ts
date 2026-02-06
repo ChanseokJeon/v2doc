@@ -7,7 +7,7 @@
 import { Vibrant } from 'node-vibrant/node';
 import chroma from 'chroma-js';
 import * as fs from 'fs';
-import { Theme } from './pdf-generator.js';
+import { Theme } from './pdf/themes.js';
 
 // 간단한 로거 (테스트 호환성을 위해 logger 의존성 제거)
 const log = {

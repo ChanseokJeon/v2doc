@@ -372,15 +372,21 @@ gsutil lifecycle set lifecycle.json gs://yt2pdf-output
 | 1.3 | 언어 유틸리티 통합 | ✅ 완료 | src/utils/language.ts |
 | 1.4 | formatTimestamp 이동 | ✅ 완료 | src/utils/time.ts |
 
-### Phase 2: PDF Generator 분해 (예정)
+### Phase 2: PDF Generator 분해 (✅ 완료)
 
 | ID | 태스크 | 상태 | 파일 |
 |----|--------|------|------|
-| 2.1 | 테마 시스템 추출 | ⬜ 대기 | src/core/pdf/themes/* |
-| 2.2 | 렌더러 모듈 추출 | ⬜ 대기 | src/core/pdf/renderers/* |
-| 2.3 | 출력 생성기 추출 | ⬜ 대기 | src/core/output/* |
-| 2.4 | Brief 생성기 추출 | ⬜ 대기 | src/core/output/brief-generator.ts |
-| 2.5 | 하위 호환성 파사드 | ⬜ 대기 | src/core/pdf-generator.ts |
+| 2.1 | 테마 시스템 추출 | ✅ 완료 | src/core/pdf/themes.ts |
+| 2.2 | PDFKit 렌더러 추출 | ✅ 완료 | src/core/pdf/pdfkit-renderer.ts |
+| 2.2 | Puppeteer 렌더러 추출 | ✅ 완료 | src/core/pdf/puppeteer-renderer.ts |
+| 2.4 | Brief 생성기 추출 | ✅ 완료 | src/core/brief-generator.ts |
+| 2.5 | PDFGenerator 단순화 | ✅ 완료 | src/core/pdf-generator.ts (544줄) |
+
+### Phase 2 완료 요약
+- PDF Generator 4개 모듈로 분해 완료
+- pdf-generator.ts: 3,800줄 → 544줄 (86% 감소)
+- 825개 테스트 통과
+- 0개 순환 의존성
 
 ### Phase 1 완료 요약
 - 4개 유틸리티 모듈 추출: text-normalizer, image, language, time
