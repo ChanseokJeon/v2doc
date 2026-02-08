@@ -39,6 +39,18 @@ docs/
 1. `docs/PROGRESS.md` - 해당 태스크 상태를 ✅로 변경
 2. `docs/SESSION.md` - 마지막 세션 정보 업데이트
 
+## Naming Convention
+
+| 위치 | 규칙 | 예시 |
+|------|------|------|
+| **API 파라미터** | camelCase | `forceProxy`, `includeTranslation`, `screenshotInterval` |
+| **CLI 플래그** | kebab-case | `--force-proxy`, `--include-translation`, `--screenshot-interval` |
+| **TypeScript 변수/필드** | camelCase | `forceProxy`, `screenshotQuality` |
+| **Zod 스키마 필드** | camelCase | `z.object({ forceProxy: z.boolean() })` |
+| **환경변수** | UPPER_SNAKE_CASE | `YT_DLP_PROXY`, `FORCE_PROXY` |
+
+CLI ↔ API 인자는 반드시 1:1 대응 (kebab-case ↔ camelCase 변환만 다름).
+
 ## 기술 스택
 
 - **언어**: Node.js / TypeScript

@@ -215,6 +215,27 @@ export interface PDFOptions {
 }
 
 // ============================================================
+// 파이프라인 트레이스
+// ============================================================
+
+export interface TraceStep {
+  name: string;
+  ms: number;
+  detail?: Record<string, unknown>;
+}
+
+export interface TraceResult {
+  totalMs: number;
+  steps: TraceStep[];
+  proxy: {
+    configured: boolean;
+    forced: boolean;
+    used: boolean;
+    fallbackTriggered: boolean;
+  };
+}
+
+// ============================================================
 // 변환 결과
 // ============================================================
 
@@ -228,6 +249,7 @@ export interface ConvertResult {
     duration: number;
     screenshotCount: number;
   };
+  trace?: TraceResult;
 }
 
 // ============================================================

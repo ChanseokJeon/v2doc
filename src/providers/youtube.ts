@@ -30,14 +30,28 @@ export const YTDLP_DOWNLOAD_TIMEOUT_MS = 300_000;
 export class YouTubeProvider {
   private ytdlpPath: string;
   private proxyUrl?: string;
+  private forceProxy: boolean;
+  private _lastCallUsedProxy = false;
+  private _lastCallFallbackTriggered = false;
 
-  constructor(ytdlpPath?: string) {
+  constructor(ytdlpPath?: string, forceProxy?: boolean) {
     this.ytdlpPath = ytdlpPath || process.env.YT_DLP_PATH || 'yt-dlp';
+    this.forceProxy = forceProxy ?? false;
     const rawProxy = process.env.YT_DLP_PROXY;
     this.proxyUrl = getValidatedProxyUrl(rawProxy);
     if (rawProxy && !this.proxyUrl) {
       logger.warn(`Invalid proxy URL ignored: ${rawProxy.substring(0, 50)}...`);
     }
+  }
+
+  /** 마지막 호출에서 프록시가 사용되었는지 여부 */
+  wasProxyUsed(): boolean {
+    return this._lastCallUsedProxy;
+  }
+
+  /** 마지막 호출에서 폴백이 트리거되었는지 여부 */
+  wasFallbackTriggered(): boolean {
+    return this._lastCallFallbackTriggered;
   }
 
   /** Base args for all yt-dlp calls (no proxy) */
@@ -57,12 +71,35 @@ export class YouTubeProvider {
 
   /**
    * Execute yt-dlp with automatic proxy fallback on IP block detection.
-   * First attempt: no proxy. On IP block + proxy configured: retry with proxy.
+   * forceProxy=true: 프록시가 있으면 첫 시도부터 프록시 사용.
+   * forceProxy=false (기본): 프록시 없이 먼저 시도, IP 차단 시 프록시로 재시도.
    */
   private async execWithProxyFallback(
     args: string[],
     options?: { maxBuffer?: number; timeout?: number }
   ): Promise<{ stdout: string; stderr: string }> {
+    // Reset tracking
+    this._lastCallUsedProxy = false;
+    this._lastCallFallbackTriggered = false;
+
+    // forceProxy: 프록시가 있으면 첫 시도부터 프록시 사용
+    if (this.forceProxy && this.hasProxy()) {
+      this._lastCallUsedProxy = true;
+      const result = await execFileAsync(
+        this.ytdlpPath,
+        [...this.getBaseArgs(), ...this.getProxyArgs(), ...args],
+        options
+      );
+      return {
+        stdout: typeof result.stdout === 'string' ? result.stdout : result.stdout.toString(),
+        stderr: result.stderr
+          ? typeof result.stderr === 'string'
+            ? result.stderr
+            : result.stderr.toString()
+          : '',
+      };
+    }
+
     try {
       const result = await execFileAsync(this.ytdlpPath, [...this.getBaseArgs(), ...args], options);
       return {
@@ -82,6 +119,8 @@ export class YouTubeProvider {
       if (this.hasProxy() && isYouTubeIpBlock(errorText)) {
         logger.warn('YouTube IP 차단 감지, 프록시로 재시도 중...');
         logger.debug(`프록시: ${this.proxyUrl}`);
+        this._lastCallUsedProxy = true;
+        this._lastCallFallbackTriggered = true;
         const result = await execFileAsync(
           this.ytdlpPath,
           [...this.getBaseArgs(), ...this.getProxyArgs(), ...args],

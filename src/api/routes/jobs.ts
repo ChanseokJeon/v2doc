@@ -60,7 +60,11 @@ jobs.post('/sync', zValidator('json', CreateJobRequestSchema), async (c) => {
       config.subtitle.languages = [options.language];
     }
 
-    const orchestrator = new Orchestrator({ config });
+    const orchestrator = new Orchestrator({
+      config,
+      forceProxy: options.forceProxy,
+      trace: options.trace,
+    });
 
     // Run conversion with timeout (14 minutes, leaving 1 min buffer for Cloud Run's 15min limit)
     const TIMEOUT_MS = 14 * 60 * 1000;
@@ -118,6 +122,7 @@ jobs.post('/sync', zValidator('json', CreateJobRequestSchema), async (c) => {
         fileSize: buffer.length,
         processingTime,
       },
+      trace: result.trace,
     });
   } catch (error) {
     console.error(`[Sync] Conversion failed for ${jobId}:`, error);

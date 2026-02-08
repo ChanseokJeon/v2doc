@@ -12,6 +12,8 @@ export const JobOptionsSchema = z.object({
   language: z.string().optional(),
   includeTranslation: z.boolean().default(false),
   includeSummary: z.boolean().default(true),
+  forceProxy: z.boolean().default(false),
+  trace: z.boolean().default(false),
 });
 
 export type JobOptions = z.infer<typeof JobOptionsSchema>;

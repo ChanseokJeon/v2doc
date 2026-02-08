@@ -15,6 +15,7 @@ import {
   SubtitleSegment,
   Chapter,
   ExecutiveBrief,
+  TraceStep,
 } from '../types/index.js';
 import { YouTubeProvider } from '../providers/youtube.js';
 import { FFmpegWrapper } from '../providers/ffmpeg.js';
@@ -42,11 +43,15 @@ import { parseYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 export interface OrchestratorOptions {
   config: Config;
   cache?: CacheManager;
+  forceProxy?: boolean;
+  trace?: boolean;
 }
 
 export class Orchestrator {
   private config: Config;
   private cache?: CacheManager;
+  private forceProxy: boolean;
+  private traceEnabled: boolean;
   private progressCallbacks: ProgressCallback[] = [];
   private state: PipelineState = {
     status: 'idle',
@@ -64,8 +69,10 @@ export class Orchestrator {
   constructor(options: OrchestratorOptions) {
     this.config = options.config;
     this.cache = options.cache;
+    this.forceProxy = options.forceProxy ?? false;
+    this.traceEnabled = options.trace ?? false;
 
-    this.youtube = new YouTubeProvider();
+    this.youtube = new YouTubeProvider(undefined, this.forceProxy);
     this.ffmpeg = new FFmpegWrapper();
 
     // OpenAI API 키가 있을 때만 초기화
@@ -162,6 +169,8 @@ export class Orchestrator {
    */
   private async processVideo(videoId: string, options: ConvertOptions): Promise<ConvertResult> {
     const tempDir = await createTempDir('yt2pdf-');
+    const traceSteps: TraceStep[] = [];
+    const pipelineStart = Date.now();
 
     // Dev mode logging and warning
     if (this.config.dev?.enabled) {
@@ -193,7 +202,11 @@ export class Orchestrator {
 
     try {
       // 1. 메타데이터 및 챕터 가져오기
+      let stepStart = Date.now();
       const { metadata, chapters: fetchedChapters } = await this.fetchMetadataAndChapters(videoId);
+      if (this.traceEnabled) {
+        traceSteps.push({ name: 'metadata', ms: Date.now() - stepStart });
+      }
 
       // Apply dev mode chapter limiting (BEFORE AI processing)
       let initialChapters = fetchedChapters;
@@ -205,31 +218,60 @@ export class Orchestrator {
       }
 
       // 2. 자막 추출 및 번역
+      stepStart = Date.now();
       const { subtitles, processedSegments } = await this.extractAndTranslateSubtitles(
         videoId,
         metadata,
         tempDir
       );
+      if (this.traceEnabled) {
+        traceSteps.push({
+          name: 'subtitles',
+          ms: Date.now() - stepStart,
+          detail: { segments: processedSegments.length },
+        });
+      }
 
       // 3. 영상 분류 및 챕터 생성
+      stepStart = Date.now();
       const chapters = await this.classifyAndGenerateChapters(
         metadata,
         processedSegments,
         initialChapters
       );
+      if (this.traceEnabled) {
+        traceSteps.push({
+          name: 'classification',
+          ms: Date.now() - stepStart,
+          detail: { chapters: chapters.length },
+        });
+      }
 
       // 4. 요약 생성
+      stepStart = Date.now();
       const summary = await this.generateSummary(processedSegments);
+      if (this.traceEnabled) {
+        traceSteps.push({ name: 'summary', ms: Date.now() - stepStart });
+      }
 
       // 5. 스크린샷 캡처
+      stepStart = Date.now();
       const { screenshots, useChapters } = await this.captureScreenshots(
         videoId,
         metadata,
         chapters,
         tempDir
       );
+      if (this.traceEnabled) {
+        traceSteps.push({
+          name: 'screenshots',
+          ms: Date.now() - stepStart,
+          detail: { count: screenshots.length },
+        });
+      }
 
       // 6. 콘텐츠 병합 및 AI 처리
+      stepStart = Date.now();
       const content = await this.mergeContentWithAI(
         metadata,
         { ...subtitles, segments: processedSegments },
@@ -239,9 +281,17 @@ export class Orchestrator {
         summary,
         useChapters
       );
+      if (this.traceEnabled) {
+        traceSteps.push({
+          name: 'ai-processing',
+          ms: Date.now() - stepStart,
+          detail: { sections: content.sections.length },
+        });
+      }
 
       // 7. 출력 생성
-      return await this.generateOutput(
+      stepStart = Date.now();
+      const result = await this.generateOutput(
         options,
         videoId,
         metadata,
@@ -251,6 +301,25 @@ export class Orchestrator {
         summary,
         screenshots
       );
+      if (this.traceEnabled) {
+        traceSteps.push({ name: 'pdf-generate', ms: Date.now() - stepStart });
+      }
+
+      // Trace 결과 첨부
+      if (this.traceEnabled) {
+        result.trace = {
+          totalMs: Date.now() - pipelineStart,
+          steps: traceSteps,
+          proxy: {
+            configured: !!process.env.YT_DLP_PROXY,
+            forced: this.forceProxy,
+            used: this.youtube.wasProxyUsed(),
+            fallbackTriggered: this.youtube.wasFallbackTriggered(),
+          },
+        };
+      }
+
+      return result;
     } finally {
       if (!this.config.cache.enabled) {
         await cleanupDir(tempDir);

@@ -31,6 +31,8 @@ interface ConvertCommandOptions {
   verbose?: boolean;
   dev?: boolean;
   devChapters?: string;
+  forceProxy?: boolean;
+  trace?: boolean;
 }
 
 export async function convertCommand(url: string | undefined, options: ConvertCommandOptions) {
@@ -137,6 +139,8 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
     const orchestrator = new Orchestrator({
       config,
       cache: config.cache.enabled ? cacheManager : undefined,
+      forceProxy: options.forceProxy,
+      trace: options.trace,
     });
 
     // 진행 상황 표시
@@ -222,6 +226,26 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
       console.log(`  ${chalk.cyan.underline(`https://youtube.com/watch?v=${result.metadata.id}`)}`);
       // eslint-disable-next-line no-console
       console.log();
+
+      // Trace 출력
+      if (options.trace && result.trace) {
+        // eslint-disable-next-line no-console
+        console.log(chalk.dim('\n─── Trace ───'));
+        for (const step of result.trace.steps) {
+          // eslint-disable-next-line no-console
+          console.log(`  ${step.name.padEnd(16)} ${(step.ms / 1000).toFixed(1)}s`);
+        }
+        // eslint-disable-next-line no-console
+        console.log(chalk.dim('─'.repeat(30)));
+        // eslint-disable-next-line no-console
+        console.log(`  ${'total'.padEnd(16)} ${(result.trace.totalMs / 1000).toFixed(1)}s`);
+        // eslint-disable-next-line no-console
+        console.log(
+          `  proxy: configured=${result.trace.proxy.configured} forced=${result.trace.proxy.forced} used=${result.trace.proxy.used}`
+        );
+        // eslint-disable-next-line no-console
+        console.log();
+      }
     }
   } catch (error) {
     spinner.stop();

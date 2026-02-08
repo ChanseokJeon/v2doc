@@ -35,6 +35,8 @@ program
   .option('--verbose', '상세 로그 출력')
   .option('--dev', '개발 모드 (빠른 처리, 제한된 출력)')
   .option('--dev-chapters <n>', '개발 모드 최대 챕터 수 (기본: 3)')
+  .option('--force-proxy', '프록시 강제 사용')
+  .option('--trace', '파이프라인 트레이스 출력')
   .action(convertCommand);
 
 // 서브 명령어
