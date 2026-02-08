@@ -21,6 +21,12 @@ import { getValidatedProxyUrl, isYouTubeIpBlock } from '../utils/proxy.js';
 
 const execFileAsync = promisify(execFile);
 
+/** Timeout for metadata/caption/lightweight yt-dlp calls (ms) */
+export const YTDLP_METADATA_TIMEOUT_MS = 30_000;
+
+/** Timeout for download operations (audio/video) (ms) */
+export const YTDLP_DOWNLOAD_TIMEOUT_MS = 300_000;
+
 export class YouTubeProvider {
   private ytdlpPath: string;
   private proxyUrl?: string;
@@ -55,7 +61,7 @@ export class YouTubeProvider {
    */
   private async execWithProxyFallback(
     args: string[],
-    options?: { maxBuffer?: number }
+    options?: { maxBuffer?: number; timeout?: number }
   ): Promise<{ stdout: string; stderr: string }> {
     try {
       const result = await execFileAsync(this.ytdlpPath, [...this.getBaseArgs(), ...args], options);
@@ -100,7 +106,7 @@ export class YouTubeProvider {
    */
   static async checkInstallation(): Promise<boolean> {
     try {
-      await execFileAsync('yt-dlp', ['--version']);
+      await execFileAsync('yt-dlp', ['--version'], { timeout: 5_000 });
       return true;
     } catch {
       return false;
@@ -117,7 +123,9 @@ export class YouTubeProvider {
 
     try {
       logger.debug(`메타데이터 가져오기: ${url}`);
-      const { stdout } = await this.execWithProxyFallback(['--dump-json', '--no-playlist', url]);
+      const { stdout } = await this.execWithProxyFallback(['--dump-json', '--no-playlist', url], {
+        timeout: YTDLP_METADATA_TIMEOUT_MS,
+      });
       const data = JSON.parse(stdout) as {
         id: string;
         title?: string;
@@ -167,7 +175,9 @@ export class YouTubeProvider {
   async getPlaylistVideos(url: string): Promise<VideoMetadata[]> {
     try {
       logger.debug(`플레이리스트 정보 가져오기: ${url}`);
-      const { stdout } = await this.execWithProxyFallback(['--flat-playlist', '--dump-json', url]);
+      const { stdout } = await this.execWithProxyFallback(['--flat-playlist', '--dump-json', url], {
+        timeout: YTDLP_METADATA_TIMEOUT_MS,
+      });
 
       const videos = stdout
         .trim()
@@ -215,18 +225,21 @@ export class YouTubeProvider {
       const url = buildVideoUrl(videoId);
 
       // 자막 다운로드 시도
-      await this.execWithProxyFallback([
-        '--write-sub',
-        '--write-auto-sub',
-        '--sub-lang',
-        langCode,
-        '--sub-format',
-        'vtt',
-        '--skip-download',
-        '-o',
-        `${tempDir}/%(id)s`,
-        url,
-      ]);
+      await this.execWithProxyFallback(
+        [
+          '--write-sub',
+          '--write-auto-sub',
+          '--sub-lang',
+          langCode,
+          '--sub-format',
+          'vtt',
+          '--skip-download',
+          '-o',
+          `${tempDir}/%(id)s`,
+          url,
+        ],
+        { timeout: YTDLP_METADATA_TIMEOUT_MS }
+      );
 
       // VTT 파일 찾기
       const files = await fs.readdir(tempDir);
@@ -259,16 +272,10 @@ export class YouTubeProvider {
       logger.debug(`오디오 다운로드: ${videoId}`);
       const url = buildVideoUrl(videoId);
 
-      await this.execWithProxyFallback([
-        '-x',
-        '--audio-format',
-        'mp3',
-        '--audio-quality',
-        '0',
-        '-o',
-        outputPath,
-        url,
-      ]);
+      await this.execWithProxyFallback(
+        ['-x', '--audio-format', 'mp3', '--audio-quality', '0', '-o', outputPath, url],
+        { timeout: YTDLP_DOWNLOAD_TIMEOUT_MS }
+      );
 
       return outputPath;
     } catch (error) {
@@ -295,15 +302,10 @@ export class YouTubeProvider {
       logger.debug(`영상 다운로드: ${videoId}`);
       const url = buildVideoUrl(videoId);
 
-      await this.execWithProxyFallback([
-        '-f',
-        format,
-        '--merge-output-format',
-        'mp4',
-        '-o',
-        outputPath,
-        url,
-      ]);
+      await this.execWithProxyFallback(
+        ['-f', format, '--merge-output-format', 'mp4', '-o', outputPath, url],
+        { timeout: YTDLP_DOWNLOAD_TIMEOUT_MS }
+      );
 
       return outputPath;
     } catch (error) {
