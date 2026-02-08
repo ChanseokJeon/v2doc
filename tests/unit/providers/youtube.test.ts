@@ -83,11 +83,25 @@ describe('YouTubeProvider', () => {
       expect(p).toBeInstanceOf(YouTubeProvider);
       delete process.env.YT_DLP_PATH;
     });
+
+    it('should validate proxy URL from environment', () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const p = new YouTubeProvider();
+      expect(p).toBeInstanceOf(YouTubeProvider);
+      delete process.env.YT_DLP_PROXY;
+    });
+
+    it('should ignore invalid proxy URL', () => {
+      process.env.YT_DLP_PROXY = 'not-a-url';
+      const p = new YouTubeProvider();
+      expect(p).toBeInstanceOf(YouTubeProvider);
+      delete process.env.YT_DLP_PROXY;
+    });
   });
 
   describe('checkInstallation', () => {
     it('should return true when yt-dlp is installed', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '2023.11.16' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '2023.11.16', stderr: '' });
       const result = await YouTubeProvider.checkInstallation();
       expect(result).toBe(true);
     });
@@ -118,7 +132,7 @@ describe('YouTubeProvider', () => {
     };
 
     it('should fetch video metadata successfully', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(validMetadata) });
+      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(validMetadata), stderr: '' });
 
       const result = await provider.getMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 
@@ -158,7 +172,7 @@ describe('YouTubeProvider', () => {
       const minimalMetadata = {
         id: 'test123',
       };
-      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(minimalMetadata) });
+      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(minimalMetadata), stderr: '' });
 
       const result = await provider.getMetadata('https://www.youtube.com/watch?v=test1234567');
 
@@ -174,7 +188,7 @@ describe('YouTubeProvider', () => {
         uploader: undefined,
         channel: 'Fallback Channel',
       };
-      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata) });
+      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata), stderr: '' });
 
       const result = await provider.getMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
       expect(result.channel).toBe('Fallback Channel');
@@ -188,7 +202,7 @@ describe('YouTubeProvider', () => {
           { title: 'Chapter 2', start_time: 60 },
         ],
       };
-      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata) });
+      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata), stderr: '' });
 
       const result = await provider.getMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
       expect(result.chapters).toHaveLength(2);
@@ -202,7 +216,7 @@ describe('YouTubeProvider', () => {
         title: 'Test',
         chapters: [{ title: 'Solo', start_time: 0 }],
       };
-      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata) });
+      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata), stderr: '' });
 
       const result = await provider.getMetadata('https://www.youtube.com/watch?v=test1234567');
       expect(result.chapters![0].endTime).toBe(60); // fallback 60 seconds
@@ -210,7 +224,7 @@ describe('YouTubeProvider', () => {
 
     it('should return empty chapters when none exist', async () => {
       const metadata = { ...validMetadata, chapters: undefined };
-      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata) });
+      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata), stderr: '' });
 
       const result = await provider.getMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
       expect(result.chapters).toBeUndefined();
@@ -222,7 +236,7 @@ describe('YouTubeProvider', () => {
         subtitles: { en: [] },
         automatic_captions: { en: [], ko: [] },
       };
-      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata) });
+      mockExecAsync.mockResolvedValueOnce({ stdout: JSON.stringify(metadata), stderr: '' });
 
       const result = await provider.getMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
       // Should have en (manual), ko (auto) - en auto is filtered out
@@ -241,14 +255,16 @@ describe('YouTubeProvider', () => {
         .join('\n');
 
       mockExecAsync
-        .mockResolvedValueOnce({ stdout: playlistOutput })
+        .mockResolvedValueOnce({ stdout: playlistOutput, stderr: '' })
         // Second call: getMetadata for video1 (uses buildVideoUrl which creates youtube.com URL)
         .mockResolvedValueOnce({
           stdout: JSON.stringify({ id: 'dQw4w9WgXcQ', title: 'Video 1', duration: 100 }),
+          stderr: '',
         })
         // Third call: getMetadata for video2
         .mockResolvedValueOnce({
           stdout: JSON.stringify({ id: 'jNQXAC9IVRw', title: 'Video 2', duration: 200 }),
+          stderr: '',
         });
 
       const result = await provider.getPlaylistVideos(
@@ -261,7 +277,7 @@ describe('YouTubeProvider', () => {
     });
 
     it('should throw error for empty playlist', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
       await expect(
         provider.getPlaylistVideos('https://www.youtube.com/playlist?list=PLempty')
@@ -276,9 +292,10 @@ describe('YouTubeProvider', () => {
         .join('\n');
 
       mockExecAsync
-        .mockResolvedValueOnce({ stdout: playlistOutput })
+        .mockResolvedValueOnce({ stdout: playlistOutput, stderr: '' })
         .mockResolvedValueOnce({
           stdout: JSON.stringify({ id: 'dQw4w9WgXcQ', title: 'Video 1', duration: 100 }),
+          stderr: '',
         })
         .mockRejectedValueOnce(new Error('Video unavailable'));
 
@@ -300,7 +317,7 @@ describe('YouTubeProvider', () => {
     });
 
     it('should rethrow Yt2PdfError', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' }); // Empty playlist
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' }); // Empty playlist
 
       await expect(
         provider.getPlaylistVideos('https://www.youtube.com/playlist?list=PLtest')
@@ -320,7 +337,7 @@ Hello world
 This is a test`;
 
     it('should download and parse VTT captions', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockReaddir.mockResolvedValueOnce(['video.en.vtt']);
       mockReadFile.mockResolvedValueOnce(vttContent);
 
@@ -333,7 +350,7 @@ This is a test`;
     });
 
     it('should return empty array when no VTT file found', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockReaddir.mockResolvedValueOnce(['video.mp4']);
 
       const result = await provider.getCaptions('dQw4w9WgXcQ', 'en');
@@ -353,7 +370,7 @@ This is a test`;
 01:02:03.456 --> 01:02:08.789
 Long video caption`;
 
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockReaddir.mockResolvedValueOnce(['video.vtt']);
       mockReadFile.mockResolvedValueOnce(vtt);
 
@@ -369,7 +386,7 @@ Long video caption`;
 02:30.000 --> 02:35.500
 Short format`;
 
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockReaddir.mockResolvedValueOnce(['video.vtt']);
       mockReadFile.mockResolvedValueOnce(vtt);
 
@@ -385,7 +402,7 @@ Short format`;
 00:00:00.000 --> 00:00:05.000
 <c.colorWhite>Hello</c> <b>world</b>`;
 
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockReaddir.mockResolvedValueOnce(['video.vtt']);
       mockReadFile.mockResolvedValueOnce(vtt);
 
@@ -401,7 +418,7 @@ Short format`;
 Line one
 Line two`;
 
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockReaddir.mockResolvedValueOnce(['video.vtt']);
       mockReadFile.mockResolvedValueOnce(vtt);
 
@@ -416,7 +433,7 @@ Line two`;
 00:00:00.000 --> 00:00:05.000
 Hello&nbsp;world`;
 
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
       mockReaddir.mockResolvedValueOnce(['video.vtt']);
       mockReadFile.mockResolvedValueOnce(vtt);
 
@@ -428,7 +445,7 @@ Hello&nbsp;world`;
 
   describe('downloadAudio', () => {
     it('should download audio successfully', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
       const result = await provider.downloadAudio('dQw4w9WgXcQ', '/tmp/output');
 
@@ -446,7 +463,7 @@ Hello&nbsp;world`;
 
   describe('downloadVideo', () => {
     it('should download video with default format', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
       const result = await provider.downloadVideo('dQw4w9WgXcQ', '/tmp/output');
 
@@ -454,7 +471,7 @@ Hello&nbsp;world`;
     });
 
     it('should download video with custom format', async () => {
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
       const result = await provider.downloadVideo('dQw4w9WgXcQ', '/tmp/output', 'best');
 
@@ -476,7 +493,7 @@ Hello&nbsp;world`;
         ok: true,
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
       });
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' }); // ffmpeg conversion
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' }); // ffmpeg conversion
 
       const result = await provider.downloadThumbnail(
         'https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg',
@@ -491,7 +508,7 @@ Hello&nbsp;world`;
         ok: true,
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
       });
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
       await provider.downloadThumbnail(
         'https://i.ytimg.com/vi/dQw4w9WgXcQ/default.jpg',
@@ -510,7 +527,7 @@ Hello&nbsp;world`;
           ok: true,
           arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
         });
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
       await provider.downloadThumbnail(
         'https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
@@ -556,11 +573,185 @@ Hello&nbsp;world`;
         ok: true,
         arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
       });
-      mockExecAsync.mockResolvedValueOnce({ stdout: '' });
+      mockExecAsync.mockResolvedValueOnce({ stdout: '', stderr: '' });
 
       await provider.downloadThumbnail('https://example.com/thumb.jpg', '/tmp/thumb.jpg');
 
       expect(mockFetch).toHaveBeenCalledWith('https://example.com/thumb.jpg');
+    });
+  });
+
+  describe('proxy fallback', () => {
+    afterEach(() => {
+      delete process.env.YT_DLP_PROXY;
+    });
+
+    it('should retry getMetadata with proxy when IP block detected', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      mockExecAsync
+        .mockRejectedValueOnce(new Error("Sign in to confirm you're not a bot"))
+        .mockResolvedValueOnce({ stdout: JSON.stringify({ id: 'test', title: 'Test' }), stderr: '' });
+
+      const result = await proxyProvider.getMetadata('https://www.youtube.com/watch?v=test1234567');
+      expect(result.title).toBe('Test');
+      expect(mockExecAsync).toHaveBeenCalledTimes(2);
+      const secondCallArgs = mockExecAsync.mock.calls[1][1];
+      expect(secondCallArgs).toContain('--proxy');
+      expect(secondCallArgs).toContain('http://proxy.example.com:8080');
+    });
+
+    it('should detect block from err.stderr even if err.message differs', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      const error = new Error('Command failed');
+      (error as any).stderr = "Sign in to confirm you're not a bot";
+      mockExecAsync
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce({ stdout: JSON.stringify({ id: 'test', title: 'Test' }), stderr: '' });
+
+      const result = await proxyProvider.getMetadata('https://www.youtube.com/watch?v=test1234567');
+      expect(result.title).toBe('Test');
+      expect(mockExecAsync).toHaveBeenCalledTimes(2);
+    });
+
+    it('should not retry when no proxy configured', async () => {
+      delete process.env.YT_DLP_PROXY;
+      const noProxyProvider = new YouTubeProvider();
+
+      mockExecAsync.mockRejectedValueOnce(
+        new Error("Sign in to confirm you're not a bot")
+      );
+
+      await expect(
+        noProxyProvider.getMetadata('https://www.youtube.com/watch?v=test1234567')
+      ).rejects.toThrow();
+      expect(mockExecAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not retry for non-block errors', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      mockExecAsync.mockRejectedValueOnce(new Error('Video unavailable'));
+
+      await expect(
+        proxyProvider.getMetadata('https://www.youtube.com/watch?v=test1234567')
+      ).rejects.toThrow();
+      expect(mockExecAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('should still fail if proxy retry also fails', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      mockExecAsync
+        .mockRejectedValueOnce(new Error("Sign in to confirm you're not a bot"))
+        .mockRejectedValueOnce(new Error('Proxy connection failed'));
+
+      await expect(
+        proxyProvider.getMetadata('https://www.youtube.com/watch?v=test1234567')
+      ).rejects.toThrow('Proxy connection failed');
+    });
+
+    it('should not include proxy args in first attempt', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      mockExecAsync.mockResolvedValueOnce({
+        stdout: JSON.stringify({ id: 'test', title: 'Test' }),
+        stderr: '',
+      });
+
+      await proxyProvider.getMetadata('https://www.youtube.com/watch?v=test1234567');
+
+      const firstCallArgs = mockExecAsync.mock.calls[0][1];
+      expect(firstCallArgs).not.toContain('--proxy');
+    });
+
+    it('should work for getCaptions with proxy fallback', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      mockExecAsync
+        .mockRejectedValueOnce(new Error('HTTP Error 403: Forbidden'))
+        .mockResolvedValueOnce({ stdout: '', stderr: '' });
+      mockReaddir.mockResolvedValueOnce([]);
+
+      await proxyProvider.getCaptions('testId', 'ko');
+      expect(mockExecAsync).toHaveBeenCalledTimes(2);
+      const secondCallArgs = mockExecAsync.mock.calls[1][1];
+      expect(secondCallArgs).toContain('--proxy');
+    });
+
+    it('should work for downloadAudio with proxy fallback', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      mockExecAsync
+        .mockRejectedValueOnce(new Error('HTTP Error 403: Forbidden'))
+        .mockResolvedValueOnce({ stdout: '', stderr: '' });
+
+      const result = await proxyProvider.downloadAudio('testId', '/tmp');
+      expect(result).toBe('/tmp/testId.mp3');
+      expect(mockExecAsync).toHaveBeenCalledTimes(2);
+    });
+
+    it('should work for downloadVideo with proxy fallback', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      mockExecAsync
+        .mockRejectedValueOnce(new Error('HTTP Error 429: Too Many Requests'))
+        .mockResolvedValueOnce({ stdout: '', stderr: '' });
+
+      const result = await proxyProvider.downloadVideo('testId', '/tmp');
+      expect(result).toBe('/tmp/testId.mp4');
+      expect(mockExecAsync).toHaveBeenCalledTimes(2);
+    });
+
+    it('should work for getPlaylistVideos with proxy fallback on flat-playlist call', async () => {
+      process.env.YT_DLP_PROXY = 'http://proxy.example.com:8080';
+      const proxyProvider = new YouTubeProvider();
+
+      // First call (flat-playlist): blocked, then retried with proxy, then per-video getMetadata calls
+      mockExecAsync
+        .mockRejectedValueOnce(new Error("Sign in to confirm you're not a bot"))
+        .mockResolvedValueOnce({
+          stdout:
+            JSON.stringify({ id: 'dQw4w9WgXcQ' }) + '\n' + JSON.stringify({ id: 'jNQXAC9IVRw' }),
+          stderr: '',
+        })
+        .mockResolvedValueOnce({
+          stdout: JSON.stringify({
+            id: 'dQw4w9WgXcQ',
+            title: 'Video 1',
+            duration: 100,
+            thumbnail: 'https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg',
+            uploader: 'Channel 1',
+          }),
+          stderr: '',
+        })
+        .mockResolvedValueOnce({
+          stdout: JSON.stringify({
+            id: 'jNQXAC9IVRw',
+            title: 'Video 2',
+            duration: 200,
+            thumbnail: 'https://i.ytimg.com/vi/jNQXAC9IVRw/maxresdefault.jpg',
+            uploader: 'Channel 2',
+          }),
+          stderr: '',
+        });
+
+      const result = await proxyProvider.getPlaylistVideos(
+        'https://www.youtube.com/playlist?list=PLtest'
+      );
+      expect(result).toHaveLength(2);
+      expect(mockExecAsync).toHaveBeenCalledTimes(4);
+      const proxyRetryArgs = mockExecAsync.mock.calls[1][1];
+      expect(proxyRetryArgs).toContain('--proxy');
     });
   });
 });

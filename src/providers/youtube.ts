@@ -17,6 +17,7 @@ import {
 } from '../types/index.js';
 import { isValidYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 import { logger } from '../utils/logger.js';
+import { getValidatedProxyUrl, isYouTubeIpBlock } from '../utils/proxy.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -26,14 +27,72 @@ export class YouTubeProvider {
 
   constructor(ytdlpPath?: string) {
     this.ytdlpPath = ytdlpPath || process.env.YT_DLP_PATH || 'yt-dlp';
-    this.proxyUrl = process.env.YT_DLP_PROXY;
+    const rawProxy = process.env.YT_DLP_PROXY;
+    this.proxyUrl = getValidatedProxyUrl(rawProxy);
+    if (rawProxy && !this.proxyUrl) {
+      logger.warn(`Invalid proxy URL ignored: ${rawProxy.substring(0, 50)}...`);
+    }
+  }
+
+  /** Base args for all yt-dlp calls (no proxy) */
+  private getBaseArgs(): string[] {
+    return [];
+  }
+
+  /** Proxy args to add on retry */
+  private getProxyArgs(): string[] {
+    return this.proxyUrl ? ['--proxy', this.proxyUrl] : [];
+  }
+
+  /** Whether proxy fallback is available */
+  private hasProxy(): boolean {
+    return !!this.proxyUrl;
   }
 
   /**
-   * 프록시 설정이 있으면 기본 인자 반환
+   * Execute yt-dlp with automatic proxy fallback on IP block detection.
+   * First attempt: no proxy. On IP block + proxy configured: retry with proxy.
    */
-  private getBaseArgs(): string[] {
-    return this.proxyUrl ? ['--proxy', this.proxyUrl] : [];
+  private async execWithProxyFallback(
+    args: string[],
+    options?: { maxBuffer?: number }
+  ): Promise<{ stdout: string; stderr: string }> {
+    try {
+      const result = await execFileAsync(this.ytdlpPath, [...this.getBaseArgs(), ...args], options);
+      return {
+        stdout: typeof result.stdout === 'string' ? result.stdout : result.stdout.toString(),
+        stderr: result.stderr
+          ? typeof result.stderr === 'string'
+            ? result.stderr
+            : result.stderr.toString()
+          : '',
+      };
+    } catch (error: unknown) {
+      const err = error as Error & { stderr?: string };
+
+      // Combine err.message and err.stderr for comprehensive block detection
+      const errorText = [err.message, err.stderr].filter(Boolean).join(' ');
+
+      if (this.hasProxy() && isYouTubeIpBlock(errorText)) {
+        logger.warn('YouTube IP 차단 감지, 프록시로 재시도 중...');
+        logger.debug(`프록시: ${this.proxyUrl}`);
+        const result = await execFileAsync(
+          this.ytdlpPath,
+          [...this.getBaseArgs(), ...this.getProxyArgs(), ...args],
+          options
+        );
+        return {
+          stdout: typeof result.stdout === 'string' ? result.stdout : result.stdout.toString(),
+          stderr: result.stderr
+            ? typeof result.stderr === 'string'
+              ? result.stderr
+              : result.stderr.toString()
+            : '',
+        };
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -58,12 +117,7 @@ export class YouTubeProvider {
 
     try {
       logger.debug(`메타데이터 가져오기: ${url}`);
-      const { stdout } = await execFileAsync(this.ytdlpPath, [
-        ...this.getBaseArgs(),
-        '--dump-json',
-        '--no-playlist',
-        url,
-      ]);
+      const { stdout } = await this.execWithProxyFallback(['--dump-json', '--no-playlist', url]);
       const data = JSON.parse(stdout) as {
         id: string;
         title?: string;
@@ -113,12 +167,7 @@ export class YouTubeProvider {
   async getPlaylistVideos(url: string): Promise<VideoMetadata[]> {
     try {
       logger.debug(`플레이리스트 정보 가져오기: ${url}`);
-      const { stdout } = await execFileAsync(this.ytdlpPath, [
-        ...this.getBaseArgs(),
-        '--flat-playlist',
-        '--dump-json',
-        url,
-      ]);
+      const { stdout } = await this.execWithProxyFallback(['--flat-playlist', '--dump-json', url]);
 
       const videos = stdout
         .trim()
@@ -166,8 +215,7 @@ export class YouTubeProvider {
       const url = buildVideoUrl(videoId);
 
       // 자막 다운로드 시도
-      await execFileAsync(this.ytdlpPath, [
-        ...this.getBaseArgs(),
+      await this.execWithProxyFallback([
         '--write-sub',
         '--write-auto-sub',
         '--sub-lang',
@@ -211,8 +259,7 @@ export class YouTubeProvider {
       logger.debug(`오디오 다운로드: ${videoId}`);
       const url = buildVideoUrl(videoId);
 
-      await execFileAsync(this.ytdlpPath, [
-        ...this.getBaseArgs(),
+      await this.execWithProxyFallback([
         '-x',
         '--audio-format',
         'mp3',
@@ -248,8 +295,7 @@ export class YouTubeProvider {
       logger.debug(`영상 다운로드: ${videoId}`);
       const url = buildVideoUrl(videoId);
 
-      await execFileAsync(this.ytdlpPath, [
-        ...this.getBaseArgs(),
+      await this.execWithProxyFallback([
         '-f',
         format,
         '--merge-output-format',
@@ -272,6 +318,8 @@ export class YouTubeProvider {
 
   /**
    * 썸네일 다운로드 (JPEG로 변환)
+   * NOTE: fetch-based -- no proxy fallback (i.ytimg.com CDN is rarely blocked)
+   * If needed, implement via undici ProxyAgent
    */
   async downloadThumbnail(thumbnailUrl: string, outputPath: string): Promise<string> {
     try {
@@ -329,6 +377,7 @@ export class YouTubeProvider {
   /**
    * YouTube 썸네일 여러 장 다운로드 (dev mode 최적화용)
    * 영상의 여러 지점 썸네일을 빠르게 가져옴 (비디오 다운로드 불필요)
+   * NOTE: fetch-based -- no proxy fallback (i.ytimg.com CDN is rarely blocked)
    */
   async downloadThumbnails(
     videoId: string,
