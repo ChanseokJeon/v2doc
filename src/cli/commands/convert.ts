@@ -23,6 +23,7 @@ interface ConvertCommandOptions {
   theme?: string;
   themeFrom?: string;
   quality?: string;
+  screenshotMethod?: string;
   lang?: string;
   summary?: boolean;
   translate?: boolean;
@@ -93,6 +94,14 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
     // 설정 로드
     spinner.text = '설정 로드 중...';
     const config = await configManager.load(cliOptions);
+
+    // 스크린샷 방식 오버라이드
+    if (options.screenshotMethod) {
+      const method = options.screenshotMethod as 'storyboard' | 'ffmpeg' | 'auto';
+      if (['storyboard', 'ffmpeg', 'auto'].includes(method)) {
+        config.screenshot.method = method;
+      }
+    }
 
     // Dev mode 설정 적용 (하드코딩된 빠른 테스트 설정 사용)
     if (options.dev) {

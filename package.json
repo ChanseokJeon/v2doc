@@ -1,6 +1,6 @@
 {
   "name": "yt2pdf",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환하는 CLI 도구",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

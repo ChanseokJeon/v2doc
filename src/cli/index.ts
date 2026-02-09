@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name('yt2pdf')
   .description('YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환')
-  .version('0.1.0');
+  .version('0.2.0');
 
 // 기본 명령어 (URL만 입력)
 program
@@ -25,6 +25,7 @@ program
   .option('-t, --theme <name>', 'PDF 테마', 'default')
   .option('--theme-from <source>', 'URL, 이미지, 또는 프리셋에서 테마 추출')
   .option('-q, --quality <level>', '스크린샷 품질 (low, medium, high)', 'low')
+  .option('--screenshot-method <method>', '스크린샷 방식 (storyboard, ffmpeg, auto)', 'storyboard')
   .option('--lang <code>', '자막 언어 (ko, en)')
   .option('--summary', 'AI 요약 생성 (기본: 켜짐)', true)
   .option('--no-summary', 'AI 요약 생성 안함')
