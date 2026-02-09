@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * yt2pdf CLI 실행 파일
+ * v2doc CLI 실행 파일
  */
 
 // Node.js 22에서 punycode 모듈 deprecation 경고 억제 (의존성에서 발생)

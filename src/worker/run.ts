@@ -1,15 +1,16 @@
 import { JobProcessor } from './processor';
+import { getBucketName } from '../constants';
 
 async function main() {
   // eslint-disable-next-line no-console
-  console.log('Starting yt2pdf Worker...');
+  console.log('Starting v2doc Worker...');
 
   const worker = new JobProcessor({
     maxConcurrentJobs: parseInt(process.env.MAX_CONCURRENT_JOBS || '3', 10),
     visibilityTimeout: parseInt(process.env.VISIBILITY_TIMEOUT || '600', 10),
     pollingInterval: parseInt(process.env.POLLING_INTERVAL || '5000', 10),
-    tempDir: process.env.TEMP_DIR || '/tmp/yt2pdf',
-    outputBucket: process.env.OUTPUT_BUCKET || 'yt2pdf-results',
+    tempDir: process.env.TEMP_DIR || '/tmp/v2doc',
+    outputBucket: getBucketName(),
   });
 
   // Graceful shutdown handlers

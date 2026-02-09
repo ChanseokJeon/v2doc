@@ -4,6 +4,7 @@ import { FFmpegWrapper } from '../../providers/ffmpeg';
 import { YouTubeProvider } from '../../providers/youtube';
 import { getCloudProvider } from '../../cloud/factory';
 import { HealthStatusSchema } from '../models/job';
+import { getBucketName } from '../../constants';
 
 const health = new OpenAPIHono();
 
@@ -31,8 +32,8 @@ async function checkStorageHealth(timeoutMs = 3000): Promise<'healthy' | 'unheal
       setTimeout(() => reject(new Error('Storage health check timeout')), timeoutMs);
     });
 
-    // Get actual bucket name from environment
-    const bucketName = process.env.GCS_BUCKET_NAME || process.env.OUTPUT_BUCKET || 'yt2pdf-output';
+    // Get actual bucket name from environment or constants
+    const bucketName = getBucketName();
 
     // Try a simple exists operation on a non-existent test key
     // This validates credentials and connectivity without side effects

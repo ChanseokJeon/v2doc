@@ -1,16 +1,16 @@
 {
-  "name": "yt2pdf",
-  "version": "0.2.0",
-  "description": "YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환하는 CLI 도구",
+  "name": "v2doc",
+  "version": "1.0.0",
+  "description": "Video to Document converter - PDF/MD/HTML with AI",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "yt2pdf": "./dist/bin/yt2pdf.js"
+    "v2doc": "./dist/bin/v2doc.js"
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/bin/yt2pdf.ts",
-    "start": "node dist/bin/yt2pdf.js",
+    "dev": "tsx src/bin/v2doc.ts",
+    "start": "node dist/bin/v2doc.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -45,6 +45,12 @@
   ],
   "author": "",
   "license": "MIT",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "assets/fonts/"
+  ],
   "engines": {
     "node": ">=18.0.0"
   },

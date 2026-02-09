@@ -46,7 +46,7 @@ app.route('/api/v1/health', health);
 app.doc('/openapi.json', {
   openapi: '3.0.0',
   info: {
-    title: 'yt2pdf API',
+    title: 'v2doc API',
     version: process.env.npm_package_version || '1.0.0',
     description:
       'Convert YouTube videos to PDF, Markdown, or HTML. Extract subtitles and screenshots, with optional AI-powered translation and summarization.',
@@ -81,14 +81,14 @@ app.get(
   '/docs',
   Scalar({
     url: '/openapi.json',
-    pageTitle: 'yt2pdf API Documentation',
+    pageTitle: 'v2doc API Documentation',
   })
 );
 
 // Root endpoint
 app.get('/', (c) => {
   return c.json({
-    name: 'yt2pdf API',
+    name: 'v2doc API',
     version: process.env.npm_package_version || '1.0.0',
     docs: '/docs',
     openapi: '/openapi.json',

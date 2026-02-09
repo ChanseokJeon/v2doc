@@ -9,7 +9,7 @@
 
 ---
 
-# yt2pdf 아키텍처 상세 설계
+# v2doc 아키텍처 상세 설계
 
 ## 1. 시스템 개요
 
@@ -513,7 +513,7 @@ class Logger {
 ## 3. 파일 구조 (최종)
 
 ```
-yt2pdf/
+v2doc/
 ├── src/
 │   ├── cli/
 │   │   ├── index.ts              # CLI 진입점
@@ -563,7 +563,7 @@ yt2pdf/
 │   └── index.ts                  # 라이브러리 진입점
 │
 ├── bin/
-│   └── yt2pdf.ts                 # CLI 실행 파일
+│   └── v2doc.ts                 # CLI 실행 파일
 │
 ├── templates/
 │   └── themes/                   # PDF 테마 에셋
@@ -595,7 +595,7 @@ yt2pdf/
 │   └── API.md                    # API 문서
 │
 ├── .env.example
-├── yt2pdf.config.yaml
+├── v2doc.config.yaml
 ├── package.json
 ├── tsconfig.json
 ├── jest.config.js

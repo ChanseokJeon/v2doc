@@ -58,7 +58,7 @@ export class UnifiedContentProcessor {
     this.client = new OpenAI({ apiKey: apiKey || process.env.OPENAI_API_KEY });
     this.model = model;
     const home = process.env.HOME || process.env.USERPROFILE || '';
-    this.cacheDir = path.join(home, '.cache', 'yt2pdf', 'ai');
+    this.cacheDir = path.join(home, '.cache', 'v2doc', 'ai');
   }
 
   /**

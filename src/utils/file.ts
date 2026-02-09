@@ -9,7 +9,7 @@ import * as os from 'os';
 /**
  * 임시 디렉토리 생성
  */
-export async function createTempDir(prefix = 'yt2pdf-'): Promise<string> {
+export async function createTempDir(prefix = 'v2doc-'): Promise<string> {
   const tempDir = path.join(os.tmpdir(), prefix + Date.now().toString(36));
   await fs.mkdir(tempDir, { recursive: true });
   return tempDir;

@@ -19,6 +19,7 @@ import { getCloudProvider } from '../../cloud';
 import { parseYouTubeUrl } from '../../utils/url';
 import { Orchestrator } from '../../core/orchestrator';
 import { ConfigManager } from '../../utils/config';
+import { getQueueName, getBucketName } from '../../constants';
 
 const jobs = new OpenAPIHono();
 
@@ -89,8 +90,8 @@ jobs.openapi(syncConversionRoute, async (c) => {
   }
 
   const options = body.options || JobOptionsSchema.parse({});
-  const tempDir = path.join('/tmp/yt2pdf', jobId);
-  const outputBucket = process.env.GCS_BUCKET_NAME || process.env.OUTPUT_BUCKET || 'yt2pdf-output';
+  const tempDir = path.join('/tmp/v2doc', jobId);
+  const outputBucket = getBucketName();
 
   try {
     // Setup temp directory
@@ -254,7 +255,7 @@ jobs.post('/', zValidator('json', CreateJobRequestSchema), async (c) => {
 
   // Enqueue job
   try {
-    await cloudProvider.queue.enqueue('yt2pdf-jobs', { jobId });
+    await cloudProvider.queue.enqueue(getQueueName(), { jobId });
     store.updateStatus(jobId, 'queued');
     job.status = 'queued';
   } catch (error) {
@@ -299,7 +300,7 @@ jobs.get('/:jobId', async (c) => {
   // Add result with fresh signed URL if completed
   if (job.status === 'completed' && job.result) {
     const signedUrl = await cloudProvider.storage.getSignedUrl(
-      process.env.OUTPUT_BUCKET || 'yt2pdf-results',
+      getBucketName(),
       job.result.outputPath,
       { expiresInSeconds: 3600, action: 'read' }
     );

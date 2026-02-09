@@ -1,8 +1,8 @@
-# yt2pdf Web Service Architecture
+# v2doc Web Service Architecture
 
 ## 1. 개요
 
-yt2pdf는 현재 CLI 도구로 운영되고 있습니다. 이 문서는 CLI를 REST API 기반의 웹 서비스로 전환하는 아키텍처를 정의합니다.
+v2doc는 현재 CLI 도구로 운영되고 있습니다. 이 문서는 CLI를 REST API 기반의 웹 서비스로 전환하는 아키텍처를 정의합니다.
 
 ### 1.1 핵심 목표
 
@@ -331,7 +331,7 @@ import { Datastore } from '@google-cloud/datastore';
 export class GCPQueueProvider implements IQueueProvider {
   private pubsub: PubSub;
   private datastore: Datastore;
-  private topic: string = 'yt2pdf-jobs';
+  private topic: string = 'v2doc-jobs';
 
   constructor(projectId: string) {
     this.pubsub = new PubSub({ projectId });
@@ -433,7 +433,7 @@ export class AWSQueueProvider implements IQueueProvider {
   private sqs: SQSClient;
   private dynamodb: DynamoDBClient;
   private queueUrl: string;
-  private tableName: string = 'yt2pdf-jobs';
+  private tableName: string = 'v2doc-jobs';
 
   constructor(region: string, queueUrl: string) {
     this.sqs = new SQSClient({ region });
@@ -809,7 +809,7 @@ export class JobQueue {
   private queueProvider: IQueueProvider;
 
   constructor(redisUrl: string, queueProvider: IQueueProvider) {
-    this.queue = new Queue('yt2pdf-conversion', redisUrl);
+    this.queue = new Queue('v2doc-conversion', redisUrl);
     this.queueProvider = queueProvider;
 
     // 이벤트 리스너 등록
@@ -1028,10 +1028,10 @@ export class CloudOrchestrator extends Orchestrator {
 
 ```
 로컬 처리
-├─ 자막: /tmp/yt2pdf/{jobId}/subtitles.json
-├─ 스크린샷: /tmp/yt2pdf/{jobId}/screenshots/*.jpg
-├─ 오디오: /tmp/yt2pdf/{jobId}/audio.m4a
-└─ PDF: /tmp/yt2pdf/{jobId}/output.pdf
+├─ 자막: /tmp/v2doc/{jobId}/subtitles.json
+├─ 스크린샷: /tmp/v2doc/{jobId}/screenshots/*.jpg
+├─ 오디오: /tmp/v2doc/{jobId}/audio.m4a
+└─ PDF: /tmp/v2doc/{jobId}/output.pdf
     │
     ▼
 클라우드 업로드
@@ -1231,7 +1231,7 @@ export class MockQueueProvider implements IQueueProvider {
 ```typescript
 // tests/integration/api.test.ts
 
-describe('yt2pdf Web API', () => {
+describe('v2doc Web API', () => {
   let app: Express;
   let storageProvider: MockStorageProvider;
   let queueProvider: MockQueueProvider;
@@ -1388,7 +1388,7 @@ src/
 │   └── cloud.ts                 # (신규) 클라우드 타입
 │
 ├── bin/
-│   ├── yt2pdf.ts               # (기존) CLI
+│   ├── v2doc.ts               # (기존) CLI
 │   ├── server.ts               # (신규) API 서버
 │   └── worker.ts               # (신규) 워커 프로세스
 │
@@ -1444,7 +1444,7 @@ npm run worker
 apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
-  name: yt2pdf-api
+  name: v2doc-api
 spec:
   template:
     metadata:
@@ -1452,7 +1452,7 @@ spec:
         autoscaling.knative.dev/maxScale: '10'
     spec:
       containers:
-      - image: gcr.io/project/yt2pdf-api:latest
+      - image: gcr.io/project/v2doc-api:latest
         ports:
         - containerPort: 3000
         env:
@@ -1461,7 +1461,7 @@ spec:
         - name: GCP_PROJECT_ID
           value: 'my-project'
         - name: GCP_BUCKET_NAME
-          value: 'yt2pdf-storage'
+          value: 'v2doc-storage'
         - name: PORT
           value: '3000'
 ```
@@ -1685,4 +1685,4 @@ const job = await fetch(`/api/v1/jobs/${jobId}`);
 ---
 
 *마지막 업데이트: 2025-02-02*
-*Author: yt2pdf Team*
+*Author: v2doc Team*

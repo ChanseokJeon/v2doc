@@ -5,6 +5,7 @@ import { Orchestrator } from '../core/orchestrator';
 import { ConfigManager } from '../utils/config';
 import { Job, JobProgress, JobError } from '../api/models/job';
 import { getJobStore, JobStore } from '../api/store';
+import { getQueueName } from '../constants';
 
 export interface WorkerConfig {
   maxConcurrentJobs: number;
@@ -18,8 +19,8 @@ const DEFAULT_CONFIG: WorkerConfig = {
   maxConcurrentJobs: 3,
   visibilityTimeout: 600, // 10 minutes
   pollingInterval: 5000, // 5 seconds
-  tempDir: '/tmp/yt2pdf',
-  outputBucket: process.env.OUTPUT_BUCKET || 'yt2pdf-results',
+  tempDir: '/tmp/v2doc',
+  outputBucket: process.env.OUTPUT_BUCKET || 'v2doc-results',
 };
 
 export class JobProcessor {
@@ -56,7 +57,7 @@ export class JobProcessor {
         // Only poll if we have capacity
         if (this.activeJobs < this.config.maxConcurrentJobs) {
           const provider = await this.getProvider();
-          const messages = await provider.queue.receive<{ jobId: string }>('yt2pdf-jobs', {
+          const messages = await provider.queue.receive<{ jobId: string }>(getQueueName(), {
             maxMessages: this.config.maxConcurrentJobs - this.activeJobs,
             visibilityTimeoutSeconds: this.config.visibilityTimeout,
             waitTimeSeconds: 20, // Long polling
@@ -195,7 +196,7 @@ export class JobProcessor {
         } else {
           // Move to DLQ and mark as failed
           const dlqProvider = await this.getProvider();
-          await dlqProvider.queue.moveToDLQ('yt2pdf-jobs', {
+          await dlqProvider.queue.moveToDLQ(getQueueName(), {
             ...message,
             enqueuedAt: new Date(),
           });
@@ -294,7 +295,7 @@ export class JobProcessor {
   private async ackMessage(message: { receiptHandle?: string }): Promise<void> {
     if (message.receiptHandle) {
       const provider = await this.getProvider();
-      await provider.queue.ack('yt2pdf-jobs', message.receiptHandle);
+      await provider.queue.ack(getQueueName(), message.receiptHandle);
     }
   }
 
@@ -304,7 +305,7 @@ export class JobProcessor {
   ): Promise<void> {
     if (message.receiptHandle) {
       const provider = await this.getProvider();
-      await provider.queue.nack('yt2pdf-jobs', message.receiptHandle, delaySeconds);
+      await provider.queue.nack(getQueueName(), message.receiptHandle, delaySeconds);
     }
   }
 

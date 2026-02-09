@@ -7,7 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const CACHE_DIR = path.join(process.env.HOME || '', '.cache/yt2pdf/ai');
+const CACHE_DIR = path.join(process.env.HOME || '', '.cache/v2doc/ai');
 
 interface MainInformation {
   paragraphs: string[];

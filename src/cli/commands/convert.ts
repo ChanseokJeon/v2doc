@@ -39,15 +39,15 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
   // URL 필수 확인
   if (!url) {
     // eslint-disable-next-line no-console
-    console.log(chalk.yellow('사용법: yt2pdf <YouTube-URL> [options]'));
+    console.log(chalk.yellow('사용법: v2doc <YouTube-URL> [options]'));
     // eslint-disable-next-line no-console
     console.log(chalk.gray('\n예시:'));
     // eslint-disable-next-line no-console
-    console.log(chalk.gray('  yt2pdf https://youtube.com/watch?v=xxxxx'));
+    console.log(chalk.gray('  v2doc https://youtube.com/watch?v=xxxxx'));
     // eslint-disable-next-line no-console
-    console.log(chalk.gray('  yt2pdf https://youtube.com/watch?v=xxxxx -o ./docs -f md'));
+    console.log(chalk.gray('  v2doc https://youtube.com/watch?v=xxxxx -o ./docs -f md'));
     // eslint-disable-next-line no-console
-    console.log(chalk.gray('\n옵션 확인: yt2pdf --help'));
+    console.log(chalk.gray('\n옵션 확인: v2doc --help'));
     return;
   }
 

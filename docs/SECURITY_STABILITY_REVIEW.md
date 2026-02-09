@@ -1,4 +1,4 @@
-# Security & Stability Review: yt2pdf Remaining Tasks Plan
+# Security & Stability Review: v2doc Remaining Tasks Plan
 **Date:** 2026-02-08
 **Reviewer:** Security Reviewer (Low Tier)
 **Plan Document:** `/Users/chanseok-jeon/Projects/yt2/.omc/plans/remaining-tasks-plan-draft.md`
@@ -150,7 +150,7 @@ const tempPath = path.join(tempDir, userInput);  // NO TRAVERSAL CHECK
 
 The temp directory is created with a random hash:
 ```typescript
-const tempDir = path.join(os.tmpdir(), `yt2pdf-${videoId}`);
+const tempDir = path.join(os.tmpdir(), `v2doc-${videoId}`);
 ```
 
 Since `videoId` comes from `isValidYouTubeUrl()`, it's already validated. **No new risk introduced by A1-A4.**
@@ -546,7 +546,7 @@ Current plan scope:
 
 ```typescript
 // Correct pattern (already used in youtube.ts:161-162)
-const tempDir = path.join(os.tmpdir(), `yt2pdf-${videoId}`);
+const tempDir = path.join(os.tmpdir(), `v2doc-${videoId}`);
 await fs.mkdir(tempDir, { recursive: true });
 
 // What NOT to do
@@ -594,4 +594,4 @@ function validateProxyUrl(proxyUrl: string): URL {
 **Document Prepared By:** Security Reviewer (Low Tier)
 **Review Date:** 2026-02-08
 **Classification:** INTERNAL TECHNICAL REVIEW
-**Distribution:** yt2pdf Development Team
+**Distribution:** v2doc Development Team

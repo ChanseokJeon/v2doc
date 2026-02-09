@@ -14,10 +14,10 @@ const execAsync = promisify(exec);
 export function setupCommand(): Command {
   const setup = new Command('setup').description('외부 의존성 설치 및 확인');
 
-  // yt2pdf setup
+  // v2doc setup
   setup.option('-c, --check', '설치 상태만 확인').action(async (options: { check?: boolean }) => {
     // eslint-disable-next-line no-console
-    console.log(chalk.bold('\n🔧 yt2pdf 의존성 확인\n'));
+    console.log(chalk.bold('\n🔧 v2doc 의존성 확인\n'));
 
     // ffmpeg 확인
     const ffmpegInstalled = await FFmpegWrapper.checkInstallation();
@@ -43,7 +43,7 @@ export function setupCommand(): Command {
     if (options.check) {
       if (!ffmpegInstalled || !ytdlpInstalled) {
         // eslint-disable-next-line no-console
-        console.log(chalk.yellow('\n누락된 의존성을 설치하려면: yt2pdf setup'));
+        console.log(chalk.yellow('\n누락된 의존성을 설치하려면: v2doc setup'));
       }
       return;
     }

@@ -113,7 +113,7 @@ export class StoryboardCapturer {
       throw new Error('Storyboard를 사용할 수 없음');
     }
 
-    const workDir = this.tempDir || (await createTempDir('yt2pdf-storyboard-'));
+    const workDir = this.tempDir || (await createTempDir('v2doc-storyboard-'));
     const screenshots: Screenshot[] = [];
 
     try {

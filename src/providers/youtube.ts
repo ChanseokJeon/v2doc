@@ -256,7 +256,7 @@ export class YouTubeProvider {
    * 자막 가져오기
    */
   async getCaptions(videoId: string, langCode: string): Promise<SubtitleSegment[]> {
-    const tempDir = path.join(os.tmpdir(), `yt2pdf-${videoId}`);
+    const tempDir = path.join(os.tmpdir(), `v2doc-${videoId}`);
     await fs.mkdir(tempDir, { recursive: true });
 
     try {

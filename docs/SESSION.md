@@ -1,4 +1,4 @@
-# yt2pdf 개발 세션 상태
+# v2doc 개발 세션 상태
 
 > 이 파일은 Claude Code가 작업을 재개할 때 컨텍스트를 빠르게 파악하기 위한 파일입니다.
 
@@ -151,10 +151,10 @@ npm run verify:all  # 전체 6-layer 검증
 export OPENAI_API_KEY=sk-...
 
 # 요약 + 번역 활성화
-yt2pdf https://youtube.com/watch?v=... --summary --translate
+v2doc https://youtube.com/watch?v=... --summary --translate
 
 # 영어로 번역
-yt2pdf https://youtube.com/watch?v=... --translate --target-lang en
+v2doc https://youtube.com/watch?v=... --translate --target-lang en
 ```
 
 ### Web API 사용 방법
@@ -173,8 +173,8 @@ curl http://localhost:3000/api/v1/jobs/{jobId}
 ```
 
 ### 설정 파일 경로
-- 프로젝트: `./yt2pdf.config.yaml`
-- 전역: `~/.config/yt2pdf/config.yaml`
+- 프로젝트: `./v2doc.config.yaml`
+- 전역: `~/.config/v2doc/config.yaml`
 
 ### 클라우드 프로바이더 설정
 ```bash

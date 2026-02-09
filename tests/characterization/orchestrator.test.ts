@@ -550,7 +550,7 @@ describe('Orchestrator (Characterization)', () => {
         url: 'https://www.youtube.com/watch?v=testVideoId',
       });
 
-      expect(mockCreateTempDir).toHaveBeenCalledWith('yt2pdf-');
+      expect(mockCreateTempDir).toHaveBeenCalledWith('v2doc-');
       expect(mockCleanupDir).toHaveBeenCalledWith('/tmp/yt2pdf-abc123');
     });
 
@@ -562,7 +562,7 @@ describe('Orchestrator (Characterization)', () => {
         url: 'https://www.youtube.com/watch?v=testVideoId',
       });
 
-      expect(mockCreateTempDir).toHaveBeenCalledWith('yt2pdf-');
+      expect(mockCreateTempDir).toHaveBeenCalledWith('v2doc-');
       expect(mockCleanupDir).not.toHaveBeenCalled();
     });
 

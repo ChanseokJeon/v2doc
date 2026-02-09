@@ -1,4 +1,4 @@
-# yt2pdf - Cloud Run Dockerfile (Optimized)
+# v2doc - Cloud Run Dockerfile (Optimized)
 # Multi-stage build with Alpine for minimal image size
 # Target: ~500MB (down from ~1GB)
 
@@ -67,13 +67,13 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
 # Copy config files needed at runtime
-COPY yt2pdf.config.yaml ./
+COPY v2doc.config.yaml* /app/
 
 # Copy Korean fonts for PDF generation
 COPY assets/fonts/ ./assets/fonts/
 
 # Create temp directory
-RUN mkdir -p /tmp/yt2pdf
+RUN mkdir -p /tmp/v2doc
 
 # Set environment
 ENV NODE_ENV=production

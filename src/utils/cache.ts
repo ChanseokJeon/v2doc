@@ -25,7 +25,7 @@ export class CacheManager {
 
   constructor(cacheDir?: string, ttlDays: number = 7) {
     const home = process.env.HOME || process.env.USERPROFILE || '';
-    this.cacheDir = cacheDir || path.join(home, '.cache', 'yt2pdf');
+    this.cacheDir = cacheDir || path.join(home, '.cache', 'v2doc');
     this.ttlMs = ttlDays * 24 * 60 * 60 * 1000;
   }
 

@@ -75,7 +75,7 @@ export class ConfigManager {
    * 프로젝트 설정 파일 경로
    */
   static getProjectConfigPath(): string {
-    return path.join(process.cwd(), 'yt2pdf.config.yaml');
+    return path.join(process.cwd(), 'v2doc.config.yaml');
   }
 
   /**
@@ -83,7 +83,7 @@ export class ConfigManager {
    */
   static getGlobalConfigPath(): string {
     const home = process.env.HOME || process.env.USERPROFILE || '';
-    return path.join(home, '.config', 'yt2pdf', 'config.yaml');
+    return path.join(home, '.config', 'v2doc', 'config.yaml');
   }
 
   /**

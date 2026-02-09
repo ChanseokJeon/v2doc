@@ -1,4 +1,4 @@
-# YouTube to PDF (yt2pdf) 기술 스펙 문서
+# YouTube to PDF (v2doc) 기술 스펙 문서
 
 ## 1. 프로젝트 개요
 
@@ -6,12 +6,12 @@
 YouTube 영상의 자막과 스크린샷을 추출하여 학습/참고용 PDF 문서로 변환하는 CLI 도구
 
 ### 1.2 사용 형태
-- **CLI 도구**: `yt2pdf <URL> [options]`
-- **Claude Code Skill**: `/yt2pdf <URL>`
+- **CLI 도구**: `v2doc <URL> [options]`
+- **Claude Code Skill**: `/v2doc <URL>`
 
 ### 1.3 기술 스택
 - **언어**: Node.js / TypeScript
-- **설정 파일**: YAML (`yt2pdf.config.yaml`)
+- **설정 파일**: YAML (`v2doc.config.yaml`)
 - **배포**: GitHub 전용 (npx 또는 clone)
 
 ---
@@ -56,7 +56,7 @@ YouTube 영상의 자막과 스크린샷을 추출하여 학습/참고용 PDF �
 
 ### 3.1 기본 사용법
 ```bash
-yt2pdf <YouTube-URL> [options]
+v2doc <YouTube-URL> [options]
 ```
 
 ### 3.2 주요 옵션
@@ -78,13 +78,13 @@ Options:
 ### 3.3 사용 예시
 ```bash
 # 기본 사용
-yt2pdf https://youtube.com/watch?v=xxxxx
+v2doc https://youtube.com/watch?v=xxxxx
 
 # 옵션과 함께
-yt2pdf https://youtube.com/watch?v=xxxxx -o ./docs -f md -i 30
+v2doc https://youtube.com/watch?v=xxxxx -o ./docs -f md -i 30
 
 # 플레이리스트
-yt2pdf https://youtube.com/playlist?list=xxxxx
+v2doc https://youtube.com/playlist?list=xxxxx
 ```
 
 ---
@@ -93,7 +93,7 @@ yt2pdf https://youtube.com/playlist?list=xxxxx
 
 ### 4.1 사용법
 ```
-/yt2pdf <YouTube-URL>
+/v2doc <YouTube-URL>
 ```
 
 ### 4.2 지원 옵션
@@ -111,12 +111,12 @@ yt2pdf https://youtube.com/playlist?list=xxxxx
 ## 5. 설정 파일
 
 ### 5.1 파일 위치
-- 프로젝트: `./yt2pdf.config.yaml`
-- 전역: `~/.config/yt2pdf/config.yaml`
+- 프로젝트: `./v2doc.config.yaml`
+- 전역: `~/.config/v2doc/config.yaml`
 
 ### 5.2 설정 예시
 ```yaml
-# yt2pdf.config.yaml
+# v2doc.config.yaml
 
 output:
   directory: ./output
@@ -180,7 +180,7 @@ OPENAI_API_KEY=sk-xxx        # Whisper API용 (자막 없을 때)
 
 ### 7.2 자동 설치
 ```bash
-yt2pdf setup    # 필요한 외부 의존성 자동 설치
+v2doc setup    # 필요한 외부 의존성 자동 설치
 ```
 
 ---
@@ -209,7 +209,7 @@ yt2pdf setup    # 필요한 외부 의존성 자동 설치
 
 ### 8.3 디렉토리 구조
 ```
-yt2pdf/
+v2doc/
 ├── src/
 │   ├── cli/              # CLI 관련
 │   │   ├── index.ts
@@ -237,7 +237,7 @@ yt2pdf/
 ├── tests/
 ├── docs/
 ├── .env.example
-├── yt2pdf.config.yaml
+├── v2doc.config.yaml
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -287,8 +287,8 @@ yt2pdf/
 
 ### 11.2 캐시 관리
 - 기본 캐시 유지 기간: 7일
-- 캐시 위치: `~/.cache/yt2pdf/`
-- 수동 정리: `yt2pdf cache clear`
+- 캐시 위치: `~/.cache/v2doc/`
+- 수동 정리: `v2doc cache clear`
 
 ---
 
@@ -352,8 +352,8 @@ yt2pdf/
 - TROUBLESHOOTING.md: 문제 해결 가이드
 
 ### 14.2 CLI 도움말
-- `yt2pdf --help`: 전체 명령어 도움말
-- `yt2pdf <command> --help`: 개별 명령어 도움말
+- `v2doc --help`: 전체 명령어 도움말
+- `v2doc <command> --help`: 개별 명령어 도움말
 
 ---
 
@@ -410,15 +410,15 @@ yt2pdf/
 ## 부록 B: Claude Code Skill 프롬프트
 
 ```markdown
-# /yt2pdf
+# /v2doc
 
 YouTube 영상을 PDF로 변환합니다.
 
 ## 사용법
-/yt2pdf <YouTube-URL>
+/v2doc <YouTube-URL>
 
 ## 예시
-/yt2pdf https://youtube.com/watch?v=xxxxx
+/v2doc https://youtube.com/watch?v=xxxxx
 
 ## 동작
 1. YouTube URL에서 영상 정보 추출

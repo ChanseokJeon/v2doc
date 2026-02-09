@@ -204,19 +204,19 @@ function ensureContrast(palette: ColorPalette): ColorPalette {
 
 ```bash
 # 프리셋 사용
-yt2pdf https://www.youtube.com/watch?v=MGzymaYBiss --theme-from dark
+v2doc https://www.youtube.com/watch?v=MGzymaYBiss --theme-from dark
 
 # minimal-neon 프리셋 (Layout6 기반)
-yt2pdf https://www.youtube.com/watch?v=MGzymaYBiss --theme-from minimal-neon
+v2doc https://www.youtube.com/watch?v=MGzymaYBiss --theme-from minimal-neon
 
 # 이미지에서 추출
-yt2pdf https://www.youtube.com/watch?v=MGzymaYBiss --theme-from ./brand-logo.png
+v2doc https://www.youtube.com/watch?v=MGzymaYBiss --theme-from ./brand-logo.png
 
 # URL에서 추출
-yt2pdf https://www.youtube.com/watch?v=MGzymaYBiss --theme-from https://stripe.com
+v2doc https://www.youtube.com/watch?v=MGzymaYBiss --theme-from https://stripe.com
 
 # 조합
-yt2pdf https://www.youtube.com/watch?v=MGzymaYBiss --theme-from sepia --layout horizontal
+v2doc https://www.youtube.com/watch?v=MGzymaYBiss --theme-from sepia --layout horizontal
 ```
 
 ### 우선순위

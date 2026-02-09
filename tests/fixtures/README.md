@@ -1,6 +1,6 @@
 # Test Fixtures
 
-This directory contains comprehensive test fixtures for the yt2pdf project.
+This directory contains comprehensive test fixtures for the v2doc project.
 
 ## Structure
 

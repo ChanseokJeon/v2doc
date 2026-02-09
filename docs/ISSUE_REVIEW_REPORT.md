@@ -1,8 +1,8 @@
-# Issue Review Report: yt2pdf Cloud Migration
+# Issue Review Report: v2doc Cloud Migration
 
 **Date:** 2026-02-02
 **Reviewers:** Pragmatist, Security Purist, Architect
-**Context:** CLI tool (yt2pdf) with optional REST API for YouTube-to-PDF conversion
+**Context:** CLI tool (v2doc) with optional REST API for YouTube-to-PDF conversion
 
 ---
 

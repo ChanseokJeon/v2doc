@@ -56,7 +56,7 @@ export class ScreenshotCapturer {
     duration: number,
     thumbnailUrl?: string
   ): AsyncGenerator<Screenshot> {
-    const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
+    const workDir = this.tempDir || (await createTempDir('v2doc-screenshot-'));
 
     // 영상 다운로드
     logger.info('영상 다운로드 중...');
@@ -141,7 +141,7 @@ export class ScreenshotCapturer {
     duration: number,
     count: number = 2
   ): Promise<Screenshot[]> {
-    const workDir = this.tempDir || (await createTempDir('yt2pdf-thumbnail-'));
+    const workDir = this.tempDir || (await createTempDir('v2doc-thumbnail-'));
 
     try {
       const thumbnails = await this.youtube.downloadThumbnails(videoId, workDir, count);
@@ -203,7 +203,7 @@ export class ScreenshotCapturer {
     videoId: string,
     chapters: Chapter[]
   ): Promise<Screenshot[]> {
-    const workDir = this.tempDir || (await createTempDir('yt2pdf-storyboard-'));
+    const workDir = this.tempDir || (await createTempDir('v2doc-storyboard-'));
 
     const storyboardCapturer = new StoryboardCapturer({
       tempDir: workDir,
@@ -226,7 +226,7 @@ export class ScreenshotCapturer {
     chapters: Chapter[],
     thumbnailUrl?: string
   ): Promise<Screenshot[]> {
-    const workDir = this.tempDir || (await createTempDir('yt2pdf-screenshot-'));
+    const workDir = this.tempDir || (await createTempDir('v2doc-screenshot-'));
     const screenshots: Screenshot[] = [];
 
     // 영상 다운로드

@@ -1,5 +1,5 @@
 #!/bin/bash
-# yt2pdf Cloud Run Deployment Script
+# v2doc Cloud Run Deployment Script
 # Usage: ./scripts/deploy-cloudrun.sh [project-id] [region]
 
 set -e
@@ -7,10 +7,10 @@ set -e
 # Configuration
 PROJECT_ID="${1:-$(gcloud config get-value project)}"
 REGION="${2:-asia-northeast3}"
-SERVICE_NAME="yt2pdf"
-BUCKET_NAME="yt2pdf-output-${PROJECT_ID}"
+SERVICE_NAME="v2doc"
+BUCKET_NAME="v2doc-output-${PROJECT_ID}"
 
-echo "=== yt2pdf Cloud Run Deployment ==="
+echo "=== v2doc Cloud Run Deployment ==="
 echo "Project: $PROJECT_ID"
 echo "Region: $REGION"
 echo "Service: $SERVICE_NAME"

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Benchmark script for yt2pdf
+ * Benchmark script for v2doc
  *
  * Usage:
  *   node scripts/benchmark.js                  # Run benchmarks

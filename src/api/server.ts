@@ -4,7 +4,7 @@ import { app } from './app';
 const port = parseInt(process.env.PORT || '3000', 10);
 
 // eslint-disable-next-line no-console
-console.log(`Starting yt2pdf API server on port ${port}...`);
+console.log(`Starting v2doc API server on port ${port}...`);
 
 const server = serve({
   fetch: app.fetch,

@@ -168,7 +168,7 @@ export class Orchestrator {
    * 개별 영상 처리 (오케스트레이터 메인 메서드)
    */
   private async processVideo(videoId: string, options: ConvertOptions): Promise<ConvertResult> {
-    const tempDir = await createTempDir('yt2pdf-');
+    const tempDir = await createTempDir('v2doc-');
     const traceSteps: TraceStep[] = [];
     const pipelineStart = Date.now();
 

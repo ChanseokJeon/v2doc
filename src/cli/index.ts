@@ -11,9 +11,9 @@ import { setupCommand } from './commands/setup.js';
 const program = new Command();
 
 program
-  .name('yt2pdf')
-  .description('YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환')
-  .version('0.2.0');
+  .name('v2doc')
+  .description('Video to Document converter - PDF/MD/HTML with AI')
+  .version('1.0.0');
 
 // 기본 명령어 (URL만 입력)
 program

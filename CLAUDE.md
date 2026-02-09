@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 프로젝트 개요
 
-**yt2pdf**: YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환하는 CLI 도구
+**v2doc**: YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환하는 CLI 도구
 
 ## 작업 재개 방법
 
@@ -57,8 +57,8 @@ CLI ↔ API 인자는 반드시 1:1 대응 (kebab-case ↔ camelCase 변환만 �
 - **언어**: Node.js / TypeScript
 - **자막**: YouTube 자막 우선, OpenAI Whisper API 폴백
 - **스크린샷**: FFmpeg (1분 간격, 480p)
-- **설정**: YAML (yt2pdf.config.yaml)
-- **사용 형태**: CLI + Claude Code Skill (/yt2pdf)
+- **설정**: YAML (v2doc.config.yaml)
+- **사용 형태**: CLI + Claude Code Skill (/v2doc)
 
 ---
 

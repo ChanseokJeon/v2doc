@@ -1,4 +1,4 @@
-# yt2pdf
+# v2doc
 
 YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환하는 CLI 도구
 
@@ -28,8 +28,8 @@ YouTube 영상의 자막과 스크린샷을 추출하여 PDF로 변환하는 CLI
 
 ```bash
 # 저장소 클론
-git clone https://github.com/ChanseokJeon/yt2pdf.git
-cd yt2pdf
+git clone https://github.com/ChanseokJeon/yt2.git
+cd v2doc
 
 # 의존성 설치 (ffmpeg, yt-dlp 자동 설치)
 npm run setup
@@ -59,16 +59,16 @@ pip3 install yt-dlp
 
 ```bash
 # 단일 영상 변환
-yt2pdf https://youtube.com/watch?v=xxxxx
+v2doc https://youtube.com/watch?v=xxxxx
 
 # 플레이리스트 변환
-yt2pdf https://youtube.com/playlist?list=xxxxx
+v2doc https://youtube.com/playlist?list=xxxxx
 ```
 
 ### 옵션
 
 ```bash
-yt2pdf <YouTube-URL> [options]
+v2doc <YouTube-URL> [options]
 
 Options:
   -o, --output <path>      출력 디렉토리 (기본: ./output)
@@ -88,16 +88,16 @@ Options:
 
 ```bash
 # Markdown 출력
-yt2pdf https://youtube.com/watch?v=xxxxx -f md
+v2doc https://youtube.com/watch?v=xxxxx -f md
 
 # 고화질 스크린샷, 30초 간격
-yt2pdf https://youtube.com/watch?v=xxxxx -q high -i 30
+v2doc https://youtube.com/watch?v=xxxxx -q high -i 30
 
 # 한국어 자막 우선
-yt2pdf https://youtube.com/watch?v=xxxxx --lang ko
+v2doc https://youtube.com/watch?v=xxxxx --lang ko
 
 # 특정 디렉토리에 저장
-yt2pdf https://youtube.com/watch?v=xxxxx -o ./docs
+v2doc https://youtube.com/watch?v=xxxxx -o ./docs
 ```
 
 ## 설정
@@ -106,13 +106,13 @@ yt2pdf https://youtube.com/watch?v=xxxxx -o ./docs
 
 ```bash
 # 프로젝트 설정
-yt2pdf config init
+v2doc config init
 
 # 전역 설정
-yt2pdf config init --global
+v2doc config init --global
 ```
 
-### 설정 파일 예시 (yt2pdf.config.yaml)
+### 설정 파일 예시 (v2doc.config.yaml)
 
 ```yaml
 output:
@@ -179,7 +179,7 @@ gcloud services enable run.googleapis.com storage.googleapis.com cloudbuild.goog
 ./scripts/deploy-cloudrun.sh YOUR_PROJECT_ID asia-northeast3
 
 # 4. OpenAI API 키 설정
-gcloud run services update yt2pdf \
+gcloud run services update v2doc \
   --region=asia-northeast3 \
   --set-env-vars="OPENAI_API_KEY=sk-your-api-key"
 ```
@@ -190,7 +190,7 @@ gcloud run services update yt2pdf \
 - **메모리**: 4Gi (영상 처리용)
 - **CPU**: 2 vCPU
 - **타임아웃**: 600초 (10분)
-- **스토리지**: GCS 버킷 자동 생성 (yt2pdf-output-{PROJECT_ID})
+- **스토리지**: GCS 버킷 자동 생성 (v2doc-output-{PROJECT_ID})
 - **파일 보존**: 7일 후 자동 삭제 (lifecycle rule)
 
 ### API 사용
@@ -231,7 +231,7 @@ curl -X POST https://YOUR_SERVICE_URL/api/v1/jobs/sync \
 ## 프로그래밍 방식 사용
 
 ```typescript
-import { convert, convertPlaylist } from 'yt2pdf';
+import { convert, convertPlaylist } from 'v2doc';
 
 // 단일 영상
 const result = await convert({
@@ -323,13 +323,13 @@ CLI는 다음 입력을 자동으로 검증합니다:
 
 ```bash
 # 캐시 상태 확인
-yt2pdf cache show
+v2doc cache show
 
 # 캐시 전체 삭제
-yt2pdf cache clear
+v2doc cache clear
 
 # 만료된 캐시만 정리
-yt2pdf cache cleanup
+v2doc cache cleanup
 ```
 
 ## 비용
@@ -346,8 +346,8 @@ yt2pdf cache cleanup
 ### ffmpeg를 찾을 수 없음
 
 ```bash
-yt2pdf setup --check  # 설치 상태 확인
-yt2pdf setup          # 자동 설치
+v2doc setup --check  # 설치 상태 확인
+v2doc setup          # 자동 설치
 ```
 
 ### API 키 오류

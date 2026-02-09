@@ -1,6 +1,6 @@
 # 파일명 및 저장 정책
 
-> yt2pdf 출력 파일의 명명 규칙과 폴더 구조 정책 문서
+> v2doc 출력 파일의 명명 규칙과 폴더 구조 정책 문서
 
 **작성일**: 2026-01-27
 **적용 버전**: v0.2.0+
@@ -22,7 +22,7 @@
 
 ## 개요
 
-yt2pdf는 YouTube 영상을 처리할 때 생성되는 파일들을 체계적으로 관리하기 위해 파일명 패턴과 폴더 구조 정책을 제공합니다.
+v2doc는 YouTube 영상을 처리할 때 생성되는 파일들을 체계적으로 관리하기 위해 파일명 패턴과 폴더 구조 정책을 제공합니다.
 
 ### 주요 특징
 
@@ -50,7 +50,7 @@ yt2pdf는 YouTube 영상을 처리할 때 생성되는 파일들을 체계적으
 ### 기본 패턴
 
 ```yaml
-# yt2pdf.config.yaml의 기본값
+# v2doc.config.yaml의 기본값
 output:
   filenamePattern: "{timestamp}_{title}"
 ```
@@ -82,7 +82,7 @@ filenamePattern: "{date}/{title}"
 filenamePattern: "{channel}/{date}_{title}"
 
 # 예 3: 상세 정보 포함
-filenamePattern: "yt2pdf_{timestamp}_{videoId}_{title}"
+filenamePattern: "v2doc_{timestamp}_{videoId}_{title}"
 
 # 예 4: 단순 제목만
 filenamePattern: "{title}"
@@ -146,7 +146,7 @@ output/
 
 ```
 /tmp/
-└── yt2pdf-<random>/          # 처리 중 임시 디렉토리
+└── v2doc-<random>/          # 처리 중 임시 디렉토리
     ├── video.mp4             # 다운로드 영상
     ├── audio.mp3             # 오디오 (Whisper API용)
     ├── screenshot_0000.jpg   # 캡처한 스크린샷
@@ -162,7 +162,7 @@ output/
 ### 캐시 디렉토리 구조
 
 ```
-~/.cache/yt2pdf/                # 전역 캐시 디렉토리
+~/.cache/v2doc/                # 전역 캐시 디렉토리
 ├── subtitles/
 │   ├── ko_<videoId>.json       # 한국어 자막 캐시
 │   ├── en_<videoId>.json       # 영어 자막 캐시
@@ -178,15 +178,15 @@ output/
 **캐시 특징**:
 - 설정: `cache.enabled: true/false`
 - TTL (유지 기간): 기본 7일 (`cache.ttl: 7`)
-- `~/.cache/yt2pdf` 또는 Windows 해당 위치 자동 생성
+- `~/.cache/v2doc` 또는 Windows 해당 위치 자동 생성
 
 ---
 
 ## 설정 방법
 
-### 1. 설정 파일 (yt2pdf.config.yaml)
+### 1. 설정 파일 (v2doc.config.yaml)
 
-프로젝트 루트에 `yt2pdf.config.yaml` 파일을 생성하여 설정합니다.
+프로젝트 루트에 `v2doc.config.yaml` 파일을 생성하여 설정합니다.
 
 ```yaml
 output:
@@ -201,12 +201,12 @@ output:
 
 ```bash
 # 전역 설정 파일 위치
-~/.config/yt2pdf/config.yaml
+~/.config/v2doc/config.yaml
 ```
 
 ```yaml
 output:
-  directory: ~/Documents/yt2pdf-output
+  directory: ~/Documents/v2doc-output
   format: pdf
   filenamePattern: "{channel}/{date}_{title}"
 ```
@@ -217,13 +217,13 @@ output:
 
 ```bash
 # 출력 디렉토리 지정
-yt2pdf <URL> -o ./my-output
+v2doc <URL> -o ./my-output
 
 # 출력 포맷 지정
-yt2pdf <URL> -f md
+v2doc <URL> -f md
 
 # 전체 예시
-yt2pdf "https://www.youtube.com/watch?v=dQw4w9WgXcQ" \
+v2doc "https://www.youtube.com/watch?v=dQw4w9WgXcQ" \
   -o ./my-videos \
   -f pdf
 ```
@@ -234,9 +234,9 @@ yt2pdf "https://www.youtube.com/watch?v=dQw4w9WgXcQ" \
 
 ```bash
 # .env 파일
-YT2PDF_OUTPUT_DIR=./my-output
-YT2PDF_OUTPUT_FORMAT=pdf
-YT2PDF_FILENAME_PATTERN={timestamp}_{title}
+V2DOC_OUTPUT_DIR=./my-output
+V2DOC_OUTPUT_FORMAT=pdf
+V2DOC_FILENAME_PATTERN={timestamp}_{title}
 ```
 
 ---
@@ -245,7 +245,7 @@ YT2PDF_FILENAME_PATTERN={timestamp}_{title}
 
 ### 자동 정리 프로세스
 
-yt2pdf는 모든 파일명을 다음 규칙에 따라 자동으로 정리합니다:
+v2doc는 모든 파일명을 다음 규칙에 따라 자동으로 정리합니다:
 
 #### 1. 특수문자 제거
 
@@ -311,10 +311,10 @@ export function sanitizeFilename(filename: string): string {
 
 ```bash
 # 명령어
-yt2pdf "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+v2doc "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 
 # 설정
-# yt2pdf.config.yaml
+# v2doc.config.yaml
 output:
   directory: ./output
   filenamePattern: "{timestamp}_{title}"
@@ -333,10 +333,10 @@ output/
 
 ```bash
 # 명령어
-yt2pdf "https://www.youtube.com/watch?v=xyz123abc456"
+v2doc "https://www.youtube.com/watch?v=xyz123abc456"
 
 # 설정
-# yt2pdf.config.yaml
+# v2doc.config.yaml
 output:
   directory: ./content
   filenamePattern: "{channel}/{date}_{timestamp}_{title}"
@@ -354,10 +354,10 @@ content/
 
 ```bash
 # 명령어
-yt2pdf "https://www.youtube.com/playlist?list=PLxxx"
+v2doc "https://www.youtube.com/playlist?list=PLxxx"
 
 # 설정
-# yt2pdf.config.yaml
+# v2doc.config.yaml
 output:
   directory: ./courses
   filenamePattern: "{index}_{title}"
@@ -375,10 +375,10 @@ courses/
 
 ```bash
 # 명령어
-yt2pdf "https://www.youtube.com/watch?v=abc123xyz456"
+v2doc "https://www.youtube.com/watch?v=abc123xyz456"
 
 # 설정
-# yt2pdf.config.yaml
+# v2doc.config.yaml
 output:
   directory: ./archive
   filenamePattern: "{date}_{videoId}_{title}"
@@ -398,16 +398,16 @@ archive/
 
 ## 설정 우선순위
 
-yt2pdf는 다음 우선순위에 따라 설정을 로드합니다:
+v2doc는 다음 우선순위에 따라 설정을 로드합니다:
 
 ### 우선순위 순서 (높음 → 낮음)
 
 1. **CLI 옵션** (최우선)
    ```bash
-   yt2pdf <URL> -o ./custom-output -f html
+   v2doc <URL> -o ./custom-output -f html
    ```
 
-2. **프로젝트 설정** (./yt2pdf.config.yaml)
+2. **프로젝트 설정** (./v2doc.config.yaml)
    ```yaml
    # 프로젝트 루트의 설정 파일
    output:
@@ -415,11 +415,11 @@ yt2pdf는 다음 우선순위에 따라 설정을 로드합니다:
      filenamePattern: "{timestamp}_{title}"
    ```
 
-3. **전역 설정** (~/.config/yt2pdf/config.yaml)
+3. **전역 설정** (~/.config/v2doc/config.yaml)
    ```yaml
    # 사용자 홈 디렉토리의 전역 설정
    output:
-     directory: ~/Documents/yt2pdf
+     directory: ~/Documents/v2doc
    ```
 
 4. **기본값** (코드의 기본값)
@@ -452,18 +452,18 @@ CLI 옵션 존재? → 병합
 ```bash
 # 시나리오: CLI, 프로젝트 설정, 전역 설정 모두 지정
 
-# 1. 전역 설정 (~/.config/yt2pdf/config.yaml)
+# 1. 전역 설정 (~/.config/v2doc/config.yaml)
 output:
-  directory: ~/Documents/yt2pdf
+  directory: ~/Documents/v2doc
   filenamePattern: "{channel}/{title}"
 
-# 2. 프로젝트 설정 (./yt2pdf.config.yaml)
+# 2. 프로젝트 설정 (./v2doc.config.yaml)
 output:
   directory: ./output
   format: html
 
 # 3. CLI 옵션
-yt2pdf <URL> -o ./my-videos
+v2doc <URL> -o ./my-videos
 
 # 최종 결과:
 # - directory: ./my-videos       (CLI 옵션 우선)
@@ -479,40 +479,40 @@ yt2pdf <URL> -o ./my-videos
 
 ```bash
 # 기본 설정으로 PDF 생성
-yt2pdf "https://www.youtube.com/watch?v=..."
+v2doc "https://www.youtube.com/watch?v=..."
 # → ./output/20260127_143052_Video_Title.pdf
 
 # Markdown으로 생성
-yt2pdf "https://www.youtube.com/watch?v=..." -f md
+v2doc "https://www.youtube.com/watch?v=..." -f md
 # → ./output/20260127_143052_Video_Title.md
 
 # 커스텀 디렉토리에 생성
-yt2pdf "https://www.youtube.com/watch?v=..." -o ~/My-Videos
+v2doc "https://www.youtube.com/watch?v=..." -o ~/My-Videos
 # → ~/My-Videos/20260127_143052_Video_Title.pdf
 ```
 
 ### 예시 2: 블로그 기사 자동 생성
 
 ```bash
-# 설정 파일 (yt2pdf.config.yaml)
+# 설정 파일 (v2doc.config.yaml)
 output:
   directory: ./blog-sources
   format: md
   filenamePattern: "{date}_{videoId}_{title}"
 
 # 실행
-yt2pdf "https://www.youtube.com/watch?v=abc123"
+v2doc "https://www.youtube.com/watch?v=abc123"
 # → ./blog-sources/20260127_abc123_Article_Title.md
 
 # 같은 영상 재처리 시 파일명 동일 (내용 업데이트)
-yt2pdf "https://www.youtube.com/watch?v=abc123"
+v2doc "https://www.youtube.com/watch?v=abc123"
 # → ./blog-sources/20260127_abc123_Article_Title.md (덮어쓰기)
 ```
 
 ### 예시 3: 대규모 아카이브
 
 ```bash
-# 설정 파일 (yt2pdf.config.yaml)
+# 설정 파일 (v2doc.config.yaml)
 output:
   directory: /archive/video-content
   format: pdf
@@ -540,13 +540,13 @@ output:
 
 ```bash
 # 커스텀 패턴으로 간단한 파일명
-# yt2pdf.config.yaml
+# v2doc.config.yaml
 output:
   directory: ./downloads
   filenamePattern: "{title}"
 
 # 실행
-yt2pdf "https://www.youtube.com/watch?v=..."
+v2doc "https://www.youtube.com/watch?v=..."
 # → ./downloads/My_Tutorial.pdf
 
 # 하지만 같은 제목 여러 개 처리 시 덮어쓰기 주의!
@@ -556,11 +556,11 @@ yt2pdf "https://www.youtube.com/watch?v=..."
 
 ```bash
 # Brief 포맷은 요약된 PDF 생성
-yt2pdf "https://www.youtube.com/watch?v=..." -f brief
+v2doc "https://www.youtube.com/watch?v=..." -f brief
 # → ./output/20260127_143052_Video_Title_brief.pdf
 
 # 설정
-# yt2pdf.config.yaml
+# v2doc.config.yaml
 output:
   filenamePattern: "{timestamp}_{title}"
 
@@ -581,12 +581,12 @@ output/
 
 ```bash
 # 문제: 같은 제목으로 여러 영상 처리
-yt2pdf <URL1> -f "{title}"  # Video_Title.pdf
-yt2pdf <URL2> -f "{title}"  # Video_Title.pdf (덮어쓰기!)
+v2doc <URL1> -f "{title}"  # Video_Title.pdf
+v2doc <URL2> -f "{title}"  # Video_Title.pdf (덮어쓰기!)
 
 # 해결: timestamp 포함
-yt2pdf <URL1> -f "{timestamp}_{title}"  # 20260127_143052_Video_Title.pdf
-yt2pdf <URL2> -f "{timestamp}_{title}"  # 20260127_143100_Video_Title.pdf
+v2doc <URL1> -f "{timestamp}_{title}"  # 20260127_143052_Video_Title.pdf
+v2doc <URL2> -f "{timestamp}_{title}"  # 20260127_143100_Video_Title.pdf
 ```
 
 ### 매우 긴 제목 처리
@@ -650,7 +650,7 @@ Brief 파일: 20260127_143052_Video_Title_brief.pdf
 ### 자막 캐시
 
 ```
-~/.cache/yt2pdf/subtitles/
+~/.cache/v2doc/subtitles/
 ├── ko_dQw4w9WgXcQ.json    # 한국어 자막 캐시
 ├── en_dQw4w9WgXcQ.json    # 영어 자막 캐시
 └── ...
@@ -659,7 +659,7 @@ Brief 파일: 20260127_143052_Video_Title_brief.pdf
 ### 메타데이터 캐시
 
 ```
-~/.cache/yt2pdf/metadata/
+~/.cache/v2doc/metadata/
 ├── dQw4w9WgXcQ.json       # 영상 메타데이터 (제목, 채널 등)
 └── ...
 ```
@@ -667,7 +667,7 @@ Brief 파일: 20260127_143052_Video_Title_brief.pdf
 ### 영상 캐시
 
 ```
-~/.cache/yt2pdf/videos/
+~/.cache/v2doc/videos/
 ├── dQw4w9WgXcQ.mp4        # 다운로드 영상 (재사용 용)
 └── ...
 ```
@@ -702,7 +702,7 @@ output:
 # (직접 작성 필요)
 
 # 또는 재처리:
-yt2pdf <old-video-url> -o ./new-location
+v2doc <old-video-url> -o ./new-location
 ```
 
 ---
@@ -747,10 +747,10 @@ const filename = applyFilenamePattern(this.config.output.filenamePattern, {
 | 유형 | 기본 경로 | 설정 방법 | 코드 위치 |
 |------|----------|----------|----------|
 | 출력 | `./output/` | config, CLI `-o` | `orchestrator.ts:378` |
-| 캐시 | `~/.cache/yt2pdf/` | 생성자 param | `cache.ts:28` |
-| 프로젝트 설정 | `./yt2pdf.config.yaml` | 고정 | `config.ts:78` |
-| 전역 설정 | `~/.config/yt2pdf/config.yaml` | 고정 | `config.ts:86` |
-| 임시 파일 | `/tmp/yt2pdf-{random}/` | 시스템 | `file.ts:13` |
+| 캐시 | `~/.cache/v2doc/` | 생성자 param | `cache.ts:28` |
+| 프로젝트 설정 | `./v2doc.config.yaml` | 고정 | `config.ts:78` |
+| 전역 설정 | `~/.config/v2doc/config.yaml` | 고정 | `config.ts:86` |
+| 임시 파일 | `/tmp/v2doc-{random}/` | 시스템 | `file.ts:13` |
 | 폰트 | `./assets/fonts/` | 자동 탐색 | `pdf-generator.ts:50-64` |
 | 스크린샷 | `{tempDir}/screenshot_*.jpg` | 자동 | `screenshot-capturer.ts:59` |
 | 영상/오디오 | `{tempDir}/{videoId}.mp4` | 자동 | `youtube.ts:174` |
@@ -761,7 +761,7 @@ const filename = applyFilenamePattern(this.config.output.filenamePattern, {
 
 ### 프로젝트 설정
 ```
-{현재 디렉토리}/yt2pdf.config.yaml
+{현재 디렉토리}/v2doc.config.yaml
 ```
 - 프로젝트별 설정
 - `process.cwd()` 기준
@@ -769,7 +769,7 @@ const filename = applyFilenamePattern(this.config.output.filenamePattern, {
 
 ### 전역 설정
 ```
-~/.config/yt2pdf/config.yaml
+~/.config/v2doc/config.yaml
 ```
 - 사용자 전체 기본 설정
 - `$HOME` 또는 `$USERPROFILE` 기준
@@ -792,12 +792,12 @@ const filename = applyFilenamePattern(this.config.output.filenamePattern, {
 
 ### 기본 위치
 ```
-~/.cache/yt2pdf/
+~/.cache/v2doc/
 ```
 
 ### 캐시 파일 구조
 ```
-~/.cache/yt2pdf/
+~/.cache/v2doc/
 ├── {md5-hash}.json          # 자막 캐시
 ├── metadata:{videoId}.json  # 메타데이터 캐시
 └── subtitle:{videoId}:{lang}.json  # 자막 언어별 캐시
@@ -809,9 +809,9 @@ const filename = applyFilenamePattern(this.config.output.filenamePattern, {
 
 ### 캐시 관리 CLI
 ```bash
-yt2pdf cache status    # 캐시 상태 확인
-yt2pdf cache clear     # 전체 캐시 삭제
-yt2pdf cache cleanup   # 만료된 캐시 정리
+v2doc cache status    # 캐시 상태 확인
+v2doc cache clear     # 전체 캐시 삭제
+v2doc cache cleanup   # 만료된 캐시 정리
 ```
 
 ---
@@ -820,17 +820,17 @@ yt2pdf cache cleanup   # 만료된 캐시 정리
 
 ### 기본 위치
 ```
-{os.tmpdir()}/yt2pdf-{timestamp}/
+{os.tmpdir()}/v2doc-{timestamp}/
 ```
 
 **플랫폼별 기본값:**
-- macOS: `/private/var/folders/.../yt2pdf-*/` 또는 `/tmp/yt2pdf-*/`
-- Linux: `/tmp/yt2pdf-*/`
-- Windows: `%TEMP%\yt2pdf-*\`
+- macOS: `/private/var/folders/.../v2doc-*/` 또는 `/tmp/v2doc-*/`
+- Linux: `/tmp/v2doc-*/`
+- Windows: `%TEMP%\v2doc-*\`
 
 ### 임시 파일 구조
 ```
-/tmp/yt2pdf-kvhg3l2/
+/tmp/v2doc-kvhg3l2/
 ├── {videoId}.mp4           # 다운로드 영상
 ├── {videoId}.mp3           # 오디오 (Whisper용)
 ├── {videoId}.vtt           # 자막 파일
@@ -971,7 +971,7 @@ CLI 옵션 > 프로젝트 설정 > 전역 설정 > 기본값
 
 ### Q: 캐시는 어디에 저장되나요?
 
-**A**: `~/.cache/yt2pdf/` 디렉토리에 저장됩니다 (Linux/Mac의 XDG 표준).
+**A**: `~/.cache/v2doc/` 디렉토리에 저장됩니다 (Linux/Mac의 XDG 표준).
 
 ### Q: 출력 디렉토리를 자동으로 생성하나요?
 
@@ -984,5 +984,5 @@ CLI 옵션 > 프로젝트 설정 > 전역 설정 > 기본값
 ---
 
 **문서 완성일**: 2026-01-27
-**담당자**: yt2pdf 개발팀
+**담당자**: v2doc 개발팀
 **최종 검토**: -

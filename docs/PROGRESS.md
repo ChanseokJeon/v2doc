@@ -1,4 +1,4 @@
-# yt2pdf 개발 진행 상태
+# v2doc 개발 진행 상태
 
 > 이 문서는 개발 진행 상태를 추적합니다. 작업 중단 후 재개 시 이 문서를 참조하세요.
 
@@ -31,7 +31,7 @@
 | 0.7 | ESLint/Prettier 설정 | ✅ 완료 | - | |
 | 0.8 | 디렉토리 구조 생성 | ✅ 완료 | - | |
 | 0.9 | .env.example 생성 | ✅ 완료 | - | |
-| 0.10 | 기본 설정 파일 생성 | ✅ 완료 | - | yt2pdf.config.yaml |
+| 0.10 | 기본 설정 파일 생성 | ✅ 완료 | - | v2doc.config.yaml |
 
 ---
 
@@ -206,7 +206,7 @@
 
 | ID | 태스크 | 상태 | 의존성 | 파일 |
 |----|--------|------|--------|------|
-| 5.1 | Skill 프롬프트 작성 | ✅ 완료 | Phase 3 | .claude/skills/yt2pdf.md |
+| 5.1 | Skill 프롬프트 작성 | ✅ 완료 | Phase 3 | .claude/skills/v2doc.md |
 | 5.2 | Skill 설정 | ✅ 완료 | 5.1 | .claude/settings.json |
 | 5.3 | Skill 테스트 | ✅ 완료 | 5.2 | - |
 
@@ -244,7 +244,7 @@ region: asia-northeast3
 ### GCS 설정
 
 ```yaml
-bucket: yt2pdf-output
+bucket: v2doc-output
 lifecycle: 7일 후 자동 삭제
 signed-url: V4, 24시간 만료
 ```
@@ -336,7 +336,7 @@ signed-url: V4, 24시간 만료
 
 **배포 명령어**:
 ```bash
-gcloud run deploy yt2pdf \
+gcloud run deploy v2doc \
   --source . \
   --region asia-northeast3 \
   --memory 2Gi \
@@ -344,14 +344,14 @@ gcloud run deploy yt2pdf \
   --concurrency 1 \
   --min-instances 0 \
   --max-instances 1 \
-  --set-env-vars "GCS_BUCKET_NAME=yt2pdf-output" \
+  --set-env-vars "GCS_BUCKET_NAME=v2doc-output" \
   --allow-unauthenticated
 ```
 
 **GCS 버킷 생성**:
 ```bash
-gsutil mb -l asia-northeast3 gs://yt2pdf-output
-gsutil lifecycle set lifecycle.json gs://yt2pdf-output
+gsutil mb -l asia-northeast3 gs://v2doc-output
+gsutil lifecycle set lifecycle.json gs://v2doc-output
 ```
 
 ---

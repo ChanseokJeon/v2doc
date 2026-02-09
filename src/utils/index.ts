@@ -12,3 +12,4 @@ export * from './text-normalizer.js';
 export * from './validation.js';
 export * from './env-validator.js';
 export * from './time.js';
+export * from './migration-helper.js';

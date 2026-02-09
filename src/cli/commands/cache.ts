@@ -10,7 +10,7 @@ import { formatBytes } from '../../utils/file.js';
 export function cacheCommand(): Command {
   const cache = new Command('cache').description('캐시 관리');
 
-  // yt2pdf cache show
+  // v2doc cache show
   cache
     .command('show')
     .description('캐시 상태 표시')
@@ -30,7 +30,7 @@ export function cacheCommand(): Command {
       }
     });
 
-  // yt2pdf cache clear
+  // v2doc cache clear
   cache
     .command('clear')
     .description('캐시 전체 삭제')
@@ -44,7 +44,7 @@ export function cacheCommand(): Command {
       }
     });
 
-  // yt2pdf cache cleanup
+  // v2doc cache cleanup
   cache
     .command('cleanup')
     .description('만료된 캐시 정리')

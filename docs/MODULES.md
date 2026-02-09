@@ -1,4 +1,4 @@
-# yt2pdf 모듈 상세 설계
+# v2doc 모듈 상세 설계
 
 > 각 모듈의 인터페이스, 구현 상세, 의존성을 정의합니다.
 
@@ -21,11 +21,11 @@
 
 ```typescript
 // 주요 명령어 구조
-yt2pdf <url>                    # 기본 변환
-yt2pdf convert <url> [options]  # 변환 (명시적)
-yt2pdf config [action]          # 설정 관리
-yt2pdf cache [action]           # 캐시 관리
-yt2pdf setup                    # 의존성 설치
+v2doc <url>                    # 기본 변환
+v2doc convert <url> [options]  # 변환 (명시적)
+v2doc config [action]          # 설정 관리
+v2doc cache [action]           # 캐시 관리
+v2doc setup                    # 의존성 설치
 ```
 
 **구현 상세**:
@@ -39,7 +39,7 @@ import { setupCommand } from './commands/setup';
 const program = new Command();
 
 program
-  .name('yt2pdf')
+  .name('v2doc')
   .description('YouTube 영상을 PDF로 변환')
   .version('1.0.0');
 
@@ -146,25 +146,25 @@ function printResult(result: ConvertResult) {
 ### 1.3 `src/cli/commands/config.ts` - 설정 명령어
 
 ```typescript
-// yt2pdf config show     - 현재 설정 표시
-// yt2pdf config init     - 설정 파일 생성
-// yt2pdf config set <key> <value>  - 설정 변경
-// yt2pdf config reset    - 기본값으로 초기화
+// v2doc config show     - 현재 설정 표시
+// v2doc config init     - 설정 파일 생성
+// v2doc config set <key> <value>  - 설정 변경
+// v2doc config reset    - 기본값으로 초기화
 ```
 
 ### 1.4 `src/cli/commands/cache.ts` - 캐시 명령어
 
 ```typescript
-// yt2pdf cache show      - 캐시 상태 표시
-// yt2pdf cache clear     - 캐시 전체 삭제
-// yt2pdf cache cleanup   - 만료된 항목만 삭제
+// v2doc cache show      - 캐시 상태 표시
+// v2doc cache clear     - 캐시 전체 삭제
+// v2doc cache cleanup   - 만료된 항목만 삭제
 ```
 
 ### 1.5 `src/cli/commands/setup.ts` - 설치 명령어
 
 ```typescript
-// yt2pdf setup           - 외부 의존성 설치 (ffmpeg, yt-dlp)
-// yt2pdf setup --check   - 설치 상태 확인만
+// v2doc setup           - 외부 의존성 설치 (ffmpeg, yt-dlp)
+// v2doc setup --check   - 설치 상태 확인만
 ```
 
 ---
@@ -1040,12 +1040,12 @@ class ConfigManager {
   }
 
   static getProjectConfigPath(): string {
-    return path.join(process.cwd(), 'yt2pdf.config.yaml');
+    return path.join(process.cwd(), 'v2doc.config.yaml');
   }
 
   static getGlobalConfigPath(): string {
     const home = process.env.HOME || process.env.USERPROFILE || '';
-    return path.join(home, '.config', 'yt2pdf', 'config.yaml');
+    return path.join(home, '.config', 'v2doc', 'config.yaml');
   }
 
   private static async loadYaml(filePath: string): Promise<Partial<Config>> {

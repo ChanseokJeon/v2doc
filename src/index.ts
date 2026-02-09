@@ -1,9 +1,9 @@
 /**
- * yt2pdf - YouTube to PDF 변환 라이브러리
+ * v2doc - YouTube to PDF 변환 라이브러리
  *
  * @example
  * ```typescript
- * import { convert, convertPlaylist } from 'yt2pdf';
+ * import { convert, convertPlaylist } from 'v2doc';
  *
  * // 단일 영상 변환
  * const result = await convert({

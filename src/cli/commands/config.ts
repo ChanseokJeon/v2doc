@@ -11,7 +11,7 @@ import { ConfigManager, configManager } from '../../utils/config.js';
 export function configCommand(): Command {
   const config = new Command('config').description('설정 관리');
 
-  // yt2pdf config show
+  // v2doc config show
   config
     .command('show')
     .description('현재 설정 표시')
@@ -27,7 +27,7 @@ export function configCommand(): Command {
       }
     });
 
-  // yt2pdf config init
+  // v2doc config init
   config
     .command('init')
     .description('설정 파일 생성')
@@ -56,7 +56,7 @@ export function configCommand(): Command {
       }
     });
 
-  // yt2pdf config path
+  // v2doc config path
   config
     .command('path')
     .description('설정 파일 경로 표시')

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# yt2pdf 의존성 설치 스크립트
+# v2doc 의존성 설치 스크립트
 
 set -e
 
-echo "🔧 yt2pdf 의존성 설치 시작..."
+echo "🔧 v2doc 의존성 설치 시작..."
 echo ""
 
 # OS 감지
@@ -94,5 +94,5 @@ echo ""
 echo "✅ 모든 의존성 설치 완료!"
 echo ""
 echo "사용법:"
-echo "  yt2pdf <YouTube-URL>"
+echo "  v2doc <YouTube-URL>"
 echo ""
