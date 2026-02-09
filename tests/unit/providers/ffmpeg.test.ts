@@ -90,17 +90,6 @@ describe('FFmpegWrapper', () => {
       );
     });
 
-    it('should capture frame with medium quality', async () => {
-      mockExecFileAsync.mockResolvedValueOnce({ stdout: '' });
-
-      await wrapper.captureFrame('/video.mp4', 30, '/output/frame.jpg', 'medium');
-
-      const call = mockExecFileAsync.mock.calls[0];
-      expect(call[1]).toEqual(
-        expect.arrayContaining(['-vf', expect.stringContaining('scale=1280:720')])
-      );
-    });
-
     it('should capture frame with high quality', async () => {
       mockExecFileAsync.mockResolvedValueOnce({ stdout: '' });
 

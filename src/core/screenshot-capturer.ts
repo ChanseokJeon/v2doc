@@ -167,8 +167,8 @@ export class ScreenshotCapturer {
 
   /**
    * 챕터 기준 스크린샷 캡처
-   * - Storyboard 방식 우선 (빠름, 영상 다운로드 불필요)
-   * - 실패 시 FFmpeg 폴백
+   * - low quality: Storyboard 방식 (빠름, 영상 다운로드 불필요, 320x180)
+   * - high quality: FFmpeg 방식 (느림, 고품질 1080p, 영상 다운로드 필요)
    * @param videoId - YouTube 비디오 ID
    * @param chapters - 챕터 목록
    * @param thumbnailUrl - 첫 프레임 대신 사용할 썸네일 URL (선택)
@@ -182,23 +182,18 @@ export class ScreenshotCapturer {
       return [];
     }
 
-    // Storyboard 방식 시도 (config.method가 'ffmpeg'가 아닌 경우)
-    const method = (this.config as ScreenshotConfig & { method?: string }).method || 'storyboard';
-    if (method !== 'ffmpeg') {
-      try {
-        return await this.captureForChaptersWithStoryboard(videoId, chapters);
-      } catch (error) {
-        if (method === 'storyboard') {
-          // storyboard 전용 모드면 에러 throw
-          throw error;
-        }
-        // auto 모드면 FFmpeg로 폴백
-        logger.warn('Storyboard 캡처 실패, FFmpeg로 폴백:', error as Error);
-      }
+    // low quality → storyboard, high quality → ffmpeg
+    if (this.config.quality === 'high') {
+      return await this.captureForChaptersWithFFmpeg(videoId, chapters, thumbnailUrl);
     }
 
-    // FFmpeg 방식
-    return await this.captureForChaptersWithFFmpeg(videoId, chapters, thumbnailUrl);
+    // Try storyboard, fallback to FFmpeg on error
+    try {
+      return await this.captureForChaptersWithStoryboard(videoId, chapters);
+    } catch (error) {
+      logger.warn('Storyboard 캡처 실패, FFmpeg로 폴백:', error as Error);
+      return await this.captureForChaptersWithFFmpeg(videoId, chapters, thumbnailUrl);
+    }
   }
 
   /**
@@ -313,8 +308,6 @@ export class ScreenshotCapturer {
     switch (quality) {
       case 'high':
         return 'best[height<=1080]';
-      case 'medium':
-        return 'best[height<=720]';
       case 'low':
       default:
         return 'worst[height>=480]/best[height<=480]';
@@ -328,8 +321,6 @@ export class ScreenshotCapturer {
     switch (quality) {
       case 'high':
         return { width: 1920, height: 1080 };
-      case 'medium':
-        return { width: 1280, height: 720 };
       case 'low':
       default:
         return { width: 854, height: 480 };

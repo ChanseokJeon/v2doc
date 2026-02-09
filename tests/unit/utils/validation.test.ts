@@ -81,7 +81,6 @@ describe('Validation Utils', () => {
   describe('validateImageQuality', () => {
     it('should accept valid qualities', () => {
       expect(validateImageQuality('low').valid).toBe(true);
-      expect(validateImageQuality('medium').valid).toBe(true);
       expect(validateImageQuality('high').valid).toBe(true);
     });
 
@@ -92,6 +91,12 @@ describe('Validation Utils', () => {
     it('should reject invalid quality', () => {
       const result = validateImageQuality('ultra');
       expect(result.valid).toBe(false);
+    });
+
+    it('should reject medium quality (no longer supported)', () => {
+      const result = validateImageQuality('medium');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('유효하지 않은 이미지 품질');
     });
   });
 
@@ -164,7 +169,7 @@ describe('Validation Utils', () => {
         url: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
         format: 'pdf',
         layout: 'vertical',
-        quality: 'medium',
+        quality: 'high',
         interval: 60,
         lang: 'ko',
         output: './output',

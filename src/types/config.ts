@@ -20,8 +20,7 @@ export const OutputConfigSchema = z.object({
 
 export const ScreenshotConfigSchema = z.object({
   interval: z.number().min(10).max(600).default(60),
-  quality: z.enum(['low', 'medium', 'high']).default('low'),
-  method: z.enum(['storyboard', 'ffmpeg', 'auto']).default('storyboard'), // storyboard: 빠름(320x180), ffmpeg: 고품질
+  quality: z.enum(['low', 'high']).default('low'),
 });
 
 export const SubtitleConfigSchema = z.object({

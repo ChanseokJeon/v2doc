@@ -78,7 +78,7 @@ export function validatePDFLayout(layout: string | undefined): ValidationResult 
  * 이미지 품질 유효성 검사
  */
 export function validateImageQuality(quality: string | undefined): ValidationResult {
-  const validQualities: ImageQuality[] = ['low', 'medium', 'high'];
+  const validQualities: ImageQuality[] = ['low', 'high'];
 
   if (!quality) {
     return { valid: true, errors: [] }; // 기본값 사용

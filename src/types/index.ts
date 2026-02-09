@@ -7,7 +7,7 @@
 // ============================================================
 
 export type OutputFormat = 'pdf' | 'md' | 'html' | 'brief';
-export type ImageQuality = 'low' | 'medium' | 'high';
+export type ImageQuality = 'low' | 'high';
 export type PDFLayout = 'vertical' | 'horizontal' | 'minimal-neon';
 export type WhisperProvider = 'openai' | 'groq' | 'local';
 export type SubtitleSource = 'youtube' | 'whisper';

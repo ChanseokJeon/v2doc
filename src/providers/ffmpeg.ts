@@ -23,7 +23,6 @@ export class FFmpegWrapper {
 
   private qualityMap: Record<ImageQuality, { width: number; height: number; scale: string }> = {
     low: { width: 854, height: 480, scale: '854:480' },
-    medium: { width: 1280, height: 720, scale: '1280:720' },
     high: { width: 1920, height: 1080, scale: '1920:1080' },
   };
 

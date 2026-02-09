@@ -52,7 +52,6 @@ jobs.post('/sync', zValidator('json', CreateJobRequestSchema), async (c) => {
 
     config.output.format = options.format;
     config.screenshot.interval = options.screenshotInterval;
-    config.screenshot.quality = options.screenshotQuality;
     config.pdf.layout = options.layout;
     config.translation.enabled = options.includeTranslation;
     config.summary.enabled = options.includeSummary;

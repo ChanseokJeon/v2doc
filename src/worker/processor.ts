@@ -234,7 +234,6 @@ export class JobProcessor {
       // Override with job options
       config.output.format = job.options.format;
       config.screenshot.interval = job.options.screenshotInterval;
-      config.screenshot.quality = job.options.screenshotQuality;
       config.pdf.layout = job.options.layout;
       config.translation.enabled = job.options.includeTranslation;
       config.summary.enabled = job.options.includeSummary;
