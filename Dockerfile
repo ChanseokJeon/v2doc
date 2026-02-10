@@ -66,8 +66,8 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
 
-# Copy config files needed at runtime
-COPY v2doc.config.yaml* /app/
+# Config file is optional (app uses defaults if not present)
+# COPY v2doc.config.yaml /app/
 
 # Copy Korean fonts for PDF generation
 COPY assets/fonts/ ./assets/fonts/
