@@ -26,9 +26,18 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Load .env if present (for V2DOC_API_KEY, V2DOC_BASE_URL)
+if [ -f ".env" ]; then
+  while IFS='=' read -r key value; do
+    # Skip comments and empty lines
+    [[ "$key" =~ ^#.*$ || -z "$key" ]] && continue
+    # Only export valid variable names
+    [[ "$key" =~ ^[a-zA-Z_][a-zA-Z0-9_]*$ ]] && export "$key"="$value"
+  done < .env
+fi
+
 # Defaults
 DEFAULT_BASE_URL="https://v2doc-941839241915.asia-northeast3.run.app"
-DEFAULT_API_KEY="REDACTED"
 DEFAULT_VIDEO_URL="https://www.youtube.com/watch?v=jNQXAC9IVRw" # "Me at the zoo" (18s)
 
 # Parse options
@@ -54,9 +63,9 @@ while [[ $# -gt 0 ]]; do
       echo "  -k, --key   API key for authentication"
       echo "  -h, --help  Show this help message"
       echo ""
-      echo "Environment variables:"
+      echo "Environment variables (also loaded from .env):"
       echo "  V2DOC_BASE_URL  Base URL (overridden by -u)"
-      echo "  V2DOC_API_KEY   API key (overridden by -k)"
+      echo "  V2DOC_API_KEY   API key (required, overridden by -k)"
       exit 0
       ;;
     *)
@@ -68,7 +77,12 @@ done
 
 BASE_URL="${OPT_BASE_URL:-${V2DOC_BASE_URL:-$DEFAULT_BASE_URL}}"
 TEST_VIDEO_URL="${POSITIONAL_ARGS[0]:-$DEFAULT_VIDEO_URL}"
-API_KEY="${OPT_API_KEY:-${V2DOC_API_KEY:-$DEFAULT_API_KEY}}"
+API_KEY="${OPT_API_KEY:-${V2DOC_API_KEY:-}}"
+
+if [ -z "$API_KEY" ]; then
+  echo -e "${RED}✗ API key required. Set V2DOC_API_KEY in .env, environment, or use -k flag${NC}"
+  exit 1
+fi
 OUTPUT_DIR="./output/api-prod-test"
 
 echo -e "${BLUE}========================================${NC}"
