@@ -8,11 +8,11 @@
 
 | 항목 | 상태 |
 |------|------|
-| **현재 Phase** | Phase 7 (코드베이스 리팩토링) - Phase 2 완료 |
-| **현재 작업** | Orchestrator 특성 테스트 + 프록시 검증 (session-011) |
-| **마지막 업데이트** | 2026-02-08 |
-| **다음 작업** | Phase 3: Orchestrator 파이프라인 리팩토링 (session-012) |
-| **테스트** | 876개, 94%+ 커버리지 |
+| **현재 Phase** | Phase 7 (코드베이스 리팩토링) - Phase 2 완료, v1.0.0 출시 |
+| **현재 작업** | 문서 최신화 (session-014) |
+| **마지막 업데이트** | 2026-02-13 |
+| **다음 작업** | Phase 3: Orchestrator 파이프라인 리팩토링 또는 플레이리스트 지원 |
+| **테스트** | 928개, 94%+ 커버리지 |
 
 ---
 
@@ -216,18 +216,22 @@
 
 ### 상태: ✅ 완료
 
-> **설계 변경 (2026-02-04)**: 오버엔지니어링 리뷰 결과, 100건/월 규모에 맞는 최소 MVP로 단순화
+> **설계 변경 (2026-02-04)**: 초기에 100건/월 규모 MVP로 단순화했으나, 2026-02-10에 API 인증/Rate Limiting 추가 완료
 
 | ID | 태스크 | 상태 | 의존성 | 파일 |
 |----|--------|------|--------|------|
 | 6.1 | ~~JobStore 영속화~~ | ❌ 취소 | - | Stateless 설계로 불필요 |
-| 6.2 | ~~API 인증/인가~~ | ❌ 취소 | - | 개인용 도구, 불필요 |
-| 6.3 | ~~Rate Limiting~~ | ❌ 취소 | - | 100건/월에 불필요 |
+| 6.2 | API 인증/인가 (API Key) | ✅ 완료 | - | src/api/middleware/auth.ts |
+| 6.3 | Rate Limiting | ✅ 완료 | - | src/api/middleware/rate-limit.ts |
 | 6.4 | Dockerfile (Cloud Run용) | ✅ 완료 | - | Dockerfile |
 | 6.5 | GCS 연동 (Signed URL) | ✅ 완료 | - | /jobs/sync 엔드포인트 |
 | 6.6 | ~~CI/CD 파이프라인~~ | ❌ 취소 | - | 수동 배포로 시작 |
 | 6.7 | Cloud Run 배포 스크립트 | ✅ 완료 | 6.4, 6.5 | scripts/deploy-cloudrun.sh |
 | 6.8 | README.md 업데이트 | ✅ 완료 | 6.7 | README.md |
+| 6.9 | OpenAPI 스펙 + Scalar UI | ✅ 완료 | - | src/api/openapi.ts |
+| 6.10 | API 배포 검증 테스트 | ✅ 완료 | - | tests/e2e/api-deployment.test.ts |
+| 6.11 | 프로덕션 API 테스트 스크립트 | ✅ 완료 | - | scripts/test-api-prod.sh |
+| 6.12 | v1.0.0 리브랜딩 (yt2pdf → v2doc) | ✅ 완료 | - | 전체 프로젝트 |
 
 ### Cloud Run 설정 (Minimal MVP)
 
@@ -273,6 +277,39 @@ signed-url: V4, 24시간 만료
 ---
 
 ## 작업 로그
+
+### 2026-02-12
+
+| 시간 | 작업 내용 |
+|------|----------|
+| - | 하드코딩된 API 키 보안 수정 |
+
+### 2026-02-11
+
+| 시간 | 작업 내용 |
+|------|----------|
+| - | 프로덕션 API 테스트 스크립트 추가 |
+| - | 테스트 스크립트에 옵션 플래그 및 PDF 다운로드 기능 추가 |
+
+### 2026-02-10
+
+| 시간 | 작업 내용 |
+|------|----------|
+| - | v1.0.0 리브랜딩: yt2pdf → v2doc |
+| - | API Key 인증 + Rate Limiting 구현 |
+| - | 로컬 API E2E 테스트 추가, output 폴더 통합 |
+| - | Dockerfile config 파일 옵션화, OpenAPI URL 동적화 |
+| - | 프록시 디버그 정보 API 응답 추가, smart quote 폴백 버그 수정 |
+
+### 2026-02-09
+
+| 시간 | 작업 내용 |
+|------|----------|
+| - | forceProxy, trace 옵션 추가 (프록시 제어/파이프라인 관찰) |
+| - | v0.2.0 출시, --screenshot-method 옵션 추가 |
+| - | 스크린샷 옵션 단순화 (quality+method → -q 플래그) |
+| - | OpenAPI 스펙 + Scalar UI 문서화 |
+| - | API 배포 검증 테스트 스위트 추가 |
 
 ### 2026-02-08
 
@@ -327,31 +364,17 @@ signed-url: V4, 24시간 만료
 
 ## 다음 작업 상세
 
-### 다음 태스크: 6.4 Dockerfile (Cloud Run용)
+### 다음 태스크: Phase 3 Orchestrator 파이프라인 리팩토링
 
 **작업 내용**:
-1. Cloud Run용 Dockerfile 작성
-2. 시스템 의존성 포함 (ffmpeg, yt-dlp)
-3. pdfkit 기본, Puppeteer 옵션
+1. 파이프라인 인터페이스 정의 (`src/core/pipeline/interfaces.ts`)
+2. Orchestrator 915줄 → 6개 스테이지 + Coordinator로 분해
+3. AI Provider 통합 (ai.ts + unified-ai.ts 중복 제거)
+4. 통합 테스트 추가
 
-**배포 명령어**:
+**검증 방법**:
 ```bash
-gcloud run deploy v2doc \
-  --source . \
-  --region asia-northeast3 \
-  --memory 2Gi \
-  --timeout 900 \
-  --concurrency 1 \
-  --min-instances 0 \
-  --max-instances 1 \
-  --set-env-vars "GCS_BUCKET_NAME=v2doc-output" \
-  --allow-unauthenticated
-```
-
-**GCS 버킷 생성**:
-```bash
-gsutil mb -l asia-northeast3 gs://v2doc-output
-gsutil lifecycle set lifecycle.json gs://v2doc-output
+npm run verify:all  # 전체 6-layer 검증
 ```
 
 ---
@@ -446,6 +469,9 @@ gsutil lifecycle set lifecycle.json gs://v2doc-output
 
 | 날짜 | 결정 사항 | 이유 |
 |------|----------|------|
+| 2026-02-10 | v1.0.0 리브랜딩 (yt2pdf → v2doc) | 제품 정체성 확립 |
+| 2026-02-10 | API Key 인증 추가 | 프로덕션 보안 강화 |
+| 2026-02-09 | OpenAPI + Scalar UI 도입 | API 문서 자동화 |
 | 2026-02-02 | Hono 프레임워크 선택 | 경량, Edge 지원, TypeScript 네이티브 |
 | 2026-02-02 | 클라우드 추상화 레이어 | AWS/GCP 멀티 클라우드 지원 |
 | 2026-02-02 | In-memory JobStore (임시) | 빠른 개발, 추후 Redis 전환 |
