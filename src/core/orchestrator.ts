@@ -43,6 +43,7 @@ import { MetadataStage } from './pipeline/stages/metadata-stage.js';
 import { SummaryStage } from './pipeline/stages/summary-stage.js';
 import { ScreenshotStage } from './pipeline/stages/screenshot-stage.js';
 import { SubtitleStage } from './pipeline/stages/subtitle-stage.js';
+import { ClassificationStage } from './pipeline/stages/classification-stage.js';
 import { PipelineContext } from './pipeline/types.js';
 
 export interface OrchestratorOptions {
@@ -260,11 +261,17 @@ export class Orchestrator {
 
       // 3. 영상 분류 및 챕터 생성
       stepStart = Date.now();
-      const chapters = await this.classifyAndGenerateChapters(
+      const classificationStage = new ClassificationStage();
+      const classificationCtx: Partial<PipelineContext> = {
+        config: this.config,
+        ai: this.ai,
         metadata,
         processedSegments,
-        initialChapters
-      );
+        chapters: initialChapters,
+        onProgress: (state) => this.updateState(state),
+      };
+      await classificationStage.execute(classificationCtx as PipelineContext);
+      const chapters = classificationCtx.chapters!;
       if (this.traceEnabled) {
         traceSteps.push({
           name: 'classification',
@@ -478,7 +485,9 @@ export class Orchestrator {
 
   /**
    * 영상 유형 분류 및 챕터 자동 생성
+   * @deprecated Use ClassificationStage instead
    */
+  // @ts-expect-error - deprecated, kept for reference
   private async classifyAndGenerateChapters(
     metadata: Awaited<ReturnType<YouTubeProvider['getMetadata']>>,
     processedSegments: SubtitleSegment[],
