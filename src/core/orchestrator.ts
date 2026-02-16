@@ -40,6 +40,7 @@ import {
 } from '../utils/file.js';
 import { parseYouTubeUrl, buildVideoUrl } from '../utils/url.js';
 import { MetadataStage } from './pipeline/stages/metadata-stage.js';
+import { SummaryStage } from './pipeline/stages/summary-stage.js';
 import { PipelineContext } from './pipeline/types.js';
 
 export interface OrchestratorOptions {
@@ -262,7 +263,15 @@ export class Orchestrator {
 
       // 4. 요약 생성
       stepStart = Date.now();
-      const summary = await this.generateSummary(processedSegments);
+      const summaryStage = new SummaryStage();
+      const summaryCtx: Partial<PipelineContext> = {
+        config: this.config,
+        ai: this.ai,
+        processedSegments,
+        onProgress: (state) => this.updateState(state),
+      };
+      await summaryStage.execute(summaryCtx as PipelineContext);
+      const summary = summaryCtx.summary;
       if (this.traceEnabled) {
         traceSteps.push({ name: 'summary', ms: Date.now() - stepStart });
       }
@@ -517,7 +526,9 @@ export class Orchestrator {
 
   /**
    * 요약 생성
+   * @deprecated Replaced by SummaryStage — will be removed after full migration
    */
+  // @ts-expect-error Deprecated: replaced by SummaryStage
   private async generateSummary(
     processedSegments: SubtitleSegment[]
   ): Promise<ContentSummary | undefined> {
