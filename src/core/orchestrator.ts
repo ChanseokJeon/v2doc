@@ -39,6 +39,8 @@ import {
   getFileSize,
 } from '../utils/file.js';
 import { parseYouTubeUrl, buildVideoUrl } from '../utils/url.js';
+import { MetadataStage } from './pipeline/stages/metadata-stage.js';
+import { PipelineContext } from './pipeline/types.js';
 
 export interface OrchestratorOptions {
   config: Config;
@@ -203,7 +205,18 @@ export class Orchestrator {
     try {
       // 1. 메타데이터 및 챕터 가져오기
       let stepStart = Date.now();
-      const { metadata, chapters: fetchedChapters } = await this.fetchMetadataAndChapters(videoId);
+      const metadataStage = new MetadataStage();
+      const stageContext: Partial<PipelineContext> = {
+        videoId,
+        config: this.config,
+        youtube: this.youtube,
+        onProgress: (state) => this.updateState(state),
+        traceEnabled: this.traceEnabled,
+        traceSteps: [],
+      };
+      await metadataStage.execute(stageContext as PipelineContext);
+      const metadata = stageContext.metadata!;
+      const fetchedChapters = stageContext.chapters!;
       if (this.traceEnabled) {
         traceSteps.push({ name: 'metadata', ms: Date.now() - stepStart });
       }
@@ -333,7 +346,9 @@ export class Orchestrator {
 
   /**
    * 메타데이터 및 YouTube 챕터 가져오기
+   * @deprecated Use MetadataStage instead. Kept temporarily for reference during refactoring.
    */
+  // @ts-expect-error - Unused during refactoring, will be removed after characterization tests pass
   private async fetchMetadataAndChapters(videoId: string): Promise<{
     metadata: Awaited<ReturnType<YouTubeProvider['getMetadata']>>;
     chapters: Chapter[];

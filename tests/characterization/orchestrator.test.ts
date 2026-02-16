@@ -17,6 +17,9 @@ const mockDownloadAudio = jest.fn();
 const mockDownloadVideo = jest.fn();
 const mockDownloadThumbnail = jest.fn();
 const mockDownloadThumbnails = jest.fn();
+const mockHasValidProxy = jest.fn();
+const mockWasProxyUsed = jest.fn();
+const mockWasFallbackTriggered = jest.fn();
 
 jest.mock('../../src/providers/youtube', () => ({
   YouTubeProvider: jest.fn().mockImplementation(() => ({
@@ -26,6 +29,9 @@ jest.mock('../../src/providers/youtube', () => ({
     downloadVideo: mockDownloadVideo,
     downloadThumbnail: mockDownloadThumbnail,
     downloadThumbnails: mockDownloadThumbnails,
+    hasValidProxy: mockHasValidProxy,
+    wasProxyUsed: mockWasProxyUsed,
+    wasFallbackTriggered: mockWasFallbackTriggered,
   })),
 }));
 
@@ -260,6 +266,9 @@ function setupHappyPathMocks() {
 
   // YouTube provider
   mockGetMetadata.mockResolvedValue(createMetadata());
+  mockHasValidProxy.mockReturnValue(false);
+  mockWasProxyUsed.mockReturnValue(false);
+  mockWasFallbackTriggered.mockReturnValue(false);
 
   // Subtitle extractor
   mockSubtitleExtract.mockResolvedValue(createSubtitleResult());
