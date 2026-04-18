@@ -192,6 +192,12 @@ export async function convertCommand(url: string | undefined, options: ConvertCo
       console.log(`  ${chalk.bold('포맷')}     ${format}`);
       // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('파일')}     ${chalk.underline(result.outputPath)}`);
+      if (result.transcriptPaths) {
+        // eslint-disable-next-line no-console
+        console.log(`  ${chalk.bold('자막VTT')}  ${chalk.underline(result.transcriptPaths.vtt)}`);
+        // eslint-disable-next-line no-console
+        console.log(`  ${chalk.bold('자막TXT')}  ${chalk.underline(result.transcriptPaths.txt)}`);
+      }
       // eslint-disable-next-line no-console
       console.log(`  ${chalk.bold('섹션')}     ${result.stats.pages}개`);
       // eslint-disable-next-line no-console

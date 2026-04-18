@@ -9,7 +9,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { PipelineStage, PipelineContext } from '../types.js';
 import { PDFGenerator } from '../../pdf-generator.js';
-import { ConvertResult, ExecutiveBrief } from '../../../types/index.js';
+import { ConvertResult, ExecutiveBrief, SubtitleSegment } from '../../../types/index.js';
 import {
   ensureDir,
   getDateString,
@@ -17,6 +17,58 @@ import {
   applyFilenamePattern,
   getFileSize,
 } from '../../../utils/file.js';
+import { logger } from '../../../utils/logger.js';
+
+function formatVttTimestamp(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const ms = Math.floor((seconds - Math.floor(seconds)) * 1000);
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+}
+
+function buildVtt(segments: SubtitleSegment[]): string {
+  const lines: string[] = ['WEBVTT', ''];
+  for (const seg of segments) {
+    lines.push(`${formatVttTimestamp(seg.start)} --> ${formatVttTimestamp(seg.end)}`);
+    lines.push(seg.text);
+    lines.push('');
+  }
+  return lines.join('\n');
+}
+
+function formatTxtTimestamp(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) {
+    return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+function buildTxt(segments: SubtitleSegment[]): string {
+  return segments.map((seg) => `[${formatTxtTimestamp(seg.start)}] ${seg.text}`).join('\n');
+}
+
+async function writeTranscripts(
+  outputDir: string,
+  filename: string,
+  lang: string,
+  segments: SubtitleSegment[]
+): Promise<{ vtt: string; txt: string } | undefined> {
+  if (segments.length === 0) return undefined;
+  const vttPath = path.join(outputDir, `${filename}.${lang}.vtt`);
+  const txtPath = path.join(outputDir, `${filename}.transcript.txt`);
+  try {
+    await fs.promises.writeFile(vttPath, buildVtt(segments), 'utf-8');
+    await fs.promises.writeFile(txtPath, buildTxt(segments), 'utf-8');
+    return { vtt: vttPath, txt: txtPath };
+  } catch (e) {
+    logger.warn(`자막 파일 저장 실패: ${(e as Error).message}`);
+    return undefined;
+  }
+}
 
 export class OutputStage implements PipelineStage {
   readonly name = 'output';
@@ -74,6 +126,12 @@ export class OutputStage implements PipelineStage {
         screenshots,
         pdfGenerator
       );
+    }
+
+    const lang = context.subtitles?.language || context.config.translation.defaultLanguage || 'txt';
+    const transcriptPaths = await writeTranscripts(outputDir, filename, lang, processedSegments);
+    if (transcriptPaths) {
+      result.transcriptPaths = transcriptPaths;
     }
 
     context.result = result;

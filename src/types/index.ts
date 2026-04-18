@@ -256,6 +256,10 @@ export interface ConvertResult {
     duration: number;
     screenshotCount: number;
   };
+  transcriptPaths?: {
+    vtt: string;
+    txt: string;
+  };
   proxy?: ProxyInfo;
   trace?: TraceResult;
 }

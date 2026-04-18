@@ -361,6 +361,7 @@ export class Orchestrator {
         metadata,
         content,
         chapters,
+        subtitles,
         processedSegments,
         summary,
         screenshots,
